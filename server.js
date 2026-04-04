@@ -261,7 +261,39 @@ app.delete('/api/admin/members/:id', auth, adminOnly, async (req, res) => {
 })
 
 // ═══════════════════════════════════════
-// IMAGE UPLOAD (admin only — key stays server-side)
+// PAGE CONTENT ROUTES
+// ═══════════════════════════════════════
+
+// GET /api/page-content?lang=en
+app.get('/api/page-content', async (req, res) => {
+  const lang = req.query.lang || 'en'
+  const { data, error } = await supabase
+    .from('page_content')
+    .select('key, value')
+    .eq('lang', lang)
+  if (error) return res.status(500).json({ error: error.message })
+  // แปลงเป็น object { key: value }
+  const result = {}
+  data.forEach(row => { result[row.key] = row.value })
+  res.json(result)
+})
+
+// POST /api/admin/page-content — save page content
+app.post('/api/admin/page-content', auth, adminOnly, async (req, res) => {
+  const { lang, content } = req.body
+  if (!lang || !content) return res.status(400).json({ error: 'Missing fields' })
+  try {
+    // upsert ทุก key
+    const rows = Object.entries(content).map(([key, value]) => ({ lang, key, value }))
+    const { error } = await supabase
+      .from('page_content')
+      .upsert(rows, { onConflict: 'lang,key' })
+    if (error) throw error
+    res.json({ message: 'Saved' })
+  } catch(e) {
+    res.status(500).json({ error: e.message })
+  }
+})
 // ═══════════════════════════════════════
 app.post('/api/admin/upload', auth, adminOnly, async (req, res) => {
   try {
