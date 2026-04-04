@@ -327,19 +327,45 @@ const bgMap = ['bg1','bg2','bg3','bg4']
 let editingProductId = null
 let token = null
 
-function checkSession() {
+async function checkSession() {
   token = localStorage.getItem('mochi_token')
   const role = localStorage.getItem('mochi_role')
-  if (token && role === 'admin') {
+
+  if (!token || role !== 'admin') {
+    showLoginScreen()
+    return
+  }
+
+  // verify กับ server จริงๆ ว่า token ยังใช้ได้
+  try {
+    const res = await fetch(`${API}/api/verify`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (!res.ok) throw new Error('Invalid token')
+    const data = await res.json()
+    if (data.role !== 'admin') throw new Error('Not admin')
+
+    // token ใช้ได้ — เข้า dashboard
     document.getElementById('loginScreen').style.display = 'none'
     document.getElementById('appScreen').style.display = 'block'
-    document.getElementById('adminName').textContent = localStorage.getItem('mochi_user') || 'Admin'
+    document.getElementById('adminName').textContent = data.username || localStorage.getItem('mochi_user') || 'Admin'
     loadDashboard()
-  } else {
-    document.getElementById('loginScreen').style.display = 'flex'
-    document.getElementById('appScreen').style.display = 'none'
-    setTimeout(() => document.getElementById('loginUser').focus(), 300)
+  } catch(e) {
+    // token หมดอายุหรือไม่ valid — ล้างแล้ว show login
+    localStorage.removeItem('mochi_token')
+    localStorage.removeItem('mochi_role')
+    localStorage.removeItem('mochi_user')
+    showLoginScreen()
   }
+}
+
+function showLoginScreen() {
+  document.getElementById('loginScreen').style.display = 'flex'
+  document.getElementById('appScreen').style.display = 'none'
+  setTimeout(() => {
+    const userInput = document.getElementById('loginUser')
+    if (userInput) userInput.focus()
+  }, 300)
 }
 
 async function doLogin() {
@@ -377,8 +403,7 @@ function doLogout() {
   localStorage.removeItem('mochi_role')
   localStorage.removeItem('mochi_user')
   token = null
-  document.getElementById('appScreen').style.display = 'none'
-  document.getElementById('loginScreen').style.display = 'flex'
+  showLoginScreen()
   document.getElementById('loginUser').value = ''
   document.getElementById('loginPass').value = ''
 }
