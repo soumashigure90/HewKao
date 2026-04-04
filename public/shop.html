@@ -1901,6 +1901,7 @@ footer strong { color: var(--pink-d); }
 
     // ใช้ buyNow items ถ้ามี ไม่งั้นใช้ cart
     const orderItems = window._buyNowItems || cart
+    const isPreorder = orderItems.some(i => i.type === 'preorder')
     const total = orderItems.reduce((s,i) => s + i.price*i.qty, 0)
     const note  = document.getElementById('checkoutNote').value.trim()
     const items = orderItems.map(i => ({ product_id: i.id, quantity: i.qty, price: i.price }))
@@ -1914,36 +1915,52 @@ footer strong { color: var(--pink-d); }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-      // ล้าง cart ถ้าไม่ใช่ buyNow
-      if (!window._buyNowItems) {
-        cart = []
-        saveCart()
-        closeCart()
-      }
+      // ล้าง cart เสมอ
+      cart = []
+      saveCart()
       window._buyNowItems = null
-      closeCheckout()
 
-      // Success popup
-      const overlay = document.getElementById('checkoutOverlay')
-      overlay.classList.remove('closing')
-      overlay.classList.add('open')
-      document.querySelector('.checkout-modal').innerHTML = `
-        <div style="padding:3rem 2rem;text-align:center;">
-          <div style="font-size:64px;margin-bottom:1rem;animation:prodModalIn .5s ease both;">🎉</div>
-          <h2 style="font-family:Quicksand,sans-serif;font-size:24px;font-weight:700;margin-bottom:8px;color:var(--pink-d);">Order Placed!</h2>
-          <p style="font-size:14px;color:var(--text-s);margin-bottom:6px;">Order #${data.id}</p>
-          <p style="font-size:13px;color:var(--text-s);margin-bottom:2rem;line-height:1.6;">
-            Your order is now <strong>pending review</strong>.<br>We'll confirm it shortly! 🌸
-          </p>
-          <button onclick="document.getElementById('checkoutOverlay').classList.remove('open')" style="background:var(--pink-d);color:#fff;border:none;padding:12px 28px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;box-shadow:0 4px 16px rgba(232,130,154,.3);">
-            Continue Shopping 🛍️
-          </button>
-        </div>`
+      // ปิด popup ทั้งหมด
+      closeCheckout()
+      closeCart()
+
+      // แสดง toast แยกตาม type
+      if (isPreorder) {
+        showSuccessToast('⏳ Pre-order received! We\'ll confirm shortly 🌸', '#' + data.id)
+      } else {
+        showSuccessToast('✅ Order placed successfully! 🛍️', '#' + data.id)
+      }
+
+      // กลับหน้าแรก
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+
     } catch(e) {
       showToast('❌ ' + (e.message || 'Failed to place order'))
       btn.textContent = '✅ Place Order'
       btn.disabled = false
     }
+  }
+
+  function showSuccessToast(msg, orderId) {
+    const wrap = document.getElementById('toastWrap')
+    const t = document.createElement('div')
+    t.style.cssText = `
+      background:#fff;
+      border:2px solid var(--pink-l);
+      border-radius:20px;
+      padding:14px 20px;
+      box-shadow:0 8px 32px rgba(180,140,200,0.25);
+      text-align:center;
+      min-width:260px;
+      animation:fadeup 0.4s cubic-bezier(0.34,1.4,0.64,1);
+    `
+    t.innerHTML = `
+      <div style="font-size:28px;margin-bottom:6px;">${msg.split(' ')[0]}</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;">${msg.slice(msg.indexOf(' ')+1)}</div>
+      <div style="font-size:12px;color:var(--text-s);">Order ${orderId}</div>
+    `
+    wrap.appendChild(t)
+    setTimeout(() => t.remove(), 4000)
   }
 
   // ── INIT ──
