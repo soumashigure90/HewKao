@@ -756,7 +756,6 @@ footer strong { color: var(--pink-d); }
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
-  const res = await fetch(`/api/products`);
   let lang = 'en'
   let allProducts = []
   let currentFilter = 'all'
@@ -765,6 +764,7 @@ footer strong { color: var(--pink-d); }
   // ── FETCH PRODUCTS FROM API ──
   async function loadProducts() {
     try {
+      const API = "https://hewkao.shop";
       const res = await fetch(`${API}/api/products`)
       allProducts = await res.json()
       renderProducts(allProducts)
