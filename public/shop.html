@@ -778,28 +778,46 @@ footer strong { color: var(--pink-d); }
   }
 
   function renderProducts(products) {
-    const grid = document.getElementById('products-grid');
-    // ... โค้ดอื่นๆ ...
+    const grid = document.getElementById('products-grid')
+    const count = document.getElementById('item-count')
+    count.textContent = products.length + (lang === 'en' ? ' items' : ' รายการ')
+
+    if (!products.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#bbb;font-size:14px;">No products found 🌸</div>`
+      return
+    }
 
     grid.innerHTML = products.map((p, i) => {
-      const bg = bgMap[i % 4];
-      
-      // --- จุดที่ต้องแก้คือบรรทัดนี้ครับ ---
-      // ใน server.js คุณใช้ชื่อว่า file_url แต่ในโค้ดหน้าเว็บอาจจะเขียนว่า image_url
-      // ให้แก้ให้มันรองรับทั้งคู่ หรือเปลี่ยนเป็น p.file_url ครับ
-      const currentImageUrl = p.file_url || p.image_url; 
+      const bg = bgMap[i % 4]
+      const badgeClass = p.type === 'digital' ? 'digital' : p.type === 'preorder' ? 'preorder' : ''
+      const stockText = p.stock !== null
+        ? (lang === 'en' ? `Limited · ${p.stock} left` : `จำกัด · เหลือ ${p.stock} ชิ้น`)
+        : (lang === 'en' ? 'In stock' : 'มีสินค้า')
+      const cartLabel = p.type === 'preorder'
+        ? (lang === 'en' ? '+ Pre-order' : '+ พรีออเดอร์')
+        : (lang === 'en' ? '+ Cart' : '+ ตะกร้า')
+      const toastMsg = p.type === 'preorder' ? 'Pre-order added! ⏳' : 'Added to cart! 🛒'
 
-      const imgContent = currentImageUrl 
-        ? `<img src="${currentImageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">`
-        : (p.emoji || '📦');
+      // รูปภาพ หรือ emoji fallback
+      const imgContent = p.image_url
+        ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:0;" alt="${p.name}" onerror="this.parentElement.innerHTML='${p.emoji||'📦'}'">`
+        : (p.emoji || '📦')
 
-      return `
-        <div class="card" onclick="showToast('${p.name}')">
-          <div class="card-img ${currentImageUrl ? '' : bg}">
-            ${imgContent}
-            </div>
-          </div>`;
-    }).join('');
+      return `<div class="card" data-type="${p.type}" onclick="openProdModal(${p.id})">
+        <div class="card-img ${p.image_url ? '' : bg}" style="${p.image_url ? 'padding:0;overflow:hidden;' : ''}">${imgContent}
+          ${p.badge ? `<span class="card-badge ${badgeClass}">${p.badge}</span>` : ''}
+          <button class="wishlist" onclick="event.stopPropagation();toggleWish(this)">🤍</button>
+        </div>
+        <div class="card-body">
+          <h3>${lang === 'en' ? p.name : (p.name_th || p.name)}</h3>
+          <p class="card-sub">${p.description || stockText}</p>
+          <div class="card-footer">
+            <div class="price">฿${Number(p.price).toLocaleString()}</div>
+            <button class="btn-cart" onclick="event.stopPropagation();addToCart(${p.id},this)">${cartLabel}</button>
+          </div>
+        </div>
+      </div>`
+    }).join('')
   }
 
   function filterProducts(type, btn) {
