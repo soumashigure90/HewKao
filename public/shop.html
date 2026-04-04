@@ -856,7 +856,7 @@ footer strong { color: var(--pink-d); }
 
   // ── LANG ──
   function setLang(l) {
-    saveCurrentLangContent() // บันทึกภาษาเดิมก่อน (ถ้าเป็น admin)
+    saveCurrentLangContent(false) // บันทึกเงียบๆ ไม่ต้อง toast
     lang = l
     localStorage.setItem('hewkao_lang', l)
     document.querySelectorAll('.nav-lang button').forEach((b,i) => {
@@ -869,10 +869,9 @@ footer strong { color: var(--pink-d); }
   }
 
   function saveCurrentLangContent() {
-    // เซฟเฉพาะตอนเปิด edit mode และเป็น admin
+    // เซฟเฉพาะตอนเปิด edit mode และเป็น admin — เงียบๆ ผ่าน API
     const role = localStorage.getItem('mochi_role')
     if (!editMode || role !== 'admin') return
-    // เรียก save จริงผ่าน API
     const token = localStorage.getItem('mochi_token')
     if (!token) return
     const ids = ['heroTag','heroTitle','heroDesc']
@@ -1436,11 +1435,11 @@ footer strong { color: var(--pink-d); }
   }
 
   function savePageContent() {
-    saveCurrentLangContent()
+    saveCurrentLangContent(true) // true = show toast
   }
 
   // บันทึกลง API
-  async function saveCurrentLangContent() {
+  async function saveCurrentLangContent(showMsg = false) {
     const token = localStorage.getItem('mochi_token')
     const ids = ['heroTag','heroTitle','heroDesc']
     const content = {}
@@ -1458,9 +1457,9 @@ footer strong { color: var(--pink-d); }
         body: JSON.stringify({ lang, content })
       })
       if (!res.ok) throw new Error()
-      showToast(`💾 Saved (${lang.toUpperCase()})`)
+      if (showMsg) showToast(`💾 Saved (${lang.toUpperCase()})`)
     } catch(e) {
-      showToast('❌ Save failed')
+      if (showMsg) showToast('❌ Save failed')
     }
   }
 
@@ -1488,17 +1487,27 @@ footer strong { color: var(--pink-d); }
         hero.style.backgroundPosition = 'center'
         localStorage.setItem('hewkao_hero_bg', c.heroBg)
       }
-    } catch(e) {
-      // ถ้าโหลดไม่ได้ก็ใช้ default จาก HTML
-    }
+    } catch(e) {}
   }
 
   // ── INIT ──
-  loadProducts()
-  checkLoginState()
-  updateCartBadge()
-  loadPageContent()
-  checkEditBtn()
+  async function init() {
+    // ซ่อนหน้าไว้ก่อนจนโหลดเสร็จ
+    document.body.style.opacity = '0'
+    document.body.style.transition = 'opacity 0.3s ease'
+
+    checkLoginState()
+    updateCartBadge()
+    checkEditBtn()
+
+    // โหลด content และ products พร้อมกัน
+    await Promise.all([ loadPageContent(), loadProducts() ])
+
+    // แสดงหน้าเมื่อพร้อมแล้ว
+    document.body.style.opacity = '1'
+  }
+
+  init()
 </script>
 </body>
 </html>
