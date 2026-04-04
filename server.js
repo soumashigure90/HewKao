@@ -261,7 +261,45 @@ app.delete('/api/admin/members/:id', auth, adminOnly, async (req, res) => {
 })
 
 // ═══════════════════════════════════════
-// PAGE CONTENT ROUTES
+// SETTINGS ROUTES
+// ═══════════════════════════════════════
+
+// GET /api/settings — public
+app.get('/api/settings', async (req, res) => {
+  const { data, error } = await supabase.from('shop_settings').select('key, value')
+  if (error) return res.status(500).json({ error: error.message })
+  const result = {}
+  data.forEach(r => { result[r.key] = r.value })
+  res.json(result)
+})
+
+// POST /api/admin/settings — save all settings
+app.post('/api/admin/settings', auth, adminOnly, async (req, res) => {
+  const settings = req.body
+  try {
+    const rows = Object.entries(settings).map(([key, value]) => ({ key, value: value || '' }))
+    const { error } = await supabase
+      .from('shop_settings')
+      .upsert(rows, { onConflict: 'key' })
+    if (error) throw error
+    res.json({ message: 'Saved' })
+  } catch(e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// POST /api/admin/change-password
+app.post('/api/admin/change-password', auth, adminOnly, async (req, res) => {
+  const { currentPassword, newPassword } = req.body
+  if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Missing fields' })
+  const { data: member } = await supabase.from('members').select('password').eq('id', req.user.id).single()
+  if (!member) return res.status(404).json({ error: 'User not found' })
+  const match = await bcrypt.compare(currentPassword, member.password)
+  if (!match) return res.status(401).json({ error: 'Current password is incorrect' })
+  const hashed = await bcrypt.hash(newPassword, 10)
+  await supabase.from('members').update({ password: hashed }).eq('id', req.user.id)
+  res.json({ message: 'Password updated' })
+})
 // ═══════════════════════════════════════
 
 // GET /api/page-content?lang=en
