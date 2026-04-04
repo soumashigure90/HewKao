@@ -124,6 +124,92 @@ nav {
 .dropdown-item.logout:hover { background: #fff0f0; }
 .dropdown-divider { height: 1px; background: var(--pink-l); margin: 4px 0; }
 
+/* PROFILE MODAL */
+.profile-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(74,63,92,0.4); z-index:600;
+  align-items:center; justify-content:center;
+  backdrop-filter:blur(6px);
+}
+.profile-overlay.open { display:flex; animation:overlayIn 0.25s ease forwards; }
+.profile-overlay.closing { animation:overlayOut 0.2s ease forwards; }
+.profile-modal {
+  background:#fff; border-radius:28px;
+  width:420px; max-width:95vw;
+  box-shadow:0 24px 80px rgba(180,140,200,0.35);
+  animation:prodModalIn 0.4s cubic-bezier(0.34,1.4,0.64,1) forwards;
+  overflow:hidden;
+}
+.profile-header {
+  background:linear-gradient(135deg,var(--pink-l),var(--lav-l));
+  padding:1.5rem; display:flex; align-items:center; gap:14px;
+}
+.profile-avatar {
+  width:52px; height:52px; border-radius:50%;
+  background:var(--pink-d); color:#fff; font-size:22px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700;
+}
+.profile-header-info h3 { font-family:'Quicksand',sans-serif; font-size:18px; font-weight:700; }
+.profile-header-info p  { font-size:12px; color:var(--text-s); margin-top:2px; }
+.profile-body { padding:1.5rem; }
+.profile-field { margin-bottom:14px; }
+.profile-field label { display:block; font-size:11px; font-weight:700; color:var(--text-s); letter-spacing:.5px; margin-bottom:5px; }
+.profile-field input, .profile-field textarea {
+  width:100%; padding:10px 14px; border:2px solid var(--pink-l);
+  border-radius:12px; font-size:14px; font-family:'Nunito',sans-serif;
+  color:var(--text); outline:none; transition:border-color .2s;
+}
+.profile-field input:focus, .profile-field textarea:focus { border-color:var(--pink-d); }
+.profile-field textarea { resize:vertical; min-height:70px; }
+.profile-actions { display:flex; gap:10px; justify-content:flex-end; padding:0 1.5rem 1.5rem; }
+.btn-profile-cancel {
+  padding:10px 20px; border-radius:20px; border:1.5px solid var(--pink-l);
+  background:#fff; color:var(--text-s); cursor:pointer; font-size:13px;
+  font-weight:700; font-family:'Nunito',sans-serif; transition:all .2s;
+}
+.btn-profile-cancel:hover { border-color:var(--pink-d); color:var(--pink-d); }
+.btn-profile-save {
+  padding:10px 24px; border-radius:20px; border:none;
+  background:var(--pink-d); color:#fff; cursor:pointer; font-size:13px;
+  font-weight:700; font-family:'Nunito',sans-serif; transition:all .2s;
+  box-shadow:0 4px 12px rgba(232,130,154,.3);
+}
+.btn-profile-save:hover { transform:translateY(-1px); }
+
+/* ADDRESS WARNING POPUP */
+.addr-warn-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(74,63,92,0.45); z-index:700;
+  align-items:center; justify-content:center;
+  backdrop-filter:blur(6px);
+}
+.addr-warn-overlay.open { display:flex; animation:overlayIn .2s ease forwards; }
+.addr-warn-box {
+  background:#fff; border-radius:24px; padding:2rem;
+  width:360px; max-width:95vw; text-align:center;
+  box-shadow:0 24px 60px rgba(180,140,200,.35);
+  animation:prodModalIn .4s cubic-bezier(0.34,1.4,0.64,1) forwards;
+}
+.addr-warn-box .warn-icon { font-size:48px; margin-bottom:1rem; }
+.addr-warn-box h3 { font-family:'Quicksand',sans-serif; font-size:20px; font-weight:700; margin-bottom:8px; }
+.addr-warn-box p  { font-size:13px; color:var(--text-s); margin-bottom:1.5rem; line-height:1.6; }
+.addr-warn-btns { display:flex; gap:10px; justify-content:center; }
+.btn-warn-settings {
+  padding:11px 22px; border-radius:20px; border:none;
+  background:var(--pink-d); color:#fff; cursor:pointer;
+  font-size:14px; font-weight:700; font-family:'Nunito',sans-serif;
+  box-shadow:0 4px 12px rgba(232,130,154,.3); transition:all .2s;
+}
+.btn-warn-settings:hover { transform:translateY(-1px); }
+.btn-warn-cancel {
+  padding:11px 22px; border-radius:20px;
+  border:1.5px solid var(--pink-l); background:#fff;
+  color:var(--text-s); cursor:pointer; font-size:14px;
+  font-weight:700; font-family:'Nunito',sans-serif; transition:all .2s;
+}
+.btn-warn-cancel:hover { border-color:var(--pink-d); color:var(--pink-d); }
+
 /* HERO */
 .hero {
   background: linear-gradient(135deg, var(--pink-l) 0%, var(--lav-l) 50%, var(--mint-l) 100%);
@@ -588,7 +674,7 @@ footer strong { color: var(--pink-d); }
       <button class="dropdown-item" onclick="closeDropdown();openCart()"><span class="di">🛒</span> Cart <span id="cartCountLabel" style="margin-left:auto;background:var(--pink-l);color:var(--pink-d);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">0</span></button>
       <button class="dropdown-item" onclick="closeDropdown();showToast('📋 Order history coming soon!')"><span class="di">📋</span> Order History</button>
       <button class="dropdown-item" onclick="closeDropdown();showToast('❤️ Wishlist coming soon!')"><span class="di">❤️</span> Wishlist</button>
-      <button class="dropdown-item" onclick="closeDropdown();showToast('⚙️ Settings coming soon!')"><span class="di">⚙️</span> Settings</button>
+      <button class="dropdown-item" onclick="closeDropdown();openProfile()"><span class="di">⚙️</span> Settings / Profile</button>
       <div class="dropdown-divider"></div>
       <button class="dropdown-item logout" onclick="doLogout()"><span class="di">🚪</span> Logout</button>
     </div>
@@ -778,6 +864,47 @@ footer strong { color: var(--pink-d); }
 
 <!-- FLOATING EDIT BUTTON (admin only) -->
 <button id="editPageBtn" style="display:none;position:fixed;bottom:24px;left:24px;z-index:300;background:var(--lav-d);color:#fff;border:none;border-radius:20px;padding:10px 18px;font-size:13px;font-weight:700;font-family:Nunito,sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(155,135,214,0.4);transition:all 0.2s;" onclick="toggleEditMode()">✏️ Edit Page</button>
+
+<!-- PROFILE MODAL -->
+<div class="profile-overlay" id="profileOverlay" onclick="if(event.target===this)closeProfile()">
+  <div class="profile-modal">
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatarLetter">?</div>
+      <div class="profile-header-info">
+        <h3 id="profileUsername">—</h3>
+        <p id="profileEmail">—</p>
+      </div>
+      <button onclick="closeProfile()" style="margin-left:auto;background:rgba(255,255,255,0.7);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform=''">✕</button>
+    </div>
+    <div class="profile-body">
+      <div class="profile-field">
+        <label>📞 PHONE NUMBER</label>
+        <input type="text" id="profilePhone" placeholder="e.g. 0812345678" />
+      </div>
+      <div class="profile-field">
+        <label>📍 DELIVERY ADDRESS <span style="color:var(--red);font-size:11px;">* จำเป็นสำหรับ Pre-order</span></label>
+        <textarea id="profileAddress" placeholder="กรอกที่อยู่สำหรับจัดส่ง เลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์"></textarea>
+      </div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn-profile-cancel" onclick="closeProfile()">Cancel</button>
+      <button class="btn-profile-save" onclick="saveProfile()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADDRESS WARNING -->
+<div class="addr-warn-overlay" id="addrWarnOverlay">
+  <div class="addr-warn-box">
+    <div class="warn-icon">📍</div>
+    <h3>Please add your address first!</h3>
+    <p id="addrWarnMsg">Pre-order items require a delivery address. Please go to Settings and add your address before placing a pre-order.</p>
+    <div class="addr-warn-btns">
+      <button class="btn-warn-cancel" onclick="closeAddrWarn()">Cancel</button>
+      <button class="btn-warn-settings" onclick="closeAddrWarn();openProfile()">⚙️ Go to Settings</button>
+    </div>
+  </div>
+</div>
 
 <!-- TOAST -->
 <div class="toast-wrap" id="toastWrap"></div>
@@ -1218,9 +1345,83 @@ footer strong { color: var(--pink-d); }
     else badge.classList.remove('show')
   }
 
+  // ── PROFILE ──
+  let userProfile = null
+
+  async function loadProfile() {
+    const token = localStorage.getItem('mochi_token')
+    if (!token) return
+    try {
+      const res = await fetch(`${API}/api/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) userProfile = await res.json()
+    } catch(e) {}
+  }
+
+  function openProfile() {
+    const token = localStorage.getItem('mochi_token')
+    if (!token) { openLogin(); return }
+    const user = localStorage.getItem('mochi_user') || '?'
+    document.getElementById('profileAvatarLetter').textContent = user.charAt(0).toUpperCase()
+    document.getElementById('profileUsername').textContent = user
+    document.getElementById('profileEmail').textContent = userProfile?.email || '—'
+    document.getElementById('profilePhone').value   = userProfile?.phone   || ''
+    document.getElementById('profileAddress').value = userProfile?.address || ''
+    document.getElementById('profileOverlay').classList.remove('closing')
+    document.getElementById('profileOverlay').classList.add('open')
+  }
+
+  function closeProfile() {
+    const overlay = document.getElementById('profileOverlay')
+    overlay.classList.add('closing')
+    setTimeout(() => overlay.classList.remove('open','closing'), 220)
+  }
+
+  async function saveProfile() {
+    const token = localStorage.getItem('mochi_token')
+    if (!token) return
+    const phone   = document.getElementById('profilePhone').value.trim()
+    const address = document.getElementById('profileAddress').value.trim()
+    try {
+      const res = await fetch(`${API}/api/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body: JSON.stringify({ phone, address })
+      })
+      if (!res.ok) throw new Error()
+      userProfile = await res.json()
+      showToast('✅ Profile saved!')
+      closeProfile()
+    } catch(e) {
+      showToast('❌ Failed to save')
+    }
+  }
+
+  // ── ADDRESS WARNING ──
+  function showAddrWarn(callback) {
+    document.getElementById('addrWarnOverlay').classList.add('open')
+    window._addrWarnCallback = callback || null
+  }
+
+  function closeAddrWarn() {
+    document.getElementById('addrWarnOverlay').classList.remove('open')
+    window._addrWarnCallback = null
+  }
+
+  function hasAddress() {
+    return userProfile && userProfile.address && userProfile.address.trim().length > 0
+  }
+
   function addToCart(id, btnEl) {
     const p = allProducts.find(x => x.id === id)
     if (!p) return
+    // ถ้าเป็น preorder ต้องมีที่อยู่ก่อน
+    if (p.type === 'preorder') {
+      const token = localStorage.getItem('mochi_token')
+      if (!token) { openLogin(); return }
+      if (!hasAddress()) { showAddrWarn(); return }
+    }
     const existing = cart.find(i => i.id === id)
     if (existing) existing.qty++
     else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:Number(p.price), emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 })
@@ -1232,6 +1433,12 @@ footer strong { color: var(--pink-d); }
   function addToCartFromModal() {
     if (!currentProduct) return
     const p = currentProduct
+    // ถ้าเป็น preorder ต้องมีที่อยู่ก่อน
+    if (p.type === 'preorder') {
+      const token = localStorage.getItem('mochi_token')
+      if (!token) { closeLogin(); openLogin(); return }
+      if (!hasAddress()) { showAddrWarn(); return }
+    }
     const origPrice  = Number(p.price)
     const finalPrice = discountedPrice || origPrice
     const saved      = origPrice - finalPrice
@@ -1249,7 +1456,7 @@ footer strong { color: var(--pink-d); }
     saveCart()
     const btn = document.querySelector('.btn-add-cart')
     if (btn) flyToCart(btn)
-    showToast('Added to cart! 🛒')
+    showToast('Pre-order added! ⏳')
   }
 
   function flyToCart(fromEl) {
@@ -1530,7 +1737,7 @@ footer strong { color: var(--pink-d); }
     checkLoginState()
     updateCartBadge()
     checkEditBtn()
-    await Promise.all([ loadPageContent(), loadProducts(), loadShopSettings() ])
+    await Promise.all([ loadPageContent(), loadProducts(), loadShopSettings(), loadProfile() ])
     document.body.style.opacity = '1'
   }
 
