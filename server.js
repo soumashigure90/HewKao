@@ -10,6 +10,11 @@ app.use(cors())
 app.use(express.json())
 app.use(express.static('public')) // serve HTML files
 
+// Redirect root to shop.html
+app.get('/', (req, res) => {
+  res.redirect('/shop.html')
+})
+
 // ── Supabase ──
 const supabase = createClient(
   process.env.SUPABASE_URL,
