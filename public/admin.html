@@ -230,19 +230,23 @@ textarea{resize:vertical;min-height:80px;}
       <div class="card">
         <div class="card-title">🏪 Shop Info</div>
         <div class="form-grid">
-          <div class="form-group"><label>SHOP NAME</label><input type="text" value="HewKao" /></div>
-          <div class="form-group"><label>CONTACT EMAIL</label><input type="email" value="hello@hewkao.com" /></div>
-          <div class="form-group span2"><label>DESCRIPTION</label><textarea>Original art, prints, ebooks & digital goods.</textarea></div>
+          <div class="form-group"><label>SHOP NAME</label><input type="text" id="settingShopName" placeholder="HewKao" /></div>
+          <div class="form-group"><label>CONTACT EMAIL</label><input type="email" id="settingEmail" placeholder="hello@hewkao.com" /></div>
+          <div class="form-group span2"><label>ABOUT / DESCRIPTION (แสดงในหน้า About)</label><textarea id="settingAbout" rows="4" placeholder="Tell customers about your shop..."></textarea></div>
+          <div class="form-group span2"><label>ABOUT (ภาษาไทย)</label><textarea id="settingAboutTh" rows="4" placeholder="เล่าเรื่องร้านของคุณให้ลูกค้าฟัง..."></textarea></div>
         </div>
-        <div class="form-actions"><button class="btn-primary" onclick="toast('Settings saved! ✅','success')">Save Changes</button></div>
+        <div class="form-actions">
+          <button class="btn-secondary" onclick="loadSettings()">↺ Reset</button>
+          <button class="btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-title">🔐 Change Password</div>
         <div class="form-grid">
-          <div class="form-group"><label>CURRENT PASSWORD</label><input type="password" placeholder="••••••••" /></div>
-          <div class="form-group"><label>NEW PASSWORD</label><input type="password" placeholder="••••••••" /></div>
+          <div class="form-group"><label>CURRENT PASSWORD</label><input type="password" id="pwCurrent" placeholder="••••••••" /></div>
+          <div class="form-group"><label>NEW PASSWORD</label><input type="password" id="pwNew" placeholder="••••••••" /></div>
         </div>
-        <div class="form-actions"><button class="btn-primary" onclick="toast('Password updated! 🔐','success')">Update Password</button></div>
+        <div class="form-actions"><button class="btn-primary" onclick="changePassword()">Update Password</button></div>
       </div>
     </div>
   </main>
@@ -262,6 +266,7 @@ textarea{resize:vertical;min-height:80px;}
       </div>
       <div class="form-group"><label>EMOJI (fallback)</label><input type="text" id="pEmoji" placeholder="🎀" maxlength="4" /></div>
       <div class="form-group"><label>PRICE (฿)</label><div class="input-prefix"><span>฿</span><input type="number" id="pPrice" placeholder="290" min="0" /></div></div>
+      <div class="form-group"><label>PRICE (USD $)</label><div class="input-prefix"><span>$</span><input type="number" id="pPriceUsd" placeholder="8.99" min="0" step="0.01" /></div></div>
       <div class="form-group"><label>STOCK (blank = unlimited)</label><input type="number" id="pStock" placeholder="50" min="0" /></div>
       <div class="form-group span2"><label>DESCRIPTION</label><textarea id="pDesc" placeholder="Short description..."></textarea></div>
       <div class="form-group"><label>STATUS</label>
@@ -390,6 +395,7 @@ function showPage(id, btn) {
   if (id==='discounts') loadDiscounts()
   if (id==='orders')    loadOrders()
   if (id==='members')   loadMembers()
+  if (id==='settings')  loadSettings()
 }
 
 async function loadDashboard() {
@@ -500,8 +506,9 @@ async function openProductModal(id) {
         document.getElementById('pNameTh').value = p.name_th||''
         document.getElementById('pType').value   = p.type||'physical'
         document.getElementById('pEmoji').value  = p.emoji||''
-        document.getElementById('pPrice').value  = p.price||''
-        document.getElementById('pStock').value  = p.stock??''
+        document.getElementById('pPrice').value    = p.price||''
+        document.getElementById('pPriceUsd').value = p.price_usd||''
+        document.getElementById('pStock').value    = p.stock??''
         document.getElementById('pDesc').value   = p.description||''
         document.getElementById('pStatus').value = p.status||'active'
         document.getElementById('pBadge').value  = p.badge||''
@@ -512,7 +519,7 @@ async function openProductModal(id) {
       }
     } catch(e) {}
   } else {
-    ['pName','pNameTh','pEmoji','pPrice','pStock','pDesc','pBadge'].forEach(i => document.getElementById(i).value='')
+    ['pName','pNameTh','pEmoji','pPrice','pPriceUsd','pStock','pDesc','pBadge'].forEach(i => document.getElementById(i).value='')
     document.getElementById('pType').value = 'physical'
     document.getElementById('pStatus').value = 'active'
   }
@@ -541,6 +548,7 @@ async function saveProduct() {
 
     const body = {
       name, price,
+      price_usd:   document.getElementById('pPriceUsd').value !== '' ? parseFloat(document.getElementById('pPriceUsd').value) : null,
       name_th:     document.getElementById('pNameTh').value.trim(),
       type:        document.getElementById('pType').value,
       emoji:       document.getElementById('pEmoji').value.trim()||'📦',
@@ -660,7 +668,54 @@ async function deleteMember(id, username) {
   } catch(e) { toast('❌ Failed to delete', 'error') }
 }
 
-function toast(msg, type) {
+// ── SETTINGS ──
+async function loadSettings() {
+  try {
+    const res = await fetch(`${API}/api/settings`)
+    const data = await res.json()
+    document.getElementById('settingShopName').value  = data.shop_name  || ''
+    document.getElementById('settingEmail').value     = data.email      || ''
+    document.getElementById('settingAbout').value     = data.about_en   || ''
+    document.getElementById('settingAboutTh').value   = data.about_th   || ''
+  } catch(e) {}
+}
+
+async function saveSettings() {
+  const settings = {
+    shop_name: document.getElementById('settingShopName').value.trim(),
+    email:     document.getElementById('settingEmail').value.trim(),
+    about_en:  document.getElementById('settingAbout').value.trim(),
+    about_th:  document.getElementById('settingAboutTh').value.trim(),
+  }
+  try {
+    const res = await fetch(`${API}/api/admin/settings`, {
+      method: 'POST', headers: authHeader(),
+      body: JSON.stringify(settings)
+    })
+    if (!res.ok) throw new Error()
+    toast('✅ Settings saved!', 'success')
+  } catch(e) { toast('❌ Failed to save', 'error') }
+}
+
+async function changePassword() {
+  const current = document.getElementById('pwCurrent').value
+  const newpw   = document.getElementById('pwNew').value
+  if (!current || !newpw) { toast('Please fill in both fields', 'error'); return }
+  if (newpw.length < 6)   { toast('New password must be at least 6 characters', 'error'); return }
+  try {
+    const res = await fetch(`${API}/api/admin/change-password`, {
+      method: 'POST', headers: authHeader(),
+      body: JSON.stringify({ currentPassword: current, newPassword: newpw })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    toast('🔐 Password updated!', 'success')
+    document.getElementById('pwCurrent').value = ''
+    document.getElementById('pwNew').value = ''
+  } catch(e) { toast('❌ ' + (e.message || 'Failed'), 'error') }
+}
+
+
   const area = document.getElementById('toastArea')
   const el = document.createElement('div')
   el.className = 'toast '+(type||'')
