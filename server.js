@@ -265,8 +265,29 @@ app.delete('/api/admin/members/:id', auth, adminOnly, async (req, res) => {
   res.json({ message: 'Deleted' })
 })
 
-// ═══════════════════════════════════════
-// SETTINGS ROUTES
+// GET /api/profile — ดึงข้อมูลโปรไฟล์ตัวเอง
+app.get('/api/profile', auth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('members')
+    .select('id, username, email, address, phone, created_at')
+    .eq('id', req.user.id)
+    .single()
+  if (error) return res.status(500).json({ error: error.message })
+  res.json(data)
+})
+
+// PUT /api/profile — อัพเดทโปรไฟล์ตัวเอง
+app.put('/api/profile', auth, async (req, res) => {
+  const { address, phone } = req.body
+  const { data, error } = await supabase
+    .from('members')
+    .update({ address: address||null, phone: phone||null })
+    .eq('id', req.user.id)
+    .select('id, username, email, address, phone')
+    .single()
+  if (error) return res.status(500).json({ error: error.message })
+  res.json(data)
+})
 // ═══════════════════════════════════════
 
 // GET /api/settings — public
