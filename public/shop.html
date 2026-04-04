@@ -838,12 +838,10 @@ footer strong { color: var(--pink-d); }
         <div class="modal-icon">✨</div>
         <h3>Create Account</h3>
         <p style="font-size:13px;color:#8a7a9a;margin:6px 0 1.25rem;">Join HewKao and start shopping!</p>
-        <input type="text"     id="regUser"    placeholder="Username *" style="margin-bottom:10px;" />
-        <input type="email"    id="regEmail"   placeholder="Email *"    style="margin-bottom:10px;" />
-        <input type="password" id="regPass"    placeholder="Password * (min 6 chars)" style="margin-bottom:10px;" />
-        <input type="text"     id="regPhone"   placeholder="Phone number" style="margin-bottom:10px;" />
-        <textarea id="regAddress" placeholder="Address" rows="2"
-          style="width:100%;padding:11px 16px;margin-bottom:14px;border:2px solid var(--pink-l);border-radius:12px;font-size:14px;font-family:Nunito,sans-serif;color:var(--text);outline:none;resize:none;"></textarea>
+        <input type="text"     id="regUser"        placeholder="Username *"         style="margin-bottom:10px;" />
+        <input type="email"    id="regEmail"        placeholder="Email *"            style="margin-bottom:10px;" />
+        <input type="password" id="regPass"         placeholder="Password * (min 6 chars)" style="margin-bottom:10px;" />
+        <input type="password" id="regPassConfirm"  placeholder="Confirm Password *" style="margin-bottom:14px;" />
         <button class="btn-primary" id="regBtn" onclick="doRegister()" style="width:100%;padding:13px;margin-bottom:12px;">Create Account</button>
         <div class="divider">or</div>
         <button class="btn-outline" style="width:100%;padding:11px" onclick="showLoginTab('login')">Already have an account? Login</button>
@@ -871,7 +869,7 @@ footer strong { color: var(--pink-d); }
       <div class="discount-msg" id="discountMsg"></div>
       <div class="prod-action-row">
         <button class="btn-add-cart" onclick="addToCartFromModal()">🛒 Add to Cart</button>
-        <button class="btn-buy" onclick="showToast('💳 Checkout coming soon!')">Buy Now</button>
+        <button class="btn-buy" onclick="buyNowFromModal()">⚡ Buy Now</button>
       </div>
     </div>
   </div>
@@ -1270,15 +1268,17 @@ footer strong { color: var(--pink-d); }
     const username = document.getElementById('regUser').value.trim()
     const email    = document.getElementById('regEmail').value.trim()
     const password = document.getElementById('regPass').value
-    const address  = document.getElementById('regAddress').value.trim()
-    const phone    = document.getElementById('regPhone').value.trim()
+    const confirm  = document.getElementById('regPassConfirm').value
     const err = document.getElementById('regErr')
 
-    if (!username || !email || !password) {
+    if (!username || !email || !password || !confirm) {
       err.style.display = 'block'; err.textContent = '❌ Please fill in all required fields'; return
     }
     if (password.length < 6) {
       err.style.display = 'block'; err.textContent = '❌ Password must be at least 6 characters'; return
+    }
+    if (password !== confirm) {
+      err.style.display = 'block'; err.textContent = '❌ Passwords do not match'; return
     }
 
     const btn = document.getElementById('regBtn')
@@ -1288,7 +1288,7 @@ footer strong { color: var(--pink-d); }
     try {
       const res = await fetch(`${API}/api/register`, {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ username, email, password, address, phone })
+        body: JSON.stringify({ username, email, password })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -1296,6 +1296,7 @@ footer strong { color: var(--pink-d); }
       localStorage.setItem('mochi_token', data.token)
       localStorage.setItem('mochi_role',  data.role)
       localStorage.setItem('mochi_user',  data.username)
+      await loadProfile()
 
       const modal = document.querySelector('#loginOverlay .modal')
       modal.innerHTML = `
@@ -1460,6 +1461,7 @@ footer strong { color: var(--pink-d); }
     if (!token) return
     const phone   = document.getElementById('profilePhone').value.trim()
     const address = document.getElementById('profileAddress').value.trim()
+    if (!address) { showToast('❌ Please enter your address'); return }
     try {
       const res = await fetch(`${API}/api/profile`, {
         method: 'PUT',
@@ -1468,17 +1470,22 @@ footer strong { color: var(--pink-d); }
       })
       if (!res.ok) throw new Error()
       userProfile = await res.json()
-      showToast('✅ Profile saved!')
+      showToast('✅ Address saved!')
       closeProfile()
+      // ถ้ามี callback รอ (เช่น กด buy now แล้วค้างไว้) ให้ call ต่อ
+      if (window._afterAddrSave) {
+        const cb = window._afterAddrSave
+        window._afterAddrSave = null
+        setTimeout(cb, 300)
+      }
     } catch(e) {
       showToast('❌ Failed to save')
     }
   }
 
   // ── ADDRESS WARNING ──
-  function showAddrWarn(callback) {
+  function showAddrWarn() {
     document.getElementById('addrWarnOverlay').classList.add('open')
-    window._addrWarnCallback = callback || null
   }
 
   function closeAddrWarn() {
@@ -1808,23 +1815,8 @@ footer strong { color: var(--pink-d); }
   }
 
   // ── CHECKOUT ──
-  function openCheckout() {
-    const token = localStorage.getItem('mochi_token')
-    if (!token) { openLogin(); return }
-    if (!cart.length) return
-
-    // เช็คว่า cart มี preorder ไหม ถ้ามีต้องมีที่อยู่
-    const hasPreorder = cart.some(i => i.type === 'preorder')
-    if (hasPreorder && !hasAddress()) {
-      showAddrWarn(); return
-    }
-
-    // สร้าง items list
-    const subtotal = cart.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
-    const total    = cart.reduce((s,i) => s + i.price*i.qty, 0)
-    const discount = subtotal - total
-
-    document.getElementById('checkoutItems').innerHTML = cart.map(item => {
+  function _buildCheckoutModal(items, subtotal, total, discount) {
+    document.getElementById('checkoutItems').innerHTML = items.map(item => {
       const thumb = item.image_url
         ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">`
         : item.emoji
@@ -1835,15 +1827,62 @@ footer strong { color: var(--pink-d); }
         <div class="checkout-item-price">฿${(item.price*item.qty).toLocaleString()}</div>
       </div>`
     }).join('')
-
     document.getElementById('coSubtotal').textContent = '฿' + subtotal.toLocaleString()
     document.getElementById('coDiscount').textContent = discount > 0 ? '-฿' + discount.toLocaleString() : '-฿0'
     document.getElementById('coTotal').textContent    = '฿' + total.toLocaleString()
     document.getElementById('coAddrText').textContent = userProfile?.address || '—'
     document.getElementById('checkoutNote').value     = ''
-
     document.getElementById('checkoutOverlay').classList.remove('closing')
     document.getElementById('checkoutOverlay').classList.add('open')
+  }
+
+  // checkout จากรถเข็น
+  function openCheckout() {
+    const token = localStorage.getItem('mochi_token')
+    if (!token) { openLogin(); return }
+    if (!cart.length) return
+    // บังคับมีที่อยู่ก่อนทุก order
+    if (!hasAddress()) {
+      showAddrWarnThen(() => openCheckout())
+      return
+    }
+    const subtotal = cart.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
+    const total    = cart.reduce((s,i) => s + i.price*i.qty, 0)
+    _buildCheckoutModal(cart, subtotal, total, subtotal - total)
+  }
+
+  // buy now จาก product modal — เพิ่มลง cart ชั่วคราวแล้ว checkout เลย
+  function buyNowFromModal() {
+    if (!currentProduct) return
+    const token = localStorage.getItem('mochi_token')
+    if (!token) { closeProdModal(); openLogin(); return }
+    if (!hasAddress()) {
+      showAddrWarnThen(() => buyNowFromModal())
+      return
+    }
+    const p = currentProduct
+    const origPrice  = Number(p.price)
+    const finalPrice = discountedPrice || origPrice
+    const saved      = origPrice - finalPrice
+    // สร้าง item ชั่วคราว (ไม่ได้ add ลง cart จริง)
+    const buyItem = [{
+      id: p.id, name: p.name, name_th: p.name_th,
+      price: finalPrice, origPrice, saved,
+      emoji: p.emoji||'📦', image_url: p.image_url,
+      type: p.type, qty: 1
+    }]
+    // เก็บ buyNow items แยกไว้ใช้ตอน submitOrder
+    window._buyNowItems = buyItem
+    const subtotal = origPrice
+    const total    = finalPrice
+    _buildCheckoutModal(buyItem, subtotal, total, subtotal - total)
+    closeProdModal()
+  }
+
+  // แสดง address warning แล้ว callback หลัง save
+  function showAddrWarnThen(cb) {
+    window._afterAddrSave = cb
+    document.getElementById('addrWarnOverlay').classList.add('open')
   }
 
   function closeCheckout() {
@@ -1860,9 +1899,11 @@ footer strong { color: var(--pink-d); }
     btn.textContent = 'Placing order...'
     btn.disabled = true
 
-    const total    = cart.reduce((s,i) => s + i.price*i.qty, 0)
-    const note     = document.getElementById('checkoutNote').value.trim()
-    const items    = cart.map(i => ({ product_id: i.id, quantity: i.qty, price: i.price }))
+    // ใช้ buyNow items ถ้ามี ไม่งั้นใช้ cart
+    const orderItems = window._buyNowItems || cart
+    const total = orderItems.reduce((s,i) => s + i.price*i.qty, 0)
+    const note  = document.getElementById('checkoutNote').value.trim()
+    const items = orderItems.map(i => ({ product_id: i.id, quantity: i.qty, price: i.price }))
 
     try {
       const res = await fetch(`${API}/api/orders`, {
@@ -1873,11 +1914,14 @@ footer strong { color: var(--pink-d); }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-      // สำเร็จ — ล้าง cart และแสดง success
-      cart = []
-      saveCart()
+      // ล้าง cart ถ้าไม่ใช่ buyNow
+      if (!window._buyNowItems) {
+        cart = []
+        saveCart()
+        closeCart()
+      }
+      window._buyNowItems = null
       closeCheckout()
-      closeCart()
 
       // Success popup
       const overlay = document.getElementById('checkoutOverlay')
