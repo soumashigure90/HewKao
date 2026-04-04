@@ -856,61 +856,38 @@ footer strong { color: var(--pink-d); }
 
   // ── LANG ──
   function setLang(l) {
-    // บันทึก content ของภาษาเดิมก่อนสลับ
-    saveCurrentLangContent()
+    saveCurrentLangContent() // บันทึกภาษาเดิมก่อน (ถ้าเป็น admin)
     lang = l
     localStorage.setItem('hewkao_lang', l)
     document.querySelectorAll('.nav-lang button').forEach((b,i) => {
       b.classList.toggle('active', (i===0 && l==='en') || (i===1 && l==='th'))
     })
-    // โหลด content ของภาษาใหม่
-    loadLangContent(l)
+    applyPageContent(l)
     document.getElementById('chatInput').placeholder = l === 'en' ? 'Type a message...' : 'พิมพ์ข้อความ...'
     const filtered = currentFilter === 'all' ? allProducts : allProducts.filter(p => p.type === currentFilter)
     renderProducts(filtered)
   }
 
   function saveCurrentLangContent() {
-    // เซฟ content element ที่ถูกแก้ไขแยกตามภาษา
-    const key = `hewkao_page_${lang}`
+    // เซฟเฉพาะตอนเปิด edit mode และเป็น admin
+    const role = localStorage.getItem('mochi_role')
+    if (!editMode || role !== 'admin') return
+    // เรียก save จริงผ่าน API
+    const token = localStorage.getItem('mochi_token')
+    if (!token) return
     const ids = ['heroTag','heroTitle','heroDesc']
-    const saved = {}
+    const content = {}
     ids.forEach(id => {
       const el = document.getElementById(id)
-      if (el) saved[id] = id === 'heroTitle' ? el.innerHTML : el.textContent
+      if (el) content[id] = id === 'heroTitle' ? el.innerHTML : el.textContent
     })
-    // เซฟ hero bg ด้วย (ใช้ร่วมกันทุกภาษา)
     const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
-    if (heroBg) saved.heroBg = heroBg
-    localStorage.setItem(key, JSON.stringify(saved))
-  }
-
-  function loadLangContent(l) {
-    const key = `hewkao_page_${l}`
-    try {
-      const raw = localStorage.getItem(key)
-      if (raw) {
-        const c = JSON.parse(raw)
-        if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
-        if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
-        if (c.heroDesc)  document.getElementById('heroDesc').textContent = c.heroDesc
-        if (c.heroBg) {
-          const hero = document.getElementById('heroSection')
-          hero.style.backgroundImage    = `url('${c.heroBg}')`
-          hero.style.backgroundSize     = 'cover'
-          hero.style.backgroundPosition = 'center'
-        }
-      } else {
-        // ถ้าไม่มี saved content ให้ใช้ default data-en / data-th
-        document.querySelectorAll('[data-en]').forEach(el => {
-          el.textContent = l === 'en' ? el.dataset.en : el.dataset.th
-        })
-      }
-    } catch(e) {
-      document.querySelectorAll('[data-en]').forEach(el => {
-        el.textContent = l === 'en' ? el.dataset.en : el.dataset.th
-      })
-    }
+    if (heroBg) content['heroBg'] = heroBg
+    fetch(`${API}/api/admin/page-content`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ lang, content })
+    }).catch(() => {})
   }
 
   // ── CHAT ──
@@ -1460,17 +1437,60 @@ footer strong { color: var(--pink-d); }
 
   function savePageContent() {
     saveCurrentLangContent()
-    showToast(`💾 Page saved (${lang.toUpperCase()})`)
   }
 
-  function loadPageContent() {
-    // โหลดภาษาที่ใช้ล่าสุด
+  // บันทึกลง API
+  async function saveCurrentLangContent() {
+    const token = localStorage.getItem('mochi_token')
+    const ids = ['heroTag','heroTitle','heroDesc']
+    const content = {}
+    ids.forEach(id => {
+      const el = document.getElementById(id)
+      if (el) content[id] = id === 'heroTitle' ? el.innerHTML : el.textContent
+    })
+    const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
+    if (heroBg) content['heroBg'] = heroBg
+
+    try {
+      const res = await fetch(`${API}/api/admin/page-content`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ lang, content })
+      })
+      if (!res.ok) throw new Error()
+      showToast(`💾 Saved (${lang.toUpperCase()})`)
+    } catch(e) {
+      showToast('❌ Save failed')
+    }
+  }
+
+  // โหลดจาก API
+  async function loadPageContent() {
     const savedLang = localStorage.getItem('hewkao_lang') || 'en'
     lang = savedLang
     document.querySelectorAll('.nav-lang button').forEach((b,i) => {
       b.classList.toggle('active', (i===0 && lang==='en') || (i===1 && lang==='th'))
     })
-    loadLangContent(lang)
+    await applyPageContent(lang)
+  }
+
+  async function applyPageContent(l) {
+    try {
+      const res = await fetch(`${API}/api/page-content?lang=${l}`)
+      const c = await res.json()
+      if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
+      if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
+      if (c.heroDesc)  document.getElementById('heroDesc').textContent = c.heroDesc
+      if (c.heroBg) {
+        const hero = document.getElementById('heroSection')
+        hero.style.backgroundImage    = `url('${c.heroBg}')`
+        hero.style.backgroundSize     = 'cover'
+        hero.style.backgroundPosition = 'center'
+        localStorage.setItem('hewkao_hero_bg', c.heroBg)
+      }
+    } catch(e) {
+      // ถ้าโหลดไม่ได้ก็ใช้ default จาก HTML
+    }
   }
 
   // ── INIT ──
