@@ -1899,7 +1899,6 @@ footer strong { color: var(--pink-d); }
     btn.textContent = 'Placing order...'
     btn.disabled = true
 
-    // ใช้ buyNow items ถ้ามี ไม่งั้นใช้ cart
     const orderItems = window._buyNowItems || cart
     const isPreorder = orderItems.some(i => i.type === 'preorder')
     const total = orderItems.reduce((s,i) => s + i.price*i.qty, 0)
@@ -1915,24 +1914,27 @@ footer strong { color: var(--pink-d); }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-      // ล้าง cart เสมอ
+      // ล้าง cart และปิดทุกอย่างทันที
       cart = []
       saveCart()
       window._buyNowItems = null
 
-      // ปิด popup ทั้งหมด
-      closeCheckout()
-      closeCart()
+      // force ปิด checkout overlay ทันที
+      const co = document.getElementById('checkoutOverlay')
+      co.classList.remove('open','closing')
+      co.style.display = 'none'
 
-      // แสดง toast แยกตาม type
-      if (isPreorder) {
-        showSuccessToast('⏳ Pre-order received! We\'ll confirm shortly 🌸', '#' + data.id)
-      } else {
-        showSuccessToast('✅ Order placed successfully! 🛍️', '#' + data.id)
-      }
+      // force ปิด cart page ทันที
+      const cp = document.getElementById('cartPage')
+      cp.classList.remove('open')
+      document.body.style.overflow = ''
 
       // กลับหน้าแรก
       window.scrollTo({ top: 0, behavior: 'smooth' })
+      updateCartBadge()
+
+      // แสดง success popup กลางจอ
+      showOrderSuccess(data.id, isPreorder)
 
     } catch(e) {
       showToast('❌ ' + (e.message || 'Failed to place order'))
@@ -1941,24 +1943,35 @@ footer strong { color: var(--pink-d); }
     }
   }
 
+  function showOrderSuccess(orderId, isPreorder) {
+    // สร้าง overlay ใหม่
+    const el = document.createElement('div')
+    el.id = 'orderSuccessOverlay'
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(74,63,92,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:overlayIn .25s ease forwards;'
+    el.innerHTML = `
+      <div style="background:#fff;border-radius:28px;padding:2.5rem 2rem;width:340px;max-width:92vw;text-align:center;box-shadow:0 24px 80px rgba(180,140,200,.4);animation:prodModalIn .45s cubic-bezier(0.34,1.4,0.64,1) forwards;">
+        <div style="font-size:64px;margin-bottom:1rem;">${isPreorder ? '⏳' : '🎉'}</div>
+        <h2 style="font-family:Quicksand,sans-serif;font-size:22px;font-weight:700;color:var(--pink-d);margin-bottom:8px;">
+          ${isPreorder ? 'Pre-order Received!' : 'Order Placed!'}
+        </h2>
+        <p style="font-size:13px;color:var(--text-s);margin-bottom:6px;">Order <strong>#${orderId}</strong></p>
+        <p style="font-size:13px;color:var(--text-s);line-height:1.7;margin-bottom:1.75rem;">
+          ${isPreorder
+            ? 'เราได้รับ pre-order ของคุณแล้ว 🌸<br>จะยืนยันคำสั่งซื้อโดยเร็วที่สุดนะคะ'
+            : 'รับออเดอร์เรียบร้อยแล้ว! 🌸<br>ขอบคุณที่ซื้อสินค้ากับเราค่ะ'}
+        </p>
+        <button onclick="document.getElementById('orderSuccessOverlay').remove()" style="background:var(--pink-d);color:#fff;border:none;padding:13px 32px;border-radius:20px;font-size:15px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;box-shadow:0 4px 16px rgba(232,130,154,.35);transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          Continue Shopping 🛍️
+        </button>
+      </div>`
+    document.body.appendChild(el)
+  }
+
   function showSuccessToast(msg, orderId) {
     const wrap = document.getElementById('toastWrap')
     const t = document.createElement('div')
-    t.style.cssText = `
-      background:#fff;
-      border:2px solid var(--pink-l);
-      border-radius:20px;
-      padding:14px 20px;
-      box-shadow:0 8px 32px rgba(180,140,200,0.25);
-      text-align:center;
-      min-width:260px;
-      animation:fadeup 0.4s cubic-bezier(0.34,1.4,0.64,1);
-    `
-    t.innerHTML = `
-      <div style="font-size:28px;margin-bottom:6px;">${msg.split(' ')[0]}</div>
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;">${msg.slice(msg.indexOf(' ')+1)}</div>
-      <div style="font-size:12px;color:var(--text-s);">Order ${orderId}</div>
-    `
+    t.className = 'toast'
+    t.textContent = msg + ' ' + orderId
     wrap.appendChild(t)
     setTimeout(() => t.remove(), 4000)
   }
