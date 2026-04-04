@@ -227,13 +227,58 @@ app.post('/api/check-discount', auth, async (req, res) => {
 // ORDERS ROUTES
 // ═══════════════════════════════════════
 
+// POST /api/orders — create order
+app.post('/api/orders', auth, async (req, res) => {
+  const { total, note, items } = req.body
+  if (!items || !items.length) return res.status(400).json({ error: 'No items' })
+
+  try {
+    // สร้าง order
+    const { data: order, error: orderErr } = await supabase
+      .from('orders')
+      .insert({ member_id: req.user.id, total, note: note||null, status: 'pending' })
+      .select()
+      .single()
+    if (orderErr) throw orderErr
+
+    // สร้าง order_items
+    const orderItems = items.map(i => ({
+      order_id:   order.id,
+      product_id: i.product_id,
+      quantity:   i.quantity,
+      price:      i.price
+    }))
+    const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
+    if (itemsErr) throw itemsErr
+
+    res.json({ id: order.id, status: order.status })
+  } catch(e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
 // GET /api/admin/orders
 app.get('/api/admin/orders', auth, adminOnly, async (req, res) => {
   const { data, error } = await supabase
     .from('orders')
-    .select(`*, members(username, email), order_items(*, products(name))`)
+    .select(`*, members(username, email, address, phone), order_items(quantity, price, products(name, name_th, emoji, type))`)
     .order('created_at', { ascending: false })
+  if (error) return res.status(500).json({ error: error.message })
+  res.json(data)
+})
 
+// PUT /api/admin/orders/:id — confirm or reject
+app.put('/api/admin/orders/:id', auth, adminOnly, async (req, res) => {
+  const { id } = req.params
+  const { status } = req.body
+  if (!['pending','paid','shipped','cancelled'].includes(status))
+    return res.status(400).json({ error: 'Invalid status' })
+  const { data, error } = await supabase
+    .from('orders')
+    .update({ status })
+    .eq('id', id)
+    .select()
+    .single()
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
 })
