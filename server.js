@@ -8,13 +8,7 @@ const { createClient } = require('@supabase/supabase-js')
 const app = express()
 app.use(cors())
 app.use(express.json())
-const path = require("path");
-
-app.use(express.static("public"));
-
-app.get("/", (req, res) => {
- res.sendFile(path.join(__dirname, "public", "shop.html"));
-});
+app.use(express.static('public')) // serve HTML files
 
 // ── Supabase ──
 const supabase = createClient(
@@ -242,11 +236,23 @@ app.get('/api/admin/orders', auth, adminOnly, async (req, res) => {
 app.get('/api/admin/members', auth, adminOnly, async (req, res) => {
   const { data, error } = await supabase
     .from('members')
-    .select('id, username, email, role, created_at')
+    .select('id, username, email, role, address, phone, created_at')
     .order('created_at', { ascending: false })
 
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
+})
+
+// DELETE /api/admin/members/:id
+app.delete('/api/admin/members/:id', auth, adminOnly, async (req, res) => {
+  const { id } = req.params
+  // ป้องกันลบ admin ตัวเอง
+  if (parseInt(id) === req.user.id) return res.status(400).json({ error: 'Cannot delete your own account' })
+  const { data: member } = await supabase.from('members').select('role').eq('id', id).single()
+  if (member?.role === 'admin') return res.status(400).json({ error: 'Cannot delete admin accounts' })
+  const { error } = await supabase.from('members').delete().eq('id', id)
+  if (error) return res.status(500).json({ error: error.message })
+  res.json({ message: 'Deleted' })
 })
 
 // ═══════════════════════════════════════
