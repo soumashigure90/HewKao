@@ -740,7 +740,7 @@ async function changePassword() {
   } catch(e) { toast('❌ ' + (e.message || 'Failed'), 'error') }
 }
 
-
+function toast(msg, type) {
   const area = document.getElementById('toastArea')
   const el = document.createElement('div')
   el.className = 'toast '+(type||'')
