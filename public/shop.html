@@ -756,8 +756,7 @@ footer strong { color: var(--pink-d); }
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
-  const API = "https://hewkao.shop";
-  const res = await fetch("https://hewkao.shop/api/products");
+  const res = await fetch(`/api/products`);
   let lang = 'en'
   let allProducts = []
   let currentFilter = 'all'
