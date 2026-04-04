@@ -21,7 +21,7 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 )
 
-const JWT_SECRET = process.env.JWT_SECRET || 'mochi-secret-change-this'
+const JWT_SECRET = process.env.JWT_SECRET || 'hewkao-secret-2025-xK9mP2nQ'
 
 // ── Auth Middleware ──
 function auth(req, res, next) {
