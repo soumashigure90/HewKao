@@ -757,7 +757,8 @@ footer strong { color: var(--pink-d); }
 
 <script>
   const API = "https://hewkao.shop";
-  const res = await fetch(`${API}/api/products`);
+  <script type="module">
+  const res = await fetch("https://hewkao.shop/api/products");
   let lang = 'en'
   let allProducts = []
   let currentFilter = 'all'
