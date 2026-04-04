@@ -626,6 +626,53 @@ footer strong { color: var(--pink-d); }
 .btn-checkout { width:100%; padding:15px; background:var(--pink-d); color:#fff; border:none; border-radius:16px; font-size:16px; font-weight:700; font-family:'Nunito',sans-serif; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 20px rgba(232,130,154,0.35); }
 .btn-checkout:hover { transform:translateY(-2px); }
 
+/* CHECKOUT MODAL */
+.checkout-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(74,63,92,0.45); z-index:700;
+  align-items:center; justify-content:center;
+  backdrop-filter:blur(8px);
+}
+.checkout-overlay.open { display:flex; animation:overlayIn .25s ease forwards; }
+.checkout-overlay.closing { animation:overlayOut .2s ease forwards; }
+.checkout-modal {
+  background:#fff; border-radius:28px;
+  width:480px; max-width:95vw; max-height:90vh; overflow-y:auto;
+  box-shadow:0 24px 80px rgba(180,140,200,.35);
+  animation:prodModalIn .4s cubic-bezier(0.34,1.4,0.64,1) forwards;
+}
+.checkout-header {
+  background:linear-gradient(135deg,var(--pink-l),var(--lav-l));
+  padding:1.5rem; border-radius:28px 28px 0 0;
+}
+.checkout-header h2 { font-family:'Quicksand',sans-serif; font-size:20px; font-weight:700; }
+.checkout-header p  { font-size:13px; color:var(--text-s); margin-top:4px; }
+.checkout-body { padding:1.5rem; }
+.checkout-items { margin-bottom:1.25rem; }
+.checkout-item {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 0; border-bottom:1px solid var(--pink-l);
+}
+.checkout-item:last-child { border-bottom:none; }
+.checkout-item-img { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; overflow:hidden; }
+.checkout-item-name { flex:1; font-size:13px; font-weight:700; }
+.checkout-item-qty  { font-size:12px; color:var(--text-s); }
+.checkout-item-price{ font-size:14px; font-weight:700; color:var(--pink-d); white-space:nowrap; }
+.checkout-summary { background:var(--cream); border-radius:14px; padding:1rem; margin-bottom:1.25rem; }
+.checkout-summary-row { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; color:var(--text-s); }
+.checkout-summary-row.total { font-size:17px; font-weight:700; color:var(--pink-d); border-top:1px solid var(--pink-l); margin-top:8px; padding-top:10px; }
+.checkout-addr { background:var(--lav-l); border-radius:12px; padding:10px 14px; margin-bottom:1.25rem; font-size:13px; color:var(--text); }
+.checkout-addr strong { display:block; font-size:11px; color:var(--lav-d); letter-spacing:.5px; margin-bottom:4px; }
+.checkout-note label { font-size:12px; font-weight:700; color:var(--text-s); letter-spacing:.5px; display:block; margin-bottom:6px; }
+.checkout-note textarea { width:100%; padding:10px 14px; border:2px solid var(--pink-l); border-radius:12px; font-size:13px; font-family:'Nunito',sans-serif; color:var(--text); outline:none; resize:none; min-height:60px; transition:border-color .2s; }
+.checkout-note textarea:focus { border-color:var(--pink-d); }
+.checkout-actions { display:flex; gap:10px; padding:1rem 1.5rem 1.5rem; }
+.btn-checkout-cancel { flex:1; padding:13px; border-radius:16px; border:1.5px solid var(--pink-l); background:#fff; color:var(--text-s); cursor:pointer; font-size:14px; font-weight:700; font-family:'Nunito',sans-serif; transition:all .2s; }
+.btn-checkout-cancel:hover { border-color:var(--pink-d); color:var(--pink-d); }
+.btn-checkout-confirm { flex:2; padding:13px; border-radius:16px; border:none; background:var(--pink-d); color:#fff; cursor:pointer; font-size:14px; font-weight:700; font-family:'Nunito',sans-serif; transition:all .2s; box-shadow:0 4px 16px rgba(232,130,154,.35); }
+.btn-checkout-confirm:hover { transform:translateY(-2px); }
+.btn-checkout-confirm:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+
 /* TOAST */
 .toast-wrap {
   position: fixed; bottom: 90px; left: 50%;
@@ -844,7 +891,37 @@ footer strong { color: var(--pink-d); }
       <div class="cart-summary-row"><span>Discount</span><span id="summaryDiscount" style="color:var(--mint-d);">-฿0</span></div>
       <div class="cart-summary-row total"><span>Total</span><span id="summaryTotal">฿0</span></div>
     </div>
-    <button class="btn-checkout" id="checkoutBtn" style="display:none;" onclick="showToast('💳 Checkout coming soon!')">Proceed to Checkout →</button>
+    <button class="btn-checkout" id="checkoutBtn" style="display:none;" onclick="openCheckout()">Proceed to Checkout →</button>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="checkout-overlay" id="checkoutOverlay" onclick="if(event.target===this)closeCheckout()">
+  <div class="checkout-modal">
+    <div class="checkout-header">
+      <h2>🛍️ Confirm Order</h2>
+      <p>Please review your order before confirming</p>
+    </div>
+    <div class="checkout-body">
+      <div class="checkout-items" id="checkoutItems"></div>
+      <div class="checkout-summary">
+        <div class="checkout-summary-row"><span>Subtotal</span><span id="coSubtotal">฿0</span></div>
+        <div class="checkout-summary-row"><span>Discount</span><span id="coDiscount" style="color:var(--mint-d);">-฿0</span></div>
+        <div class="checkout-summary-row total"><span>Total</span><span id="coTotal">฿0</span></div>
+      </div>
+      <div class="checkout-addr" id="checkoutAddr">
+        <strong>📍 DELIVERY ADDRESS</strong>
+        <span id="coAddrText">—</span>
+      </div>
+      <div class="checkout-note">
+        <label>📝 NOTE (optional)</label>
+        <textarea id="checkoutNote" placeholder="e.g. fragile items, special instructions..."></textarea>
+      </div>
+    </div>
+    <div class="checkout-actions">
+      <button class="btn-checkout-cancel" onclick="closeCheckout()">Cancel</button>
+      <button class="btn-checkout-confirm" id="confirmOrderBtn" onclick="submitOrder()">✅ Place Order</button>
+    </div>
   </div>
 </div>
 
@@ -1728,6 +1805,101 @@ footer strong { color: var(--pink-d); }
       if (aboutTitle && data.shop_name) aboutTitle.textContent = 'About ' + data.shop_name
       if (aboutContact && data.email) aboutContact.textContent = '📧 ' + data.email
     } catch(e) {}
+  }
+
+  // ── CHECKOUT ──
+  function openCheckout() {
+    const token = localStorage.getItem('mochi_token')
+    if (!token) { openLogin(); return }
+    if (!cart.length) return
+
+    // เช็คว่า cart มี preorder ไหม ถ้ามีต้องมีที่อยู่
+    const hasPreorder = cart.some(i => i.type === 'preorder')
+    if (hasPreorder && !hasAddress()) {
+      showAddrWarn(); return
+    }
+
+    // สร้าง items list
+    const subtotal = cart.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
+    const total    = cart.reduce((s,i) => s + i.price*i.qty, 0)
+    const discount = subtotal - total
+
+    document.getElementById('checkoutItems').innerHTML = cart.map(item => {
+      const thumb = item.image_url
+        ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">`
+        : item.emoji
+      return `<div class="checkout-item">
+        <div class="checkout-item-img bg1">${thumb}</div>
+        <div class="checkout-item-name">${lang==='en'?item.name:(item.name_th||item.name)}</div>
+        <div class="checkout-item-qty">×${item.qty}</div>
+        <div class="checkout-item-price">฿${(item.price*item.qty).toLocaleString()}</div>
+      </div>`
+    }).join('')
+
+    document.getElementById('coSubtotal').textContent = '฿' + subtotal.toLocaleString()
+    document.getElementById('coDiscount').textContent = discount > 0 ? '-฿' + discount.toLocaleString() : '-฿0'
+    document.getElementById('coTotal').textContent    = '฿' + total.toLocaleString()
+    document.getElementById('coAddrText').textContent = userProfile?.address || '—'
+    document.getElementById('checkoutNote').value     = ''
+
+    document.getElementById('checkoutOverlay').classList.remove('closing')
+    document.getElementById('checkoutOverlay').classList.add('open')
+  }
+
+  function closeCheckout() {
+    const overlay = document.getElementById('checkoutOverlay')
+    overlay.classList.add('closing')
+    setTimeout(() => overlay.classList.remove('open','closing'), 220)
+  }
+
+  async function submitOrder() {
+    const token = localStorage.getItem('mochi_token')
+    if (!token) { openLogin(); return }
+
+    const btn = document.getElementById('confirmOrderBtn')
+    btn.textContent = 'Placing order...'
+    btn.disabled = true
+
+    const total    = cart.reduce((s,i) => s + i.price*i.qty, 0)
+    const note     = document.getElementById('checkoutNote').value.trim()
+    const items    = cart.map(i => ({ product_id: i.id, quantity: i.qty, price: i.price }))
+
+    try {
+      const res = await fetch(`${API}/api/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body: JSON.stringify({ total, note, items })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+
+      // สำเร็จ — ล้าง cart และแสดง success
+      cart = []
+      saveCart()
+      closeCheckout()
+      closeCart()
+
+      // Success popup
+      const overlay = document.getElementById('checkoutOverlay')
+      overlay.classList.remove('closing')
+      overlay.classList.add('open')
+      document.querySelector('.checkout-modal').innerHTML = `
+        <div style="padding:3rem 2rem;text-align:center;">
+          <div style="font-size:64px;margin-bottom:1rem;animation:prodModalIn .5s ease both;">🎉</div>
+          <h2 style="font-family:Quicksand,sans-serif;font-size:24px;font-weight:700;margin-bottom:8px;color:var(--pink-d);">Order Placed!</h2>
+          <p style="font-size:14px;color:var(--text-s);margin-bottom:6px;">Order #${data.id}</p>
+          <p style="font-size:13px;color:var(--text-s);margin-bottom:2rem;line-height:1.6;">
+            Your order is now <strong>pending review</strong>.<br>We'll confirm it shortly! 🌸
+          </p>
+          <button onclick="document.getElementById('checkoutOverlay').classList.remove('open')" style="background:var(--pink-d);color:#fff;border:none;padding:12px 28px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;box-shadow:0 4px 16px rgba(232,130,154,.3);">
+            Continue Shopping 🛍️
+          </button>
+        </div>`
+    } catch(e) {
+      showToast('❌ ' + (e.message || 'Failed to place order'))
+      btn.textContent = '✅ Place Order'
+      btn.disabled = false
+    }
   }
 
   // ── INIT ──
