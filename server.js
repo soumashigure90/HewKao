@@ -10,6 +10,11 @@ app.use(cors())
 app.use(express.json())
 app.use(express.static('public')) // serve HTML files
 
+// GET /api/verify — ตรวจสอบ token ว่ายังใช้ได้ไหม
+app.get('/api/verify', auth, (req, res) => {
+  res.json({ valid: true, role: req.user.role, username: req.user.username })
+})
+
 // Redirect root to shop.html
 app.get('/', (req, res) => {
   res.redirect('/shop.html')
