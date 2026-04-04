@@ -572,7 +572,7 @@ footer strong { color: var(--pink-d); }
     <a href="#" class="active" data-en="Shop" data-th="ร้านค้า">Shop</a>
     <a href="#" data-en="Pre-order" data-th="พรีออเดอร์">Pre-order</a>
     <a href="#" data-en="Digital" data-th="ไฟล์ดิจิทัล">Digital</a>
-    <a href="#" data-en="About" data-th="เกี่ยวกับ">About</a>
+    <a href="#aboutSection" data-en="About" data-th="เกี่ยวกับ">About</a>
   </div>
   <div class="nav-lang">
     <button class="active" onclick="setLang('en')">EN</button>
@@ -632,6 +632,16 @@ footer strong { color: var(--pink-d); }
     <p data-en="Login to unlock pre-order slots, exclusive drops & chat support." data-th="ล็อกอินเพื่อปลดล็อกสล็อตพรีออเดอร์ ดรอปพิเศษ และแชทซัพพอร์ต">Login to unlock pre-order slots, exclusive drops & chat support.</p>
   </div>
   <button class="btn-primary" onclick="openLogin()" data-en="Login / Sign up" data-th="เข้าสู่ระบบ / สมัคร">Login / Sign up</button>
+</div>
+
+<!-- ABOUT SECTION -->
+<div id="aboutSection" style="max-width:1100px;margin:0 auto 2rem;padding:0 2rem;">
+  <div style="background:#fff;border-radius:var(--radius);border:1.5px solid var(--pink-l);padding:2.5rem;text-align:center;">
+    <div style="font-size:40px;margin-bottom:1rem;">🌸</div>
+    <h2 id="aboutTitle" style="font-family:Quicksand,sans-serif;font-size:24px;font-weight:700;margin-bottom:1rem;color:var(--text);">About HewKao</h2>
+    <p id="aboutDesc" style="font-size:15px;color:var(--text-s);line-height:1.8;max-width:560px;margin:0 auto;">Original art, prints, ebooks & digital goods — straight from the artist to you.</p>
+    <p id="aboutContact" style="font-size:13px;color:var(--text-s);margin-top:1rem;"></p>
+  </div>
 </div>
 
 <!-- FOOTER -->
@@ -834,7 +844,7 @@ footer strong { color: var(--pink-d); }
           <h3>${lang === 'en' ? p.name : (p.name_th || p.name)}</h3>
           <p class="card-sub">${p.description || stockText}</p>
           <div class="card-footer">
-            <div class="price">฿${Number(p.price).toLocaleString()}</div>
+            <div class="price">${lang === 'en' && p.price_usd ? '$' + Number(p.price_usd).toFixed(2) : '฿' + Number(p.price).toLocaleString()}</div>
             <button class="btn-cart" onclick="event.stopPropagation();addToCart(${p.id},this)">${cartLabel}</button>
           </div>
         </div>
@@ -856,13 +866,14 @@ footer strong { color: var(--pink-d); }
 
   // ── LANG ──
   function setLang(l) {
-    saveCurrentLangContent(false) // บันทึกเงียบๆ ไม่ต้อง toast
+    saveCurrentLangContent(false)
     lang = l
     localStorage.setItem('hewkao_lang', l)
     document.querySelectorAll('.nav-lang button').forEach((b,i) => {
       b.classList.toggle('active', (i===0 && l==='en') || (i===1 && l==='th'))
     })
     applyPageContent(l)
+    loadShopSettings()
     document.getElementById('chatInput').placeholder = l === 'en' ? 'Type a message...' : 'พิมพ์ข้อความ...'
     const filtered = currentFilter === 'all' ? allProducts : allProducts.filter(p => p.type === currentFilter)
     renderProducts(filtered)
@@ -1136,7 +1147,9 @@ footer strong { color: var(--pink-d); }
     document.getElementById('prodModalName').textContent = lang==='en' ? p.name : (p.name_th||p.name)
     document.getElementById('prodModalSub').textContent  = p.type + (p.stock!==null ? ` · ${p.stock} left` : ' · In stock')
     document.getElementById('prodModalDesc').textContent = p.description || 'No description available.'
-    document.getElementById('prodModalPrice').textContent = '฿' + Number(p.price).toLocaleString()
+    document.getElementById('prodModalPrice').textContent = lang === 'en' && p.price_usd
+      ? '$' + Number(p.price_usd).toFixed(2)
+      : '฿' + Number(p.price).toLocaleString()
     document.getElementById('prodModalOrig').textContent  = ''
     document.getElementById('discountInput').value = ''
     document.getElementById('discountMsg').textContent = ''
@@ -1178,7 +1191,9 @@ footer strong { color: var(--pink-d); }
       msg.textContent = `✅ Code applied! You save ฿${(orig - discountedPrice).toLocaleString()}`
     } catch(e) {
       discountData = null; discountedPrice = null
-      document.getElementById('prodModalPrice').textContent = '฿' + Number(currentProduct.price).toLocaleString()
+      document.getElementById('prodModalPrice').textContent = lang === 'en' && currentProduct.price_usd
+        ? '$' + Number(currentProduct.price_usd).toFixed(2)
+        : '฿' + Number(currentProduct.price).toLocaleString()
       document.getElementById('prodModalOrig').textContent  = ''
       msg.className = 'discount-msg err'
       msg.textContent = '❌ ' + (e.message || 'Invalid code')
@@ -1490,20 +1505,32 @@ footer strong { color: var(--pink-d); }
     } catch(e) {}
   }
 
+  // ── SHOP SETTINGS ──
+  async function loadShopSettings() {
+    try {
+      const res = await fetch(`${API}/api/settings`)
+      const data = await res.json()
+      // About section
+      const aboutDesc    = document.getElementById('aboutDesc')
+      const aboutTitle   = document.getElementById('aboutTitle')
+      const aboutContact = document.getElementById('aboutContact')
+      if (aboutDesc) {
+        const text = lang === 'en' ? data.about_en : data.about_th
+        if (text) aboutDesc.textContent = text
+      }
+      if (aboutTitle && data.shop_name) aboutTitle.textContent = 'About ' + data.shop_name
+      if (aboutContact && data.email) aboutContact.textContent = '📧 ' + data.email
+    } catch(e) {}
+  }
+
   // ── INIT ──
   async function init() {
-    // ซ่อนหน้าไว้ก่อนจนโหลดเสร็จ
     document.body.style.opacity = '0'
     document.body.style.transition = 'opacity 0.3s ease'
-
     checkLoginState()
     updateCartBadge()
     checkEditBtn()
-
-    // โหลด content และ products พร้อมกัน
-    await Promise.all([ loadPageContent(), loadProducts() ])
-
-    // แสดงหน้าเมื่อพร้อมแล้ว
+    await Promise.all([ loadPageContent(), loadProducts(), loadShopSettings() ])
     document.body.style.opacity = '1'
   }
 
