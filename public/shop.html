@@ -625,7 +625,7 @@ footer strong { color: var(--pink-d); }
   </div>
 
 <!-- BANNER -->
-<div class="banner">
+<div class="banner" id="loginBanner">
   <div class="banner-icon">💌</div>
   <div class="banner-text">
     <h3 data-en="Members get early access!" data-th="สมาชิกได้สิทธิ์ก่อนใคร!">Members get early access!</h3>
@@ -856,16 +856,61 @@ footer strong { color: var(--pink-d); }
 
   // ── LANG ──
   function setLang(l) {
+    // บันทึก content ของภาษาเดิมก่อนสลับ
+    saveCurrentLangContent()
     lang = l
+    localStorage.setItem('hewkao_lang', l)
     document.querySelectorAll('.nav-lang button').forEach((b,i) => {
       b.classList.toggle('active', (i===0 && l==='en') || (i===1 && l==='th'))
     })
-    document.querySelectorAll('[data-en]').forEach(el => {
-      el.textContent = l === 'en' ? el.dataset.en : el.dataset.th
-    })
+    // โหลด content ของภาษาใหม่
+    loadLangContent(l)
     document.getElementById('chatInput').placeholder = l === 'en' ? 'Type a message...' : 'พิมพ์ข้อความ...'
     const filtered = currentFilter === 'all' ? allProducts : allProducts.filter(p => p.type === currentFilter)
     renderProducts(filtered)
+  }
+
+  function saveCurrentLangContent() {
+    // เซฟ content element ที่ถูกแก้ไขแยกตามภาษา
+    const key = `hewkao_page_${lang}`
+    const ids = ['heroTag','heroTitle','heroDesc']
+    const saved = {}
+    ids.forEach(id => {
+      const el = document.getElementById(id)
+      if (el) saved[id] = id === 'heroTitle' ? el.innerHTML : el.textContent
+    })
+    // เซฟ hero bg ด้วย (ใช้ร่วมกันทุกภาษา)
+    const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
+    if (heroBg) saved.heroBg = heroBg
+    localStorage.setItem(key, JSON.stringify(saved))
+  }
+
+  function loadLangContent(l) {
+    const key = `hewkao_page_${l}`
+    try {
+      const raw = localStorage.getItem(key)
+      if (raw) {
+        const c = JSON.parse(raw)
+        if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
+        if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
+        if (c.heroDesc)  document.getElementById('heroDesc').textContent = c.heroDesc
+        if (c.heroBg) {
+          const hero = document.getElementById('heroSection')
+          hero.style.backgroundImage    = `url('${c.heroBg}')`
+          hero.style.backgroundSize     = 'cover'
+          hero.style.backgroundPosition = 'center'
+        }
+      } else {
+        // ถ้าไม่มี saved content ให้ใช้ default data-en / data-th
+        document.querySelectorAll('[data-en]').forEach(el => {
+          el.textContent = l === 'en' ? el.dataset.en : el.dataset.th
+        })
+      }
+    } catch(e) {
+      document.querySelectorAll('[data-en]').forEach(el => {
+        el.textContent = l === 'en' ? el.dataset.en : el.dataset.th
+      })
+    }
   }
 
   // ── CHAT ──
@@ -946,11 +991,17 @@ footer strong { color: var(--pink-d); }
       } else if (role !== 'admin' && existing) {
         existing.remove()
       }
+      // ซ่อน banner เมื่อ login แล้ว
+      const banner = document.getElementById('loginBanner')
+      if (banner) banner.style.display = 'none'
     } else {
       txt.textContent = 'Login'
       if (btn.children[0]) btn.children[0].textContent = '🔑'
       const adminBtn = document.getElementById('adminDashBtn')
       if (adminBtn) adminBtn.remove()
+      // แสดง banner เมื่อยังไม่ login
+      const banner = document.getElementById('loginBanner')
+      if (banner) banner.style.display = ''
     }
   }
 
@@ -1408,31 +1459,18 @@ footer strong { color: var(--pink-d); }
   }
 
   function savePageContent() {
-    const content = {
-      heroTag:   document.getElementById('heroTag').textContent,
-      heroTitle: document.getElementById('heroTitle').innerHTML,
-      heroDesc:  document.getElementById('heroDesc').textContent,
-      heroBg:    localStorage.getItem('hewkao_hero_bg') || '',
-    }
-    localStorage.setItem('hewkao_page_content', JSON.stringify(content))
-    showToast('💾 Page saved!')
+    saveCurrentLangContent()
+    showToast(`💾 Page saved (${lang.toUpperCase()})`)
   }
 
   function loadPageContent() {
-    try {
-      const raw = localStorage.getItem('hewkao_page_content')
-      if (!raw) return
-      const c = JSON.parse(raw)
-      if (c.heroTag)   document.getElementById('heroTag').textContent   = c.heroTag
-      if (c.heroTitle) document.getElementById('heroTitle').innerHTML   = c.heroTitle
-      if (c.heroDesc)  document.getElementById('heroDesc').textContent  = c.heroDesc
-      if (c.heroBg) {
-        const hero = document.getElementById('heroSection')
-        hero.style.backgroundImage    = `url('${c.heroBg}')`
-        hero.style.backgroundSize     = 'cover'
-        hero.style.backgroundPosition = 'center'
-      }
-    } catch(e) {}
+    // โหลดภาษาที่ใช้ล่าสุด
+    const savedLang = localStorage.getItem('hewkao_lang') || 'en'
+    lang = savedLang
+    document.querySelectorAll('.nav-lang button').forEach((b,i) => {
+      b.classList.toggle('active', (i===0 && lang==='en') || (i===1 && lang==='th'))
+    })
+    loadLangContent(lang)
   }
 
   // ── INIT ──
