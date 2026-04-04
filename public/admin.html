@@ -220,8 +220,8 @@ textarea{resize:vertical;min-height:80px;}
     <div class="page" id="page-members">
       <div class="page-header"><h1>👥 Members</h1><p>View your registered members.</p></div>
       <div class="card"><div class="tbl-wrap">
-        <table><thead><tr><th>USERNAME</th><th>EMAIL</th><th>ROLE</th><th>JOINED</th></tr></thead>
-        <tbody id="membersBody"><tr class="loading-row"><td colspan="4">Loading...</td></tr></tbody></table>
+        <table><thead><tr><th>USERNAME</th><th>EMAIL</th><th>PHONE</th><th>ADDRESS</th><th>ROLE</th><th>JOINED</th><th>ACTIONS</th></tr></thead>
+        <tbody id="membersBody"><tr class="loading-row"><td colspan="7">Loading...</td></tr></tbody></table>
       </div></div>
     </div>
 
@@ -317,7 +317,7 @@ textarea{resize:vertical;min-height:80px;}
 <div class="toast-area" id="toastArea"></div>
 
 <script>
-const API = 'https://hewkao.shop'
+const API = 'http://localhost:3000'
 const bgMap = ['bg1','bg2','bg3','bg4']
 let editingProductId = null
 let token = null
@@ -630,14 +630,34 @@ async function loadOrders() {
 }
 
 async function loadMembers() {
-  document.getElementById('membersBody').innerHTML='<tr class="loading-row"><td colspan="4">Loading...</td></tr>'
+  document.getElementById('membersBody').innerHTML='<tr class="loading-row"><td colspan="7">Loading...</td></tr>'
   try {
     const res = await fetch(`${API}/api/admin/members`, {headers:authHeader()})
     const members = await res.json()
-    if (!members.length) { document.getElementById('membersBody').innerHTML='<tr class="loading-row"><td colspan="4">No members yet</td></tr>'; return }
+    if (!members.length) { document.getElementById('membersBody').innerHTML='<tr class="loading-row"><td colspan="7">No members yet</td></tr>'; return }
     document.getElementById('membersBody').innerHTML = members.map(m=>`
-      <tr><td>${m.username}</td><td>${m.email}</td><td><span class="badge ${m.role}">${m.role}</span></td><td>${new Date(m.created_at).toLocaleDateString()}</td></tr>`).join('')
-  } catch(e) { document.getElementById('membersBody').innerHTML='<tr class="loading-row"><td colspan="4">❌ Failed</td></tr>' }
+      <tr>
+        <td><strong>${m.username}</strong></td>
+        <td>${m.email}</td>
+        <td>${m.phone||'—'}</td>
+        <td style="max-width:160px;font-size:12px;color:var(--text-s);">${m.address||'—'}</td>
+        <td><span class="badge ${m.role}">${m.role}</span></td>
+        <td>${new Date(m.created_at).toLocaleDateString()}</td>
+        <td>
+          ${m.role !== 'admin' ? `<button class="btn-icon del" onclick="deleteMember(${m.id},'${m.username}')" title="Delete">🗑️</button>` : '—'}
+        </td>
+      </tr>`).join('')
+  } catch(e) { document.getElementById('membersBody').innerHTML='<tr class="loading-row"><td colspan="7">❌ Failed</td></tr>' }
+}
+
+async function deleteMember(id, username) {
+  if (!confirm(`Delete account "${username}"?\nThis cannot be undone.`)) return
+  try {
+    const res = await fetch(`${API}/api/admin/members/${id}`, {method:'DELETE', headers:authHeader()})
+    if (!res.ok) throw new Error()
+    toast(`🗑️ Deleted "${username}"`, 'error')
+    loadMembers()
+  } catch(e) { toast('❌ Failed to delete', 'error') }
 }
 
 function toast(msg, type) {
