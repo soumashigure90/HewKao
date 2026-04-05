@@ -252,6 +252,25 @@ textarea{resize:vertical;min-height:80px;}
           <div class="form-group"><label>CONTACT EMAIL</label><input type="email" id="settingEmail" placeholder="hello@hewkao.com" /></div>
           <div class="form-group span2"><label>ABOUT / DESCRIPTION (แสดงในหน้า About)</label><textarea id="settingAbout" rows="4" placeholder="Tell customers about your shop..."></textarea></div>
           <div class="form-group span2"><label>ABOUT (ภาษาไทย)</label><textarea id="settingAboutTh" rows="4" placeholder="เล่าเรื่องร้านของคุณให้ลูกค้าฟัง..."></textarea></div>
+          <!-- SHIPPING -->
+          <div class="form-group span2" style="background:var(--lav-l);border-radius:12px;padding:16px;grid-column:span 2;">
+            <div style="font-size:12px;font-weight:700;color:var(--lav-d);letter-spacing:.5px;margin-bottom:12px;">🚚 SHIPPING SETTINGS</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+              <div>
+                <label style="font-size:11px;font-weight:700;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง (THB ฿)</label>
+                <input type="number" id="settingShippingTHB" placeholder="50" min="0" step="1" />
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:700;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง (USD $)</label>
+                <input type="number" id="settingShippingUSD" placeholder="3.00" min="0" step="0.01" />
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:700;color:var(--text-s);display:block;margin-bottom:4px;">ส่งฟรีเมื่อซื้อครบ (THB ฿)</label>
+                <input type="number" id="settingFreeShipping" placeholder="500" min="0" step="1" />
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text-s);margin-top:8px;">💡 ใส่ 0 = ไม่มีค่าส่ง / ส่งฟรีทุก order · ปล่อยว่าง = ใช้ค่า default</div>
+          </div>
         </div>
         <div class="form-actions">
           <button class="btn-secondary" onclick="loadSettings()">↺ Reset</button>
@@ -870,19 +889,25 @@ async function loadSettings() {
   try {
     const res = await fetch(`${API}/api/settings`)
     const data = await res.json()
-    document.getElementById('settingShopName').value  = data.shop_name  || ''
-    document.getElementById('settingEmail').value     = data.email      || ''
-    document.getElementById('settingAbout').value     = data.about_en   || ''
-    document.getElementById('settingAboutTh').value   = data.about_th   || ''
+    document.getElementById('settingShopName').value     = data.shop_name     || ''
+    document.getElementById('settingEmail').value        = data.email         || ''
+    document.getElementById('settingAbout').value        = data.about_en      || ''
+    document.getElementById('settingAboutTh').value      = data.about_th      || ''
+    document.getElementById('settingShippingTHB').value  = data.shipping_thb  || ''
+    document.getElementById('settingShippingUSD').value  = data.shipping_usd  || ''
+    document.getElementById('settingFreeShipping').value = data.free_shipping  || ''
   } catch(e) {}
 }
 
 async function saveSettings() {
   const settings = {
-    shop_name: document.getElementById('settingShopName').value.trim(),
-    email:     document.getElementById('settingEmail').value.trim(),
-    about_en:  document.getElementById('settingAbout').value.trim(),
-    about_th:  document.getElementById('settingAboutTh').value.trim(),
+    shop_name:    document.getElementById('settingShopName').value.trim(),
+    email:        document.getElementById('settingEmail').value.trim(),
+    about_en:     document.getElementById('settingAbout').value.trim(),
+    about_th:     document.getElementById('settingAboutTh').value.trim(),
+    shipping_thb: document.getElementById('settingShippingTHB').value || '0',
+    shipping_usd: document.getElementById('settingShippingUSD').value || '0',
+    free_shipping:document.getElementById('settingFreeShipping').value || '0',
   }
   try {
     const res = await fetch(`${API}/api/admin/settings`, {
