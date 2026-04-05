@@ -265,17 +265,41 @@ app.post('/api/orders', async (req, res) => {
   }
 })
 
-// GET /api/my-orders — ดู order ของตัวเอง (ต้อง login)
+// GET /api/my-orders — ดู order ของตัวเอง
 app.get('/api/my-orders', auth, async (req, res) => {
-  const { data, error } = await supabase
-    .from('orders')
-    .select(`id, total, status, note, created_at, 
-      order_items(quantity, price, products(name, name_th, emoji, image_url, type)),
-      download_links(product_id, url, products(name, name_th))`)
-    .eq('member_id', req.user.id)
-    .order('created_at', { ascending: false })
-  if (error) return res.status(500).json({ error: error.message })
-  res.json(data)
+  try {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select(`id, total, status, note, created_at,
+        order_items(quantity, price, products(name, name_th, emoji, image_url, type))`)
+      .eq('member_id', req.user.id)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+
+    // ดึง download_links แยก
+    const orderIds = orders.map(o => o.id)
+    let dlMap = {}
+    if (orderIds.length > 0) {
+      const { data: links } = await supabase
+        .from('download_links')
+        .select('order_id, url, product_id, products(name, name_th)')
+        .in('order_id', orderIds)
+      if (links) {
+        links.forEach(l => {
+          if (!dlMap[l.order_id]) dlMap[l.order_id] = []
+          dlMap[l.order_id].push(l)
+        })
+      }
+    }
+
+    const result = orders.map(o => ({
+      ...o,
+      download_links: dlMap[o.id] || []
+    }))
+    res.json(result)
+  } catch(e) {
+    res.status(500).json({ error: e.message })
+  }
 })
 app.get('/api/admin/orders', auth, adminOnly, async (req, res) => {
   const page  = parseInt(req.query.page)  || 1
