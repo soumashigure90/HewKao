@@ -1846,22 +1846,29 @@ footer strong { color: var(--pink-d); }
       return
     }
 
-    const subtotal = cart.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
-    const total    = cart.reduce((s,i) => s + i.price*i.qty, 0)
-    const discount = subtotal - total
-    const count    = cart.reduce((s,i) => s + i.qty, 0)
+    const subtotal    = cart.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
+    const total       = cart.reduce((s,i) => s + i.price*i.qty, 0)
+    const discount    = subtotal - total
+    const count       = cart.reduce((s,i) => s + i.qty, 0)
+    const isUSD       = lang === 'en'
+    const subtotalUSD = cart.reduce((s,i) => s + (i.price_usd||0)*i.qty, 0)
+    const totalUSD    = subtotalUSD
     countEl.textContent = count + ' item' + (count!==1?'s':'')
 
     list.innerHTML = cart.map((item,idx) => {
       const thumb = item.image_url
         ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">`
         : item.emoji
+      const pTHB = (item.price*item.qty).toLocaleString()
+      const pUSD = item.price_usd ? '$'+(Number(item.price_usd)*item.qty).toFixed(2) : '฿'+pTHB
+      const pStr = isUSD && item.price_usd ? pUSD : '฿'+pTHB
+      const origTHB = ((item.origPrice||item.price)*item.qty).toLocaleString()
       const priceHtml = item.saved && item.saved > 0
         ? `<div style="text-align:right;">
-             <div class="cart-item-price">฿${(item.price*item.qty).toLocaleString()}</div>
-             <div style="font-size:10px;color:var(--text-s);text-decoration:line-through;">฿${((item.origPrice||item.price)*item.qty).toLocaleString()}</div>
+             <div class="cart-item-price">${pStr}</div>
+             <div style="font-size:10px;color:var(--text-s);text-decoration:line-through;">฿${origTHB}</div>
            </div>`
-        : `<div class="cart-item-price">฿${(item.price*item.qty).toLocaleString()}</div>`
+        : `<div class="cart-item-price">${pStr}</div>`
       return `<div class="cart-item">
         <div class="cart-item-img ${item.image_url?'':'bg1'}">${thumb}</div>
         <div class="cart-item-info">
@@ -1878,9 +1885,11 @@ footer strong { color: var(--pink-d); }
       </div>`
     }).join('')
 
-    document.getElementById('summarySubtotal').textContent = '฿' + subtotal.toLocaleString()
+    const subStr = isUSD && subtotalUSD > 0 ? '$'+subtotalUSD.toFixed(2) : '฿'+subtotal.toLocaleString()
+    const totStr = isUSD && totalUSD > 0    ? '$'+totalUSD.toFixed(2)    : '฿'+total.toLocaleString()
+    document.getElementById('summarySubtotal').textContent = subStr
     document.getElementById('summaryDiscount').textContent = discount > 0 ? '-฿'+discount.toLocaleString() : '-฿0'
-    document.getElementById('summaryTotal').textContent    = '฿' + total.toLocaleString()
+    document.getElementById('summaryTotal').textContent    = totStr
     summary.style.display  = 'block'
     checkout.style.display = 'block'
   }
@@ -2060,7 +2069,7 @@ footer strong { color: var(--pink-d); }
     if (!p) return
     const existing = cart.find(i => i.id === id)
     if (existing) existing.qty++
-    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:Number(p.price), emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 })
+    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:Number(p.price), price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 })
     saveCart()
     if (btnEl) flyToCart(btnEl)
     else showToast('Added to cart!')
@@ -2069,12 +2078,14 @@ footer strong { color: var(--pink-d); }
   function addToCartFromModal() {
     if (!currentProduct) return
     const p = currentProduct
-    const origPrice  = Number(p.price)
-    const finalPrice = discountedPrice || origPrice
-    const saved      = origPrice - finalPrice
+    const origPrice    = Number(p.price)
+    const finalPrice   = discountedPrice || origPrice
+    const saved        = origPrice - finalPrice
+    const origPriceUSD = p.price_usd ? Number(p.price_usd) : null
+    const finalPriceUSD = origPriceUSD // discount ไม่ adjust USD (simplified)
     const existing = cart.find(i => i.id === p.id)
     if (existing) existing.qty++
-    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 })
+    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved, price_usd:finalPriceUSD, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 })
     saveCart()
     const btn = document.querySelector('.btn-add-cart')
     if (btn) flyToCart(btn)
@@ -2212,12 +2223,11 @@ footer strong { color: var(--pink-d); }
   function buyNowFromModal() {
     if (!currentProduct) return
     const p = currentProduct
-    // บังคับที่อยู่เฉพาะ physical และ preorder
     const needAddr = p.type === 'physical' || p.type === 'preorder'
     if (needAddr && !hasAddress()) { openAddrCollect(() => buyNowFromModal()); return }
-    const origPrice  = Number(p.price)
-    const finalPrice = discountedPrice || origPrice
-    const buyItem = [{ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved:origPrice-finalPrice, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 }]
+    const origPrice    = Number(p.price)
+    const finalPrice   = discountedPrice || origPrice
+    const buyItem = [{ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved:origPrice-finalPrice, price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 }]
     window._buyNowItems = buyItem
     _buildCheckoutModal(buyItem, origPrice, finalPrice, origPrice - finalPrice)
     closeProdModal()
