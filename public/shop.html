@@ -1107,7 +1107,7 @@ footer strong { color: var(--pink-d); }
     </div>
     <div class="checkout-actions">
       <button class="btn-checkout-cancel" onclick="closeCheckout()">Cancel</button>
-      <button class="btn-checkout-confirm" id="confirmOrderBtn" onclick="openPayment(parseFloat(document.getElementById('coTotal').textContent.replace(/[^0-9.]/g,'')))">💳 Payment →</button>
+      <button class="btn-checkout-confirm" id="confirmOrderBtn" onclick="goToPayment()">💳 Payment →</button>
     </div>
   </div>
 </div>
@@ -1424,20 +1424,20 @@ footer strong { color: var(--pink-d); }
   }
 
   // ── LANG ──
-  function setLang(l) {
-    saveCurrentLangContent(false)
+  async function setLang(l) {
     lang = l
     localStorage.setItem('hewkao_lang', l)
     document.querySelectorAll('.nav-lang button').forEach((b,i) => {
       b.classList.toggle('active', (i===0 && l==='en') || (i===1 && l==='th'))
     })
-    // อัพเดท data-en/data-th elements ทั้งหมด
+    // อัพเดท data-en/data-th ทันที
     document.querySelectorAll('[data-en]').forEach(el => {
       if (el.children.length === 0) {
-        el.textContent = l === 'en' ? el.dataset.en : el.dataset.th
+        el.textContent = l === 'en' ? (el.dataset.en || el.textContent) : (el.dataset.th || el.textContent)
       }
     })
-    applyPageContent(l)
+    // โหลด content จาก DB
+    await applyPageContent(l)
     loadShopSettings()
     const filtered = currentFilter === 'all' ? allProducts : allProducts.filter(p => p.type === currentFilter)
     renderProducts(filtered)
@@ -2144,6 +2144,18 @@ footer strong { color: var(--pink-d); }
     const o = document.getElementById('checkoutOverlay')
     o.classList.add('closing')
     setTimeout(() => o.classList.remove('open','closing'), 220)
+  }
+
+  function goToPayment() {
+    const total = parseFloat(document.getElementById('coTotal').textContent.replace(/[^0-9.]/g,''))
+    // ปิด checkout ก่อน แล้วค่อยเปิด payment
+    const co = document.getElementById('checkoutOverlay')
+    co.classList.remove('open','closing')
+    co.style.display = 'none'
+    setTimeout(() => {
+      co.style.display = ''
+      openPayment(total)
+    }, 50)
   }
 
   // ── PAYMENT ──
