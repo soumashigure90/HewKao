@@ -918,7 +918,7 @@ footer strong { color: var(--pink-d); }
     </div>
     <div class="checkout-actions">
       <button class="btn-checkout-cancel" onclick="closeCheckout()">Cancel</button>
-      <button class="btn-checkout-confirm" id="confirmOrderBtn" onclick="submitOrder()">✅ Place Order</button>
+      <button class="btn-checkout-confirm" id="confirmOrderBtn" onclick="openPayment(parseFloat(document.getElementById('coTotal').textContent.replace(/[^0-9.]/g,'')))">💳 Payment →</button>
     </div>
   </div>
 </div>
@@ -949,16 +949,32 @@ footer strong { color: var(--pink-d); }
         <h3 id="profileUsername">—</h3>
         <p id="profileEmail">—</p>
       </div>
-      <button onclick="closeProfile()" style="margin-left:auto;background:rgba(255,255,255,0.7);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform=''">✕</button>
+      <button onclick="closeProfile()" style="margin-left:auto;background:rgba(255,255,255,0.7);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform=''">✕</button>
     </div>
     <div class="profile-body">
+      <div class="profile-field">
+        <label>👤 FULL NAME</label>
+        <input type="text" id="profileFullName" placeholder="e.g. John Doe" />
+      </div>
       <div class="profile-field">
         <label>📞 PHONE NUMBER</label>
         <input type="text" id="profilePhone" placeholder="e.g. 0812345678" />
       </div>
       <div class="profile-field">
-        <label>📍 DELIVERY ADDRESS <span style="color:var(--red);font-size:11px;">* จำเป็นสำหรับ Pre-order</span></label>
-        <textarea id="profileAddress" placeholder="กรอกที่อยู่สำหรับจัดส่ง เลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์"></textarea>
+        <label>🌍 COUNTRY</label>
+        <select id="profileCountry" style="width:100%;padding:10px 14px;border:2px solid var(--pink-l);border-radius:12px;font-size:14px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;">
+          <option value="">Select country...</option>
+          <option value="Thailand">🇹🇭 Thailand</option>
+          <option value="Japan">🇯🇵 Japan</option>
+          <option value="USA">🇺🇸 USA</option>
+          <option value="UK">🇬🇧 UK</option>
+          <option value="Singapore">🇸🇬 Singapore</option>
+          <option value="Other">🌐 Other</option>
+        </select>
+      </div>
+      <div class="profile-field">
+        <label>📍 DELIVERY ADDRESS</label>
+        <textarea id="profileAddress" placeholder="เลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์"></textarea>
       </div>
     </div>
     <div class="profile-actions">
@@ -968,15 +984,166 @@ footer strong { color: var(--pink-d); }
   </div>
 </div>
 
+<!-- ADDRESS COLLECTION MODAL (สำหรับ physical/preorder ที่ยังไม่มีที่อยู่) -->
+<div class="profile-overlay" id="addrCollectOverlay" onclick="if(event.target===this)closeAddrCollect()">
+  <div class="profile-modal">
+    <div class="profile-header" style="background:linear-gradient(135deg,var(--yellow-l),var(--pink-l));">
+      <div class="profile-avatar" style="background:var(--pink-d);font-size:20px;">📍</div>
+      <div class="profile-header-info">
+        <h3>Delivery Information</h3>
+        <p>Required for this order type</p>
+      </div>
+      <button onclick="closeAddrCollect()" style="margin-left:auto;background:rgba(255,255,255,0.7);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform=''">✕</button>
+    </div>
+    <div class="profile-body">
+      <div class="profile-field">
+        <label>👤 FULL NAME <span style="color:var(--red);">*</span></label>
+        <input type="text" id="acFullName" placeholder="ชื่อ-นามสกุล / Full name" />
+      </div>
+      <div class="profile-field">
+        <label>📞 PHONE <span style="color:var(--red);">*</span></label>
+        <input type="text" id="acPhone" placeholder="เบอร์โทรศัพท์" />
+      </div>
+      <div class="profile-field">
+        <label>🌍 COUNTRY <span style="color:var(--red);">*</span></label>
+        <select id="acCountry" style="width:100%;padding:10px 14px;border:2px solid var(--pink-l);border-radius:12px;font-size:14px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;">
+          <option value="">Select country...</option>
+          <option value="Thailand">🇹🇭 Thailand</option>
+          <option value="Japan">🇯🇵 Japan</option>
+          <option value="USA">🇺🇸 USA</option>
+          <option value="UK">🇬🇧 UK</option>
+          <option value="Singapore">🇸🇬 Singapore</option>
+          <option value="Other">🌐 Other</option>
+        </select>
+      </div>
+      <div class="profile-field">
+        <label>📍 ADDRESS <span style="color:var(--red);">*</span></label>
+        <textarea id="acAddress" placeholder="เลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์" rows="3"></textarea>
+      </div>
+      <p style="font-size:12px;color:var(--text-s);margin-top:-6px;">
+        <input type="checkbox" id="acSaveToProfile" checked style="margin-right:4px;">
+        Save to my profile for future orders
+      </p>
+    </div>
+    <div class="profile-actions">
+      <button class="btn-profile-cancel" onclick="closeAddrCollect()">Cancel</button>
+      <button class="btn-profile-save" onclick="confirmAddrCollect()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="checkout-overlay" id="paymentOverlay" onclick="if(event.target===this)closePayment()" style="z-index:800;">
+  <div class="checkout-modal" style="max-width:440px;">
+    <div class="checkout-header">
+      <h2>💳 Payment</h2>
+      <p>Choose your payment method</p>
+    </div>
+    <div class="checkout-body">
+      <!-- Payment method tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
+        <button id="payTabCard" onclick="switchPayTab('card')" style="flex:1;padding:10px;border-radius:12px;border:2px solid var(--pink-d);background:var(--pink-d);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;">
+          💳 Card
+        </button>
+        <button id="payTabQR" onclick="switchPayTab('qr')" style="flex:1;padding:10px;border-radius:12px;border:2px solid var(--pink-l);background:#fff;color:var(--text-s);font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;">
+          📱 QR / PromptPay
+        </button>
+      </div>
+
+      <!-- Card form -->
+      <div id="payCardForm">
+        <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:16px;padding:1.25rem;margin-bottom:1.25rem;color:#fff;">
+          <div style="font-size:11px;letter-spacing:2px;opacity:.7;margin-bottom:.5rem;">CARD NUMBER</div>
+          <div style="font-size:18px;letter-spacing:4px;font-family:monospace;" id="cardPreview">•••• •••• •••• ••••</div>
+          <div style="display:flex;justify-content:space-between;margin-top:.75rem;font-size:12px;">
+            <div><div style="opacity:.7;font-size:10px;letter-spacing:1px;">CARD HOLDER</div><div id="cardHolderPreview">YOUR NAME</div></div>
+            <div><div style="opacity:.7;font-size:10px;letter-spacing:1px;">EXPIRES</div><div id="cardExpPreview">MM/YY</div></div>
+          </div>
+        </div>
+        <div style="display:grid;gap:10px;">
+          <div class="profile-field" style="margin:0;">
+            <label>CARD NUMBER</label>
+            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)" />
+          </div>
+          <div class="profile-field" style="margin:0;">
+            <label>CARD HOLDER NAME</label>
+            <input type="text" id="cardHolder" placeholder="Name on card" oninput="document.getElementById('cardHolderPreview').textContent=this.value||'YOUR NAME'" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="profile-field" style="margin:0;">
+              <label>EXPIRY DATE</label>
+              <input type="text" id="cardExp" placeholder="MM/YY" maxlength="5" oninput="formatExp(this)" />
+            </div>
+            <div class="profile-field" style="margin:0;">
+              <label>CVV</label>
+              <input type="password" id="cardCvv" placeholder="•••" maxlength="4" />
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--lav-l);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:11px;color:var(--lav-d);display:flex;align-items:center;gap:6px;">
+          🔒 <span>This is a demo. No real payment will be charged.</span>
+        </div>
+      </div>
+
+      <!-- QR form -->
+      <div id="payQRForm" style="display:none;text-align:center;">
+        <div style="background:var(--cream);border-radius:16px;padding:1.5rem;margin-bottom:1rem;">
+          <div style="font-size:11px;color:var(--text-s);letter-spacing:1px;margin-bottom:1rem;">SCAN TO PAY VIA PROMPTPAY</div>
+          <!-- Mock QR Code -->
+          <div style="width:180px;height:180px;background:#fff;border-radius:12px;margin:0 auto;display:flex;align-items:center;justify-content:center;border:2px solid var(--pink-l);position:relative;overflow:hidden;">
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <rect width="160" height="160" fill="white"/>
+              <!-- QR mock pattern -->
+              <rect x="10" y="10" width="50" height="50" fill="none" stroke="#333" stroke-width="4"/>
+              <rect x="18" y="18" width="34" height="34" fill="#333"/>
+              <rect x="100" y="10" width="50" height="50" fill="none" stroke="#333" stroke-width="4"/>
+              <rect x="108" y="18" width="34" height="34" fill="#333"/>
+              <rect x="10" y="100" width="50" height="50" fill="none" stroke="#333" stroke-width="4"/>
+              <rect x="18" y="108" width="34" height="34" fill="#333"/>
+              <rect x="70" y="10" width="8" height="8" fill="#333"/>
+              <rect x="82" y="10" width="8" height="8" fill="#333"/>
+              <rect x="70" y="22" width="8" height="8" fill="#333"/>
+              <rect x="70" y="46" width="8" height="8" fill="#333"/>
+              <rect x="82" y="34" width="8" height="8" fill="#333"/>
+              <rect x="70" y="70" width="8" height="8" fill="#333"/>
+              <rect x="82" y="70" width="8" height="8" fill="#333"/>
+              <rect x="94" y="70" width="8" height="8" fill="#333"/>
+              <rect x="70" y="82" width="8" height="8" fill="#333"/>
+              <rect x="94" y="82" width="8" height="8" fill="#333"/>
+              <rect x="106" y="70" width="8" height="8" fill="#333"/>
+              <rect x="118" y="82" width="8" height="8" fill="#333"/>
+              <rect x="130" y="70" width="8" height="8" fill="#333"/>
+              <rect x="106" y="94" width="8" height="8" fill="#333"/>
+              <rect x="118" y="106" width="8" height="8" fill="#333"/>
+              <rect x="130" y="94" width="8" height="8" fill="#333"/>
+              <rect x="118" y="118" width="8" height="8" fill="#333"/>
+              <rect x="130" y="130" width="8" height="8" fill="#333"/>
+            </svg>
+          </div>
+          <div style="margin-top:1rem;font-size:13px;font-weight:700;color:var(--text);" id="qrAmount">฿0</div>
+          <div style="font-size:11px;color:var(--text-s);margin-top:4px;">HewKao Shop · PromptPay</div>
+        </div>
+        <div style="background:var(--lav-l);border-radius:10px;padding:10px 14px;font-size:11px;color:var(--lav-d);display:flex;align-items:center;gap:6px;">
+          🔒 <span>This is a demo QR. No real payment will be charged.</span>
+        </div>
+      </div>
+    </div>
+    <div class="checkout-actions">
+      <button class="btn-checkout-cancel" onclick="closePayment()">Cancel</button>
+      <button class="btn-checkout-confirm" id="confirmPayBtn" onclick="confirmPayment()">✅ Confirm Payment</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADDRESS WARNING -->
 <div class="addr-warn-overlay" id="addrWarnOverlay">
   <div class="addr-warn-box">
     <div class="warn-icon">📍</div>
-    <h3>Please add your address first!</h3>
-    <p id="addrWarnMsg">Pre-order items require a delivery address. Please go to Settings and add your address before placing a pre-order.</p>
+    <h3>Delivery Address Required</h3>
+    <p>This item requires a delivery address. Please fill in your shipping info first.</p>
     <div class="addr-warn-btns">
       <button class="btn-warn-cancel" onclick="closeAddrWarn()">Cancel</button>
-      <button class="btn-warn-settings" onclick="closeAddrWarn();openProfile()">⚙️ Go to Settings</button>
+      <button class="btn-warn-settings" onclick="closeAddrWarn();openAddrCollect()">📍 Add Address</button>
     </div>
   </div>
 </div>
@@ -1430,9 +1597,7 @@ footer strong { color: var(--pink-d); }
     const token = localStorage.getItem('mochi_token')
     if (!token) return
     try {
-      const res = await fetch(`${API}/api/profile`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const res = await fetch(`${API}/api/profile`, { headers: { 'Authorization': `Bearer ${token}` } })
       if (res.ok) userProfile = await res.json()
     } catch(e) {}
   }
@@ -1444,536 +1609,289 @@ footer strong { color: var(--pink-d); }
     document.getElementById('profileAvatarLetter').textContent = user.charAt(0).toUpperCase()
     document.getElementById('profileUsername').textContent = user
     document.getElementById('profileEmail').textContent = userProfile?.email || '—'
-    document.getElementById('profilePhone').value   = userProfile?.phone   || ''
-    document.getElementById('profileAddress').value = userProfile?.address || ''
+    document.getElementById('profileFullName').value = userProfile?.full_name || ''
+    document.getElementById('profilePhone').value    = userProfile?.phone    || ''
+    document.getElementById('profileAddress').value  = userProfile?.address  || ''
+    document.getElementById('profileCountry').value  = userProfile?.country  || ''
     document.getElementById('profileOverlay').classList.remove('closing')
     document.getElementById('profileOverlay').classList.add('open')
   }
 
   function closeProfile() {
-    const overlay = document.getElementById('profileOverlay')
-    overlay.classList.add('closing')
-    setTimeout(() => overlay.classList.remove('open','closing'), 220)
+    const o = document.getElementById('profileOverlay')
+    o.classList.add('closing')
+    setTimeout(() => o.classList.remove('open','closing'), 220)
   }
 
   async function saveProfile() {
     const token = localStorage.getItem('mochi_token')
     if (!token) return
-    const phone   = document.getElementById('profilePhone').value.trim()
-    const address = document.getElementById('profileAddress').value.trim()
-    if (!address) { showToast('❌ Please enter your address'); return }
+    const body = {
+      full_name: document.getElementById('profileFullName').value.trim(),
+      phone:     document.getElementById('profilePhone').value.trim(),
+      country:   document.getElementById('profileCountry').value,
+      address:   document.getElementById('profileAddress').value.trim(),
+    }
     try {
       const res = await fetch(`${API}/api/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-        body: JSON.stringify({ phone, address })
+        method:'PUT', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify(body)
       })
       if (!res.ok) throw new Error()
       userProfile = await res.json()
-      showToast('✅ Address saved!')
+      showToast('Profile saved!')
       closeProfile()
-      // ถ้ามี callback รอ (เช่น กด buy now แล้วค้างไว้) ให้ call ต่อ
       if (window._afterAddrSave) {
-        const cb = window._afterAddrSave
-        window._afterAddrSave = null
+        const cb = window._afterAddrSave; window._afterAddrSave = null
         setTimeout(cb, 300)
       }
-    } catch(e) {
-      showToast('❌ Failed to save')
+    } catch(e) { showToast('Failed to save') }
+  }
+
+  // ── ADDRESS COLLECTION ──
+  function openAddrCollect(callback) {
+    window._afterAddrCollect = callback || null
+    document.getElementById('acFullName').value = userProfile?.full_name || ''
+    document.getElementById('acPhone').value    = userProfile?.phone    || ''
+    document.getElementById('acCountry').value  = userProfile?.country  || ''
+    document.getElementById('acAddress').value  = userProfile?.address  || ''
+    document.getElementById('addrCollectOverlay').classList.remove('closing')
+    document.getElementById('addrCollectOverlay').classList.add('open')
+  }
+
+  function closeAddrCollect() {
+    const o = document.getElementById('addrCollectOverlay')
+    o.classList.add('closing')
+    setTimeout(() => o.classList.remove('open','closing'), 220)
+    window._afterAddrCollect = null
+  }
+
+  async function confirmAddrCollect() {
+    const full_name = document.getElementById('acFullName').value.trim()
+    const phone     = document.getElementById('acPhone').value.trim()
+    const country   = document.getElementById('acCountry').value
+    const address   = document.getElementById('acAddress').value.trim()
+    if (!full_name || !phone || !country || !address) { showToast('Please fill in all fields'); return }
+    if (!userProfile) userProfile = {}
+    userProfile.full_name = full_name
+    userProfile.phone     = phone
+    userProfile.country   = country
+    userProfile.address   = address
+    const token = localStorage.getItem('mochi_token')
+    const shouldSave = document.getElementById('acSaveToProfile')?.checked
+    if (token && shouldSave) {
+      try {
+        const res = await fetch(`${API}/api/profile`, {
+          method:'PUT', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+          body: JSON.stringify({ full_name, phone, country, address })
+        })
+        if (res.ok) userProfile = await res.json()
+      } catch(e) {}
     }
+    closeAddrCollect()
+    const cb = window._afterAddrCollect
+    window._afterAddrCollect = null
+    if (cb) setTimeout(cb, 300)
   }
 
   // ── ADDRESS WARNING ──
-  function showAddrWarn() {
-    document.getElementById('addrWarnOverlay').classList.add('open')
-  }
-
-  function closeAddrWarn() {
-    document.getElementById('addrWarnOverlay').classList.remove('open')
-    window._addrWarnCallback = null
-  }
-
-  function hasAddress() {
-    return userProfile && userProfile.address && userProfile.address.trim().length > 0
-  }
+  function showAddrWarn() { document.getElementById('addrWarnOverlay').classList.add('open') }
+  function closeAddrWarn() { document.getElementById('addrWarnOverlay').classList.remove('open') }
+  function hasAddress() { return userProfile?.address?.trim().length > 0 }
+  function needsAddress(items) { return items.some(i => i.type==='physical'||i.type==='preorder') }
+  function showAddrWarnThen(cb) { window._afterAddrSave = cb; showAddrWarn() }
 
   function addToCart(id, btnEl) {
     const p = allProducts.find(x => x.id === id)
     if (!p) return
-    // ถ้าเป็น preorder ต้องมีที่อยู่ก่อน
-    if (p.type === 'preorder') {
-      const token = localStorage.getItem('mochi_token')
-      if (!token) { openLogin(); return }
-      if (!hasAddress()) { showAddrWarn(); return }
-    }
     const existing = cart.find(i => i.id === id)
     if (existing) existing.qty++
     else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:Number(p.price), emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 })
     saveCart()
     if (btnEl) flyToCart(btnEl)
-    else showToast('Added to cart! 🛒')
+    else showToast('Added to cart!')
   }
 
   function addToCartFromModal() {
     if (!currentProduct) return
     const p = currentProduct
-    // ถ้าเป็น preorder ต้องมีที่อยู่ก่อน
-    if (p.type === 'preorder') {
-      const token = localStorage.getItem('mochi_token')
-      if (!token) { closeLogin(); openLogin(); return }
-      if (!hasAddress()) { showAddrWarn(); return }
-    }
     const origPrice  = Number(p.price)
     const finalPrice = discountedPrice || origPrice
     const saved      = origPrice - finalPrice
     const existing = cart.find(i => i.id === p.id)
-    if (existing) {
-      existing.qty++
-    } else {
-      cart.push({
-        id: p.id, name: p.name, name_th: p.name_th,
-        price: finalPrice, origPrice, saved,
-        emoji: p.emoji||'📦', image_url: p.image_url,
-        type: p.type, qty: 1
-      })
-    }
+    if (existing) existing.qty++
+    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 })
     saveCart()
     const btn = document.querySelector('.btn-add-cart')
     if (btn) flyToCart(btn)
-    showToast('Pre-order added! ⏳')
-  }
-
-  function flyToCart(fromEl) {
-    const from = fromEl.getBoundingClientRect()
-    const to   = document.getElementById('loginBtn').getBoundingClientRect()
-    const fly  = document.createElement('div')
-    fly.className = 'fly-item'
-    fly.textContent = '🛒'
-    fly.style.cssText = `left:${from.left + from.width/2 - 18}px;top:${from.top + from.height/2 - 18}px;`
-    document.body.appendChild(fly)
-
-    const dx = to.left + to.width/2  - (from.left + from.width/2)
-    const dy = to.top  + to.height/2 - (from.top  + from.height/2)
-
-    fly.animate([
-      { transform:'scale(1) translate(0,0)', opacity:1 },
-      { transform:`scale(0.4) translate(${dx}px,${dy}px)`, opacity:0 }
-    ], { duration:600, easing:'cubic-bezier(0.4,0,0.2,1)', fill:'forwards' })
-    .onfinish = () => { fly.remove(); pulseCartBtn() }
-  }
-
-  function pulseCartBtn() {
-    const btn = document.getElementById('loginBtn')
-    btn.animate([
-      {transform:'scale(1)'},{transform:'scale(1.2)'},{transform:'scale(1)'}
-    ], {duration:300, easing:'ease'})
-  }
-
-  function openCart() {
-    renderCart()
-    document.getElementById('cartPage').classList.add('open')
-    document.body.style.overflow = 'hidden'
-  }
-
-  function closeCart() {
-    document.getElementById('cartPage').classList.remove('open')
-    document.body.style.overflow = ''
-  }
-
-  function renderCart() {
-    const list = document.getElementById('cartList')
-    const summary = document.getElementById('cartSummary')
-    const checkout = document.getElementById('checkoutBtn')
-    const countEl  = document.getElementById('cartItemCount')
-
-    if (!cart.length) {
-      list.innerHTML = `<div class="cart-empty">
-        <div class="empty-icon">🛒</div>
-        <h3>Your cart is empty</h3>
-        <p style="font-size:14px;margin-bottom:1.5rem;">Add some items to get started!</p>
-        <button class="btn-primary" onclick="closeCart()">Continue Shopping 🌸</button>
-      </div>`
-      summary.style.display = 'none'
-      checkout.style.display = 'none'
-      countEl.textContent = '0 items'
-      return
-    }
-
-    const subtotal  = cart.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
-    const total     = cart.reduce((s,i) => s + i.price*i.qty, 0)
-    const discount  = subtotal - total
-    const count = cart.reduce((s,i) => s + i.qty, 0)
-    countEl.textContent = count + ' item' + (count!==1?'s':'')
-
-    list.innerHTML = cart.map((item,idx) => {
-      const thumb = item.image_url
-        ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;" />`
-        : item.emoji
-      const priceHtml = item.saved && item.saved > 0
-        ? `<div style="text-align:right;">
-             <div class="cart-item-price">฿${(item.price*item.qty).toLocaleString()}</div>
-             <div style="font-size:10px;color:var(--text-s);text-decoration:line-through;">฿${((item.origPrice||item.price)*item.qty).toLocaleString()}</div>
-           </div>`
-        : `<div class="cart-item-price">฿${(item.price*item.qty).toLocaleString()}</div>`
-      return `<div class="cart-item">
-        <div class="cart-item-img ${item.image_url?'':'bg1'}">${thumb}</div>
-        <div class="cart-item-info">
-          <div class="cart-item-name">${lang==='en'?item.name:(item.name_th||item.name)}</div>
-          <div class="cart-item-type">${item.type}</div>
-        </div>
-        <div class="cart-qty">
-          <button class="qty-btn" onclick="changeQty(${idx},-1)">−</button>
-          <span class="qty-num">${item.qty}</span>
-          <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
-        </div>
-        ${priceHtml}
-        <button class="cart-remove" onclick="removeFromCart(${idx})">✕</button>
-      </div>`
-    }).join('')
-
-    document.getElementById('summarySubtotal').textContent = '฿' + subtotal.toLocaleString()
-    document.getElementById('summaryDiscount').textContent = discount > 0 ? '-฿' + discount.toLocaleString() : '-฿0'
-    document.getElementById('summaryTotal').textContent    = '฿' + total.toLocaleString()
-    summary.style.display  = 'block'
-    checkout.style.display = 'block'
-  }
-
-  function changeQty(idx, delta) {
-    cart[idx].qty = Math.max(1, cart[idx].qty + delta)
-    saveCart(); renderCart()
-  }
-
-  function removeFromCart(idx) {
-    cart.splice(idx, 1)
-    saveCart(); renderCart()
-    showToast('Removed from cart')
-  }
-
-  // ── PAGE EDITOR ──
-  let editMode = false
-
-  function checkEditBtn() {
-    const role = localStorage.getItem('mochi_role')
-    const btn  = document.getElementById('editPageBtn')
-    if (role === 'admin') btn.style.display = 'flex'
-    else btn.style.display = 'none'
-  }
-
-  function toggleEditMode() {
-    editMode ? exitEditMode() : enterEditMode()
-  }
-
-  function enterEditMode() {
-    editMode = true
-    document.getElementById('editorToolbar').style.display = 'flex'
-    document.getElementById('editPageBtn').textContent = '✕ Exit Edit'
-    document.getElementById('editPageBtn').style.background = 'var(--red)'
-    // highlight editable elements
-    ;['heroTag','heroTitle','heroDesc','heroSection'].forEach(id => {
-      const el = document.getElementById(id)
-      if (el) el.classList.add('edit-highlight')
-    })
-    showToast('✏️ Edit mode on — click any element or use toolbar')
-  }
-
-  function exitEditMode() {
-    editMode = false
-    document.getElementById('editorToolbar').style.display = 'none'
-    document.getElementById('editPageBtn').textContent = '✏️ Edit Page'
-    document.getElementById('editPageBtn').style.background = 'var(--lav-d)'
-    ;['heroTag','heroTitle','heroDesc','heroSection'].forEach(id => {
-      const el = document.getElementById(id)
-      if (el) el.classList.remove('edit-highlight')
-    })
-  }
-
-  function editHeroTag() {
-    const el = document.getElementById('heroTag')
-    const val = prompt('Hero tag text:', el.textContent)
-    if (val !== null) { el.textContent = val; el.setAttribute('data-en', val) }
-  }
-
-  function editHeroTitle() {
-    const current = document.getElementById('heroTitle').innerText.replace('\n','  ')
-    const val = prompt('Hero title (use | to separate lines):', current.replace('\n','|'))
-    if (val !== null) {
-      const parts = val.split('|')
-      document.getElementById('heroTitle').innerHTML =
-        `<em>${parts[0]||''}</em><br><span>${parts[1]||''}</span>`
-    }
-  }
-
-  function editHeroDesc() {
-    const el = document.getElementById('heroDesc')
-    const val = prompt('Hero description:', el.textContent)
-    if (val !== null) { el.textContent = val; el.setAttribute('data-en', val) }
-  }
-
-  function editHeroBg() {
-    document.getElementById('heroBgInput').click()
-  }
-
-  async function uploadHeroBg(input) {
-    const file = input.files[0]
-    if (!file) return
-    const token = localStorage.getItem('mochi_token')
-    if (!token) { showToast('❌ Please login as admin'); return }
-    showToast('Uploading hero image... 🖼️')
-    try {
-      const res = await fetch(`${API}/api/admin/upload`, {
-        method:'POST',
-        headers:{'Authorization':`Bearer ${token}`,'Content-Type':file.type},
-        body: file
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      const hero = document.getElementById('heroSection')
-      hero.style.backgroundImage = `url('${data.url}')`
-      hero.style.backgroundSize  = 'cover'
-      hero.style.backgroundPosition = 'center'
-      // บันทึก URL ไว้
-      localStorage.setItem('hewkao_hero_bg', data.url)
-      showToast('✅ Hero image updated!')
-    } catch(e) {
-      showToast('❌ Upload failed: ' + e.message)
-    }
-    input.value = ''
-  }
-
-  function savePageContent() {
-    saveCurrentLangContent(true) // true = show toast
-  }
-
-  // บันทึกลง API
-  async function saveCurrentLangContent(showMsg = false) {
-    const token = localStorage.getItem('mochi_token')
-    const ids = ['heroTag','heroTitle','heroDesc']
-    const content = {}
-    ids.forEach(id => {
-      const el = document.getElementById(id)
-      if (el) content[id] = id === 'heroTitle' ? el.innerHTML : el.textContent
-    })
-    const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
-    if (heroBg) content['heroBg'] = heroBg
-
-    try {
-      const res = await fetch(`${API}/api/admin/page-content`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ lang, content })
-      })
-      if (!res.ok) throw new Error()
-      if (showMsg) showToast(`💾 Saved (${lang.toUpperCase()})`)
-    } catch(e) {
-      if (showMsg) showToast('❌ Save failed')
-    }
-  }
-
-  // โหลดจาก API
-  async function loadPageContent() {
-    const savedLang = localStorage.getItem('hewkao_lang') || 'en'
-    lang = savedLang
-    document.querySelectorAll('.nav-lang button').forEach((b,i) => {
-      b.classList.toggle('active', (i===0 && lang==='en') || (i===1 && lang==='th'))
-    })
-    await applyPageContent(lang)
-  }
-
-  async function applyPageContent(l) {
-    try {
-      const res = await fetch(`${API}/api/page-content?lang=${l}`)
-      const c = await res.json()
-      if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
-      if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
-      if (c.heroDesc)  document.getElementById('heroDesc').textContent = c.heroDesc
-      if (c.heroBg) {
-        const hero = document.getElementById('heroSection')
-        hero.style.backgroundImage    = `url('${c.heroBg}')`
-        hero.style.backgroundSize     = 'cover'
-        hero.style.backgroundPosition = 'center'
-        localStorage.setItem('hewkao_hero_bg', c.heroBg)
-      }
-    } catch(e) {}
-  }
-
-  // ── SHOP SETTINGS ──
-  async function loadShopSettings() {
-    try {
-      const res = await fetch(`${API}/api/settings`)
-      const data = await res.json()
-      // About section
-      const aboutDesc    = document.getElementById('aboutDesc')
-      const aboutTitle   = document.getElementById('aboutTitle')
-      const aboutContact = document.getElementById('aboutContact')
-      if (aboutDesc) {
-        const text = lang === 'en' ? data.about_en : data.about_th
-        if (text) aboutDesc.textContent = text
-      }
-      if (aboutTitle && data.shop_name) aboutTitle.textContent = 'About ' + data.shop_name
-      if (aboutContact && data.email) aboutContact.textContent = '📧 ' + data.email
-    } catch(e) {}
+    showToast('Added to cart!')
   }
 
   // ── CHECKOUT ──
   function _buildCheckoutModal(items, subtotal, total, discount) {
     document.getElementById('checkoutItems').innerHTML = items.map(item => {
-      const thumb = item.image_url
-        ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">`
-        : item.emoji
+      const thumb = item.image_url ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">` : item.emoji
       return `<div class="checkout-item">
         <div class="checkout-item-img bg1">${thumb}</div>
         <div class="checkout-item-name">${lang==='en'?item.name:(item.name_th||item.name)}</div>
-        <div class="checkout-item-qty">×${item.qty}</div>
+        <div class="checkout-item-qty">x${item.qty}</div>
         <div class="checkout-item-price">฿${(item.price*item.qty).toLocaleString()}</div>
       </div>`
     }).join('')
     document.getElementById('coSubtotal').textContent = '฿' + subtotal.toLocaleString()
     document.getElementById('coDiscount').textContent = discount > 0 ? '-฿' + discount.toLocaleString() : '-฿0'
     document.getElementById('coTotal').textContent    = '฿' + total.toLocaleString()
-    document.getElementById('coAddrText').textContent = userProfile?.address || '—'
-    document.getElementById('checkoutNote').value     = ''
+    const addrBox = document.getElementById('checkoutAddr')
+    if (needsAddress(items)) {
+      addrBox.style.display = 'block'
+      const parts = [userProfile?.full_name, userProfile?.address, userProfile?.country].filter(Boolean)
+      document.getElementById('coAddrText').textContent = parts.join(' · ') || '—'
+    } else { addrBox.style.display = 'none' }
+    document.getElementById('checkoutNote').value = ''
     document.getElementById('checkoutOverlay').classList.remove('closing')
     document.getElementById('checkoutOverlay').classList.add('open')
   }
 
-  // checkout จากรถเข็น
   function openCheckout() {
-    const token = localStorage.getItem('mochi_token')
-    if (!token) { openLogin(); return }
     if (!cart.length) return
-    // บังคับมีที่อยู่ก่อนทุก order
-    if (!hasAddress()) {
-      showAddrWarnThen(() => openCheckout())
-      return
-    }
+    if (needsAddress(cart) && !hasAddress()) { openAddrCollect(() => openCheckout()); return }
     const subtotal = cart.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
     const total    = cart.reduce((s,i) => s + i.price*i.qty, 0)
     _buildCheckoutModal(cart, subtotal, total, subtotal - total)
   }
 
-  // buy now จาก product modal — เพิ่มลง cart ชั่วคราวแล้ว checkout เลย
   function buyNowFromModal() {
     if (!currentProduct) return
-    const token = localStorage.getItem('mochi_token')
-    if (!token) { closeProdModal(); openLogin(); return }
-    if (!hasAddress()) {
-      showAddrWarnThen(() => buyNowFromModal())
-      return
-    }
     const p = currentProduct
+    const needAddr = p.type==='physical'||p.type==='preorder'
+    if (needAddr && !hasAddress()) { openAddrCollect(() => buyNowFromModal()); return }
     const origPrice  = Number(p.price)
     const finalPrice = discountedPrice || origPrice
-    const saved      = origPrice - finalPrice
-    // สร้าง item ชั่วคราว (ไม่ได้ add ลง cart จริง)
-    const buyItem = [{
-      id: p.id, name: p.name, name_th: p.name_th,
-      price: finalPrice, origPrice, saved,
-      emoji: p.emoji||'📦', image_url: p.image_url,
-      type: p.type, qty: 1
-    }]
-    // เก็บ buyNow items แยกไว้ใช้ตอน submitOrder
+    const buyItem = [{ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved:origPrice-finalPrice, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 }]
     window._buyNowItems = buyItem
-    const subtotal = origPrice
-    const total    = finalPrice
-    _buildCheckoutModal(buyItem, subtotal, total, subtotal - total)
+    _buildCheckoutModal(buyItem, origPrice, finalPrice, origPrice - finalPrice)
     closeProdModal()
   }
 
-  // แสดง address warning แล้ว callback หลัง save
-  function showAddrWarnThen(cb) {
-    window._afterAddrSave = cb
-    document.getElementById('addrWarnOverlay').classList.add('open')
+  function closeCheckout() {
+    const o = document.getElementById('checkoutOverlay')
+    o.classList.add('closing')
+    setTimeout(() => o.classList.remove('open','closing'), 220)
   }
 
-  function closeCheckout() {
-    const overlay = document.getElementById('checkoutOverlay')
-    overlay.classList.add('closing')
-    setTimeout(() => overlay.classList.remove('open','closing'), 220)
+  // ── PAYMENT ──
+  let currentPayTab = 'card'
+
+  function openPayment(total) {
+    document.getElementById('qrAmount').textContent = '฿' + Number(total).toLocaleString()
+    switchPayTab('card')
+    document.getElementById('cardNumber').value  = ''
+    document.getElementById('cardHolder').value  = ''
+    document.getElementById('cardExp').value     = ''
+    document.getElementById('cardCvv').value     = ''
+    document.getElementById('cardPreview').textContent = 'xxxx xxxx xxxx xxxx'
+    document.getElementById('cardHolderPreview').textContent = 'YOUR NAME'
+    document.getElementById('cardExpPreview').textContent = 'MM/YY'
+    document.getElementById('confirmPayBtn').textContent = 'Confirm Payment'
+    document.getElementById('confirmPayBtn').disabled = false
+    document.getElementById('paymentOverlay').classList.remove('closing')
+    document.getElementById('paymentOverlay').classList.add('open')
+  }
+
+  function closePayment() {
+    const o = document.getElementById('paymentOverlay')
+    o.classList.add('closing')
+    setTimeout(() => o.classList.remove('open','closing'), 220)
+  }
+
+  function switchPayTab(tab) {
+    currentPayTab = tab
+    document.getElementById('payCardForm').style.display = tab==='card' ? 'block' : 'none'
+    document.getElementById('payQRForm').style.display   = tab==='qr'   ? 'block' : 'none'
+    const cardBtn = document.getElementById('payTabCard')
+    const qrBtn   = document.getElementById('payTabQR')
+    if (tab==='card') {
+      cardBtn.style.background='var(--pink-d)'; cardBtn.style.color='#fff'; cardBtn.style.borderColor='var(--pink-d)'
+      qrBtn.style.background='#fff'; qrBtn.style.color='var(--text-s)'; qrBtn.style.borderColor='var(--pink-l)'
+    } else {
+      qrBtn.style.background='var(--pink-d)'; qrBtn.style.color='#fff'; qrBtn.style.borderColor='var(--pink-d)'
+      cardBtn.style.background='#fff'; cardBtn.style.color='var(--text-s)'; cardBtn.style.borderColor='var(--pink-l)'
+    }
+  }
+
+  function formatCard(el) {
+    let v = el.value.replace(/\D/g,'').substring(0,16)
+    el.value = v.replace(/(.{4})/g,'$1 ').trim()
+    const preview = v.padEnd(16,'x')
+    document.getElementById('cardPreview').textContent =
+      preview.substring(0,4)+' '+preview.substring(4,8)+' '+preview.substring(8,12)+' '+preview.substring(12,16)
+  }
+
+  function formatExp(el) {
+    let v = el.value.replace(/\D/g,'')
+    if (v.length >= 2) v = v.substring(0,2)+'/'+v.substring(2,4)
+    el.value = v
+    document.getElementById('cardExpPreview').textContent = v || 'MM/YY'
+  }
+
+  function confirmPayment() {
+    if (currentPayTab === 'card') {
+      const num = document.getElementById('cardNumber').value.replace(/\s/g,'')
+      const holder = document.getElementById('cardHolder').value.trim()
+      const exp = document.getElementById('cardExp').value
+      const cvv = document.getElementById('cardCvv').value
+      if (!num || num.length < 16 || !holder || !exp || !cvv) { showToast('Please fill in all card details'); return }
+    }
+    const btn = document.getElementById('confirmPayBtn')
+    btn.textContent = 'Processing...'
+    btn.disabled = true
+    setTimeout(() => { closePayment(); submitOrder() }, 1500)
   }
 
   async function submitOrder() {
     const token = localStorage.getItem('mochi_token')
-    if (!token) { openLogin(); return }
-
-    const btn = document.getElementById('confirmOrderBtn')
-    btn.textContent = 'Placing order...'
-    btn.disabled = true
-
     const orderItems = window._buyNowItems || cart
     const isPreorder = orderItems.some(i => i.type === 'preorder')
     const total = orderItems.reduce((s,i) => s + i.price*i.qty, 0)
-    const note  = document.getElementById('checkoutNote').value.trim()
-    const items = orderItems.map(i => ({ product_id: i.id, quantity: i.qty, price: i.price }))
-
+    const note  = document.getElementById('checkoutNote')?.value?.trim() || ''
+    const items = orderItems.map(i => ({ product_id:i.id, quantity:i.qty, price:i.price }))
     try {
-      const res = await fetch(`${API}/api/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-        body: JSON.stringify({ total, note, items })
-      })
+      const headers = { 'Content-Type':'application/json' }
+      if (token) headers['Authorization'] = 'Bearer ' + token
+      const res = await fetch(`${API}/api/orders`, { method:'POST', headers, body:JSON.stringify({ total, note, items }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-
-      // ล้าง cart และปิดทุกอย่างทันที
-      cart = []
-      saveCart()
-      window._buyNowItems = null
-
-      // force ปิด checkout overlay ทันที
+      cart = []; saveCart(); window._buyNowItems = null
       const co = document.getElementById('checkoutOverlay')
-      co.classList.remove('open','closing')
-      co.style.display = 'none'
-
-      // force ปิด cart page ทันที
-      const cp = document.getElementById('cartPage')
-      cp.classList.remove('open')
+      co.classList.remove('open','closing'); co.style.display = 'none'
+      document.getElementById('cartPage').classList.remove('open')
       document.body.style.overflow = ''
-
-      // กลับหน้าแรก
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      window.scrollTo({ top:0, behavior:'smooth' })
       updateCartBadge()
-
-      // แสดง success popup กลางจอ
       showOrderSuccess(data.id, isPreorder)
-
+      setTimeout(() => { co.style.display = '' }, 500)
     } catch(e) {
-      showToast('❌ ' + (e.message || 'Failed to place order'))
-      btn.textContent = '✅ Place Order'
-      btn.disabled = false
+      showToast((e.message || 'Failed to place order'))
     }
   }
 
   function showOrderSuccess(orderId, isPreorder) {
-    // สร้าง overlay ใหม่
     const el = document.createElement('div')
     el.id = 'orderSuccessOverlay'
     el.style.cssText = 'position:fixed;inset:0;background:rgba(74,63,92,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:overlayIn .25s ease forwards;'
     el.innerHTML = `
       <div style="background:#fff;border-radius:28px;padding:2.5rem 2rem;width:340px;max-width:92vw;text-align:center;box-shadow:0 24px 80px rgba(180,140,200,.4);animation:prodModalIn .45s cubic-bezier(0.34,1.4,0.64,1) forwards;">
-        <div style="font-size:64px;margin-bottom:1rem;">${isPreorder ? '⏳' : '🎉'}</div>
-        <h2 style="font-family:Quicksand,sans-serif;font-size:22px;font-weight:700;color:var(--pink-d);margin-bottom:8px;">
-          ${isPreorder ? 'Pre-order Received!' : 'Order Placed!'}
-        </h2>
+        <div style="font-size:64px;margin-bottom:1rem;">${isPreorder?'⏳':'🎉'}</div>
+        <h2 style="font-family:Quicksand,sans-serif;font-size:22px;font-weight:700;color:var(--pink-d);margin-bottom:8px;">${isPreorder?'Pre-order Received!':'Order Placed!'}</h2>
         <p style="font-size:13px;color:var(--text-s);margin-bottom:6px;">Order <strong>#${orderId}</strong></p>
         <p style="font-size:13px;color:var(--text-s);line-height:1.7;margin-bottom:1.75rem;">
-          ${isPreorder
-            ? 'เราได้รับ pre-order ของคุณแล้ว 🌸<br>จะยืนยันคำสั่งซื้อโดยเร็วที่สุดนะคะ'
-            : 'รับออเดอร์เรียบร้อยแล้ว! 🌸<br>ขอบคุณที่ซื้อสินค้ากับเราค่ะ'}
+          ${isPreorder?'เราได้รับ pre-order ของคุณแล้ว<br>จะยืนยันโดยเร็วที่สุดนะคะ 🌸':'รับออเดอร์เรียบร้อยแล้ว!<br>ขอบคุณที่ซื้อสินค้ากับเราค่ะ 🌸'}
         </p>
-        <button onclick="document.getElementById('orderSuccessOverlay').remove()" style="background:var(--pink-d);color:#fff;border:none;padding:13px 32px;border-radius:20px;font-size:15px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;box-shadow:0 4px 16px rgba(232,130,154,.35);transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-          Continue Shopping 🛍️
+        <button onclick="document.getElementById('orderSuccessOverlay').remove()" style="background:var(--pink-d);color:#fff;border:none;padding:13px 32px;border-radius:20px;font-size:15px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">
+          Continue Shopping
         </button>
       </div>`
     document.body.appendChild(el)
-  }
-
-  function showSuccessToast(msg, orderId) {
-    const wrap = document.getElementById('toastWrap')
-    const t = document.createElement('div')
-    t.className = 'toast'
-    t.textContent = msg + ' ' + orderId
-    wrap.appendChild(t)
-    setTimeout(() => t.remove(), 4000)
   }
 
   // ── INIT ──
