@@ -265,7 +265,16 @@ app.post('/api/orders', async (req, res) => {
   }
 })
 
-// GET /api/admin/orders?page=1&limit=10
+// GET /api/my-orders — ดู order ของตัวเอง (ต้อง login)
+app.get('/api/my-orders', auth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`id, total, status, note, created_at, order_items(quantity, price, products(name, name_th, emoji, image_url, type))`)
+    .eq('member_id', req.user.id)
+    .order('created_at', { ascending: false })
+  if (error) return res.status(500).json({ error: error.message })
+  res.json(data)
+})
 app.get('/api/admin/orders', auth, adminOnly, async (req, res) => {
   const page  = parseInt(req.query.page)  || 1
   const limit = parseInt(req.query.limit) || 10
