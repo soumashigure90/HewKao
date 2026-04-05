@@ -2204,12 +2204,6 @@ footer strong { color: var(--pink-d); }
     const amt = Number(total)
     document.getElementById('qrAmount').textContent = '฿' + amt.toLocaleString()
 
-    // สร้าง PromptPay QR payload แล้วให้ QR server generate
-    const phone = '0957562647'
-    const payload = generatePromptPayPayload(phone, amt)
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(payload)}&bgcolor=ffffff&color=000000&margin=4`
-    document.getElementById('promptpayQRImg').src = qrUrl
-
     // reset slip
     _slipFile = null
     document.getElementById('slipInput').value = ''
@@ -2240,9 +2234,21 @@ footer strong { color: var(--pink-d); }
       guestEmailBox.style.display = 'none'
     }
 
-    switchPayTab('qr') // default QR
+    // clear QR ก่อน
+    document.getElementById('promptpayQRImg').src = ''
+
+    switchPayTab('qr')
     document.getElementById('paymentOverlay').classList.remove('closing')
     document.getElementById('paymentOverlay').classList.add('open')
+
+    // set QR หลัง modal เปิดแล้ว (ให้ browser โหลดได้)
+    setTimeout(() => {
+      const phone   = '0957562647'
+      const payload = generatePromptPayPayload(phone, amt)
+      const qrUrl   = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(payload)}&bgcolor=ffffff&color=000000&margin=6`
+      document.getElementById('promptpayQRImg').src = qrUrl
+      document.getElementById('promptpayQRImg').style.cssText = 'width:200px;height:200px;display:block;'
+    }, 100)
   }
 
   function previewSlip(input) {
