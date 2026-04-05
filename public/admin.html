@@ -254,22 +254,36 @@ textarea{resize:vertical;min-height:80px;}
           <div class="form-group span2"><label>ABOUT (ภาษาไทย)</label><textarea id="settingAboutTh" rows="4" placeholder="เล่าเรื่องร้านของคุณให้ลูกค้าฟัง..."></textarea></div>
           <!-- SHIPPING -->
           <div class="form-group span2" style="background:var(--lav-l);border-radius:12px;padding:16px;grid-column:span 2;">
-            <div style="font-size:12px;font-weight:700;color:var(--lav-d);letter-spacing:.5px;margin-bottom:12px;">🚚 SHIPPING SETTINGS</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div style="font-size:12px;font-weight:700;color:var(--lav-d);letter-spacing:.5px;margin-bottom:12px;">🚚 SHIPPING SETTINGS (DEFAULT)</div>
+            <!-- ในประเทศ -->
+            <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">🇹🇭 ในประเทศ (Thailand)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
               <div>
-                <label style="font-size:11px;font-weight:700;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง (THB ฿)</label>
-                <input type="number" id="settingShippingTHB" placeholder="50" min="0" step="1" />
+                <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง (฿)</label>
+                <input type="number" id="settingShippingTHB" placeholder="60" min="0" step="1" />
               </div>
               <div>
-                <label style="font-size:11px;font-weight:700;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง (USD $)</label>
-                <input type="number" id="settingShippingUSD" placeholder="3.00" min="0" step="0.01" />
-              </div>
-              <div>
-                <label style="font-size:11px;font-weight:700;color:var(--text-s);display:block;margin-bottom:4px;">ส่งฟรีเมื่อซื้อครบ (THB ฿)</label>
+                <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ส่งฟรีเมื่อซื้อครบ (฿)</label>
                 <input type="number" id="settingFreeShipping" placeholder="500" min="0" step="1" />
               </div>
             </div>
-            <div style="font-size:11px;color:var(--text-s);margin-top:8px;">💡 ใส่ 0 = ไม่มีค่าส่ง / ส่งฟรีทุก order · ปล่อยว่าง = ใช้ค่า default</div>
+            <!-- ต่างประเทศ -->
+            <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">🌍 ต่างประเทศ (International)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+              <div>
+                <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง (฿)</label>
+                <input type="number" id="settingShippingIntlTHB" placeholder="350" min="0" step="1" />
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง ($)</label>
+                <input type="number" id="settingShippingUSD" placeholder="10.00" min="0" step="0.01" />
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ส่งฟรีเมื่อซื้อครบ ($)</label>
+                <input type="number" id="settingFreeShippingIntl" placeholder="50" min="0" step="0.01" />
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text-s);margin-top:8px;">💡 ค่าส่งนี้เป็น default · แต่ละสินค้าสามารถตั้งค่าส่งของตัวเองได้ · ใส่ 0 = ส่งฟรีทุก order</div>
           </div>
         </div>
         <div class="form-actions">
@@ -329,6 +343,26 @@ textarea{resize:vertical;min-height:80px;}
         <input type="url" id="pFileUrl" placeholder="https://drive.google.com/file/d/..." />
         <div style="margin-top:6px;padding:8px 12px;background:var(--lav-l);border-radius:10px;font-size:11px;color:var(--lav-d);">
           💡 ตั้ง Google Drive เป็น "Anyone with the link" แล้ววาง link ที่นี่ ลูกค้าจะได้ link หลัง order confirmed
+        </div>
+      </div>
+      <!-- ค่าส่งเฉพาะสินค้านี้ สำหรับ physical/preorder -->
+      <div class="form-group span2" id="productShippingGroup">
+        <div style="background:var(--cream);border-radius:12px;padding:14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-s);letter-spacing:.5px;margin-bottom:10px;">🚚 ค่าส่งสำหรับสินค้านี้ <span style="font-weight:400;">(ไม่ใส่ = ใช้ค่า default จาก Settings)</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;">
+            <div>
+              <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">🇹🇭 ค่าส่งในประเทศ (฿)</label>
+              <input type="number" id="pShippingDomTHB" placeholder="default" min="0" step="1" />
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">🌍 ค่าส่งต่างประเทศ (฿)</label>
+              <input type="number" id="pShippingIntlTHB" placeholder="default" min="0" step="1" />
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">🌍 ค่าส่งต่างประเทศ ($)</label>
+              <input type="number" id="pShippingIntlUSD" placeholder="default" min="0" step="0.01" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -581,7 +615,10 @@ async function openProductModal(id) {
         document.getElementById('pDesc').value     = p.description||''
         document.getElementById('pStatus').value   = p.status||'active'
         document.getElementById('pBadge').value    = p.badge||''
-        document.getElementById('pFileUrl').value  = p.file_url||''
+        document.getElementById('pFileUrl').value         = p.file_url||''
+        document.getElementById('pShippingDomTHB').value  = p.shipping_dom_thb != null ? p.shipping_dom_thb : ''
+        document.getElementById('pShippingIntlTHB').value = p.shipping_intl_thb != null ? p.shipping_intl_thb : ''
+        document.getElementById('pShippingIntlUSD').value = p.shipping_intl_usd != null ? p.shipping_intl_usd : ''
         if (p.image_url) {
           document.getElementById('imgPreview').src = p.image_url
           document.getElementById('imgPreviewWrap').style.display = 'block'
@@ -590,7 +627,7 @@ async function openProductModal(id) {
       }
     } catch(e) {}
   } else {
-    ['pName','pNameTh','pEmoji','pPrice','pPriceUsd','pStock','pDesc','pBadge','pFileUrl'].forEach(i => document.getElementById(i).value='')
+    ['pName','pNameTh','pEmoji','pPrice','pPriceUsd','pStock','pDesc','pBadge','pFileUrl','pShippingDomTHB','pShippingIntlTHB','pShippingIntlUSD'].forEach(i => document.getElementById(i).value='')
     document.getElementById('pType').value   = 'physical'
     document.getElementById('pStatus').value = 'active'
     toggleFileUrlField('physical')
@@ -600,6 +637,7 @@ async function openProductModal(id) {
 
 function toggleFileUrlField(type) {
   document.getElementById('fileUrlGroup').style.display = type === 'digital' ? 'block' : 'none'
+  document.getElementById('productShippingGroup').style.display = (type === 'physical' || type === 'preorder') ? 'block' : 'none'
 }
 
 // ให้ pType onchange toggle field
@@ -635,7 +673,10 @@ async function saveProduct() {
       description: document.getElementById('pDesc').value.trim(),
       status:      document.getElementById('pStatus').value,
       badge:       document.getElementById('pBadge').value.trim().toUpperCase(),
-      file_url:    document.getElementById('pFileUrl').value.trim() || null,
+      file_url:           document.getElementById('pFileUrl').value.trim() || null,
+      shipping_dom_thb:   document.getElementById('pShippingDomTHB').value  !== '' ? parseFloat(document.getElementById('pShippingDomTHB').value)  : null,
+      shipping_intl_thb:  document.getElementById('pShippingIntlTHB').value !== '' ? parseFloat(document.getElementById('pShippingIntlTHB').value) : null,
+      shipping_intl_usd:  document.getElementById('pShippingIntlUSD').value !== '' ? parseFloat(document.getElementById('pShippingIntlUSD').value) : null,
     }
     if (image_url) body.image_url = image_url
 
@@ -893,9 +934,11 @@ async function loadSettings() {
     document.getElementById('settingEmail').value        = data.email         || ''
     document.getElementById('settingAbout').value        = data.about_en      || ''
     document.getElementById('settingAboutTh').value      = data.about_th      || ''
-    document.getElementById('settingShippingTHB').value  = data.shipping_thb  || ''
-    document.getElementById('settingShippingUSD').value  = data.shipping_usd  || ''
-    document.getElementById('settingFreeShipping').value = data.free_shipping  || ''
+    document.getElementById('settingShippingTHB').value     = data.shipping_thb       || ''
+    document.getElementById('settingShippingUSD').value      = data.shipping_usd       || ''
+    document.getElementById('settingFreeShipping').value     = data.free_shipping       || ''
+    document.getElementById('settingShippingIntlTHB').value  = data.shipping_intl_thb  || ''
+    document.getElementById('settingFreeShippingIntl').value = data.free_shipping_intl  || ''
   } catch(e) {}
 }
 
@@ -905,9 +948,11 @@ async function saveSettings() {
     email:        document.getElementById('settingEmail').value.trim(),
     about_en:     document.getElementById('settingAbout').value.trim(),
     about_th:     document.getElementById('settingAboutTh').value.trim(),
-    shipping_thb: document.getElementById('settingShippingTHB').value || '0',
-    shipping_usd: document.getElementById('settingShippingUSD').value || '0',
-    free_shipping:document.getElementById('settingFreeShipping').value || '0',
+    shipping_thb:      document.getElementById('settingShippingTHB').value || '0',
+    shipping_usd:      document.getElementById('settingShippingUSD').value || '0',
+    free_shipping:     document.getElementById('settingFreeShipping').value || '0',
+    shipping_intl_thb: document.getElementById('settingShippingIntlTHB').value || '0',
+    free_shipping_intl:document.getElementById('settingFreeShippingIntl').value || '0',
   }
   try {
     const res = await fetch(`${API}/api/admin/settings`, {
