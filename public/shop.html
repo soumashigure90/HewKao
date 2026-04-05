@@ -1910,6 +1910,69 @@ footer strong { color: var(--pink-d); }
     document.body.appendChild(el)
   }
 
+  function savePageContent() { saveCurrentLangContent(true) }
+
+  async function saveCurrentLangContent(showMsg = false) {
+    const role = localStorage.getItem('mochi_role')
+    if (!editMode || role !== 'admin') return
+    const token = localStorage.getItem('mochi_token')
+    if (!token) return
+    const ids = ['heroTag','heroTitle','heroDesc']
+    const content = {}
+    ids.forEach(id => {
+      const el = document.getElementById(id)
+      if (el) content[id] = id === 'heroTitle' ? el.innerHTML : el.textContent
+    })
+    const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
+    if (heroBg) content['heroBg'] = heroBg
+    try {
+      const res = await fetch(`${API}/api/admin/page-content`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ lang, content })
+      })
+      if (showMsg && res.ok) showToast(`💾 Saved (${lang.toUpperCase()})`)
+    } catch(e) { if (showMsg) showToast('❌ Save failed') }
+  }
+
+  async function loadPageContent() {
+    const savedLang = localStorage.getItem('hewkao_lang') || 'en'
+    lang = savedLang
+    document.querySelectorAll('.nav-lang button').forEach((b,i) => {
+      b.classList.toggle('active', (i===0 && lang==='en') || (i===1 && lang==='th'))
+    })
+    await applyPageContent(lang)
+  }
+
+  async function applyPageContent(l) {
+    try {
+      const res = await fetch(`${API}/api/page-content?lang=${l}`)
+      const c = await res.json()
+      if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
+      if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
+      if (c.heroDesc)  document.getElementById('heroDesc').textContent = c.heroDesc
+      if (c.heroBg) {
+        const hero = document.getElementById('heroSection')
+        hero.style.backgroundImage    = `url('${c.heroBg}')`
+        hero.style.backgroundSize     = 'cover'
+        hero.style.backgroundPosition = 'center'
+        localStorage.setItem('hewkao_hero_bg', c.heroBg)
+      }
+    } catch(e) {}
+  }
+
+  async function loadShopSettings() {
+    try {
+      const res = await fetch(`${API}/api/settings`)
+      const data = await res.json()
+      const aboutDesc    = document.getElementById('aboutDesc')
+      const aboutTitle   = document.getElementById('aboutTitle')
+      const aboutContact = document.getElementById('aboutContact')
+      if (aboutDesc) { const text = lang==='en' ? data.about_en : data.about_th; if (text) aboutDesc.textContent = text }
+      if (aboutTitle && data.shop_name) aboutTitle.textContent = 'About ' + data.shop_name
+      if (aboutContact && data.email) aboutContact.textContent = '📧 ' + data.email
+    } catch(e) {}
+  }
+
   // ── PAGE EDITOR ──
   let editMode = false
 
