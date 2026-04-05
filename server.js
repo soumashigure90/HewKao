@@ -227,21 +227,29 @@ app.post('/api/check-discount', auth, async (req, res) => {
 // ORDERS ROUTES
 // ═══════════════════════════════════════
 
-// POST /api/orders — create order
-app.post('/api/orders', auth, async (req, res) => {
-  const { total, note, items } = req.body
+// POST /api/orders — create order (ไม่บังคับ login)
+app.post('/api/orders', async (req, res) => {
+  const { total, note, items, guest_info } = req.body
   if (!items || !items.length) return res.status(400).json({ error: 'No items' })
 
+  // ถ้ามี token ก็ใช้ user id ได้ ถ้าไม่มีก็เป็น guest
+  let member_id = null
+  const token = req.headers.authorization?.split(' ')[1]
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET)
+      member_id = decoded.id
+    } catch(e) {}
+  }
+
   try {
-    // สร้าง order
     const { data: order, error: orderErr } = await supabase
       .from('orders')
-      .insert({ member_id: req.user.id, total, note: note||null, status: 'pending' })
+      .insert({ member_id, total, note: note||null, status: 'pending', guest_info: guest_info||null })
       .select()
       .single()
     if (orderErr) throw orderErr
 
-    // สร้าง order_items
     const orderItems = items.map(i => ({
       order_id:   order.id,
       product_id: i.product_id,
