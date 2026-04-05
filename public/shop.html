@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HewKao Shop</title>
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('ihPYyy1esTXMHcxHu')</script>
 <style>
 :root {
   --pink:    #FFB7C5;
@@ -941,21 +943,34 @@ footer strong { color: var(--pink-d); }
 </footer>
 
 <!-- CHAT FAB -->
-<button class="chat-fab" onclick="toggleChat()">💬</button>
+<button class="chat-fab" onclick="toggleChat()" id="chatFab">✉️</button>
 <div class="chat-box" id="chatBox">
-  <div class="chat-header">
-    <div class="chat-avatar">🌸</div>
-    <div class="chat-header-info">
-      <h4 data-en="Chat with us!" data-th="แชทกับเรา!">Chat with us!</h4>
-      <p data-en="Usually replies within 1 hr" data-th="ตอบกลับภายใน 1 ชม.">Usually replies within 1 hr</p>
+  <div class="chat-header" style="justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="chat-avatar">🌸</div>
+      <div class="chat-header-info">
+        <h4>Contact Us</h4>
+        <p data-en="We'll reply to your email" data-th="เราจะตอบกลับทางอีเมล">We'll reply to your email</p>
+      </div>
     </div>
+    <button onclick="toggleChat()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
-  <div class="chat-messages" id="chatMessages">
-    <div class="msg from" data-en="Hi there! 🌸 How can I help you today?" data-th="สวัสดีค่ะ! 🌸 ช่วยอะไรได้บ้างคะ?">Hi there! 🌸 How can I help you today?</div>
-  </div>
-  <div class="chat-input-row">
-    <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChat()"/>
-    <button class="chat-send" onclick="sendChat()">➤</button>
+  <div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+    <input id="contactName" type="text" placeholder="Your name / ชื่อของคุณ"
+      style="padding:10px 14px;border:1.5px solid var(--pink-l);border-radius:12px;font-size:13px;font-family:Nunito,sans-serif;outline:none;transition:border-color .2s;"
+      onfocus="this.style.borderColor='var(--pink-d)'" onblur="this.style.borderColor='var(--pink-l)'" />
+    <input id="contactEmail" type="email" placeholder="Your email / อีเมลของคุณ *"
+      style="padding:10px 14px;border:1.5px solid var(--pink-l);border-radius:12px;font-size:13px;font-family:Nunito,sans-serif;outline:none;transition:border-color .2s;"
+      onfocus="this.style.borderColor='var(--pink-d)'" onblur="this.style.borderColor='var(--pink-l)'" />
+    <textarea id="contactMsg" rows="4" placeholder="Message / ข้อความ *"
+      style="padding:10px 14px;border:1.5px solid var(--pink-l);border-radius:12px;font-size:13px;font-family:Nunito,sans-serif;outline:none;resize:none;transition:border-color .2s;"
+      onfocus="this.style.borderColor='var(--pink-d)'" onblur="this.style.borderColor='var(--pink-l)'"></textarea>
+    <div id="contactStatus" style="font-size:12px;min-height:16px;text-align:center;"></div>
+    <button onclick="sendContactForm()" id="contactSendBtn"
+      style="padding:11px;background:var(--pink-d);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;transition:all .2s;box-shadow:0 4px 12px rgba(232,130,154,.3);"
+      onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+      📨 Send Message
+    </button>
   </div>
 </div>
 
@@ -1450,31 +1465,57 @@ footer strong { color: var(--pink-d); }
     }).catch(() => {})
   }
 
-  // ── CHAT ──
+  // ── CONTACT FORM ──
   function toggleChat() {
-    document.getElementById('chatBox').classList.toggle('open')
+    const box = document.getElementById('chatBox')
+    box.classList.toggle('open')
+    if (box.classList.contains('open')) {
+      setTimeout(() => document.getElementById('contactName')?.focus(), 200)
+    }
   }
 
-  function sendChat() {
-    const inp = document.getElementById('chatInput')
-    const msg = inp.value.trim()
-    if (!msg) return
-    const wrap = document.getElementById('chatMessages')
-    const el = document.createElement('div')
-    el.className = 'msg to'
-    el.textContent = msg
-    wrap.appendChild(el)
-    inp.value = ''
-    wrap.scrollTop = wrap.scrollHeight
-    setTimeout(() => {
-      const rep = document.createElement('div')
-      rep.className = 'msg from'
-      rep.textContent = lang === 'en'
-        ? "Thanks for your message! I'll get back to you soon 🌸"
-        : 'ขอบคุณนะคะ! จะตอบกลับเร็วๆ นี้ 🌸'
-      wrap.appendChild(rep)
-      wrap.scrollTop = wrap.scrollHeight
-    }, 1000)
+  async function sendContactForm() {
+    const name  = document.getElementById('contactName').value.trim()
+    const email = document.getElementById('contactEmail').value.trim()
+    const msg   = document.getElementById('contactMsg').value.trim()
+    const status = document.getElementById('contactStatus')
+    const btn    = document.getElementById('contactSendBtn')
+
+    if (!email || !msg) {
+      status.style.color = 'var(--red)'
+      status.textContent = lang === 'en' ? '❌ Please fill in email and message' : '❌ กรุณากรอกอีเมลและข้อความ'
+      return
+    }
+
+    btn.textContent = lang === 'en' ? 'Sending...' : 'กำลังส่ง...'
+    btn.disabled = true
+    status.textContent = ''
+
+    try {
+      await emailjs.send('service_5ifnuuj', 'template_dufbobd', {
+        from_name:  name || 'Anonymous',
+        from_email: email,
+        message:    msg,
+        name:       name || 'Anonymous',
+        email:      email,
+      })
+      status.style.color = 'var(--mint-d)'
+      status.textContent = lang === 'en' ? '✅ Message sent! We\'ll reply soon 🌸' : '✅ ส่งแล้ว! จะตอบกลับเร็วๆ นี้ 🌸'
+      document.getElementById('contactName').value  = ''
+      document.getElementById('contactEmail').value = ''
+      document.getElementById('contactMsg').value   = ''
+      btn.textContent = lang === 'en' ? '📨 Send Message' : '📨 ส่งข้อความ'
+      btn.disabled = false
+      setTimeout(() => {
+        status.textContent = ''
+        document.getElementById('chatBox').classList.remove('open')
+      }, 3000)
+    } catch(e) {
+      status.style.color = 'var(--red)'
+      status.textContent = lang === 'en' ? '❌ Failed to send. Please try again.' : '❌ ส่งไม่สำเร็จ ลองใหม่อีกครั้ง'
+      btn.textContent = lang === 'en' ? '📨 Send Message' : '📨 ส่งข้อความ'
+      btn.disabled = false
+    }
   }
 
   // ── DROPDOWN ──
