@@ -1284,44 +1284,37 @@ footer strong { color: var(--pink-d); }
 
       <!-- QR form -->
       <div id="payQRForm" style="display:none;text-align:center;">
-        <div style="background:var(--cream);border-radius:16px;padding:1.5rem;margin-bottom:1rem;">
-          <div style="font-size:11px;color:var(--text-s);letter-spacing:1px;margin-bottom:1rem;">SCAN TO PAY VIA PROMPTPAY</div>
-          <!-- Mock QR Code -->
-          <div style="width:180px;height:180px;background:#fff;border-radius:12px;margin:0 auto;display:flex;align-items:center;justify-content:center;border:2px solid var(--pink-l);position:relative;overflow:hidden;">
-            <svg width="160" height="160" viewBox="0 0 160 160">
-              <rect width="160" height="160" fill="white"/>
-              <!-- QR mock pattern -->
-              <rect x="10" y="10" width="50" height="50" fill="none" stroke="#333" stroke-width="4"/>
-              <rect x="18" y="18" width="34" height="34" fill="#333"/>
-              <rect x="100" y="10" width="50" height="50" fill="none" stroke="#333" stroke-width="4"/>
-              <rect x="108" y="18" width="34" height="34" fill="#333"/>
-              <rect x="10" y="100" width="50" height="50" fill="none" stroke="#333" stroke-width="4"/>
-              <rect x="18" y="108" width="34" height="34" fill="#333"/>
-              <rect x="70" y="10" width="8" height="8" fill="#333"/>
-              <rect x="82" y="10" width="8" height="8" fill="#333"/>
-              <rect x="70" y="22" width="8" height="8" fill="#333"/>
-              <rect x="70" y="46" width="8" height="8" fill="#333"/>
-              <rect x="82" y="34" width="8" height="8" fill="#333"/>
-              <rect x="70" y="70" width="8" height="8" fill="#333"/>
-              <rect x="82" y="70" width="8" height="8" fill="#333"/>
-              <rect x="94" y="70" width="8" height="8" fill="#333"/>
-              <rect x="70" y="82" width="8" height="8" fill="#333"/>
-              <rect x="94" y="82" width="8" height="8" fill="#333"/>
-              <rect x="106" y="70" width="8" height="8" fill="#333"/>
-              <rect x="118" y="82" width="8" height="8" fill="#333"/>
-              <rect x="130" y="70" width="8" height="8" fill="#333"/>
-              <rect x="106" y="94" width="8" height="8" fill="#333"/>
-              <rect x="118" y="106" width="8" height="8" fill="#333"/>
-              <rect x="130" y="94" width="8" height="8" fill="#333"/>
-              <rect x="118" y="118" width="8" height="8" fill="#333"/>
-              <rect x="130" y="130" width="8" height="8" fill="#333"/>
-            </svg>
+        <div style="background:var(--cream);border-radius:16px;padding:1.25rem;margin-bottom:1rem;">
+          <div style="font-size:11px;color:var(--text-s);letter-spacing:1px;margin-bottom:.75rem;">SCAN TO PAY VIA PROMPTPAY</div>
+          <div style="background:#fff;border-radius:12px;padding:10px;display:inline-block;border:2px solid var(--pink-l);">
+            <img id="promptpayQRImg" src="" alt="PromptPay QR" style="width:180px;height:180px;display:block;" />
           </div>
-          <div style="margin-top:1rem;font-size:13px;font-weight:700;color:var(--text);" id="qrAmount">฿0</div>
-          <div style="font-size:11px;color:var(--text-s);margin-top:4px;">HewKao Shop · PromptPay</div>
+          <div style="margin-top:.75rem;font-size:15px;font-weight:700;color:var(--pink-d);" id="qrAmount">฿0</div>
+          <div style="font-size:11px;color:var(--text-s);margin-top:2px;">HewKao Shop · PromptPay 095-756-2647</div>
         </div>
-        <div style="background:var(--lav-l);border-radius:10px;padding:10px 14px;font-size:11px;color:var(--lav-d);display:flex;align-items:center;gap:6px;">
-          🔒 <span>This is a demo QR. No real payment will be charged.</span>
+        <!-- Slip Upload -->
+        <div style="background:#fff;border:2px dashed var(--pink-l);border-radius:14px;padding:1rem;margin-bottom:1rem;cursor:pointer;transition:border-color .2s;" onclick="document.getElementById('slipInput').click()" id="slipUploadBox">
+          <input type="file" id="slipInput" accept="image/*" style="display:none" onchange="previewSlip(this)" />
+          <div id="slipPreviewWrap" style="display:none;margin-bottom:8px;">
+            <img id="slipPreviewImg" style="max-width:100%;max-height:160px;border-radius:10px;object-fit:contain;" />
+          </div>
+          <div id="slipUploadText">
+            <div style="font-size:24px;margin-bottom:4px;">📎</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-s);">Upload Payment Slip</div>
+            <div style="font-size:11px;color:var(--text-s);margin-top:2px;">อัพโหลดสลิปการโอนเงิน</div>
+          </div>
+        </div>
+        <div id="slipVerifyStatus" style="font-size:12px;min-height:16px;margin-bottom:8px;"></div>
+      </div>
+    </div>
+    <div class="checkout-body" style="padding-top:0;">
+      <!-- Guest email (แสดงเฉพาะ guest + digital) -->
+      <div id="guestEmailBox" style="display:none;padding:1rem 1.5rem 0;">
+        <div style="background:var(--lav-l);border-radius:12px;padding:12px 14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--lav-d);letter-spacing:.5px;margin-bottom:6px;">📧 EMAIL FOR DOWNLOAD LINK</div>
+          <input type="email" id="guestEmailInput" placeholder="your@email.com"
+            style="width:100%;padding:9px 12px;border:1.5px solid var(--lav);border-radius:10px;font-size:13px;font-family:Nunito,sans-serif;outline:none;background:#fff;" />
+          <div style="font-size:11px;color:var(--lav-d);margin-top:5px;">เราจะส่ง download link ไปที่อีเมลนี้</div>
         </div>
       </div>
     </div>
@@ -2150,10 +2143,26 @@ footer strong { color: var(--pink-d); }
 
   // ── PAYMENT ──
   let currentPayTab = 'card'
+  let _slipFile = null
 
   function openPayment(total) {
-    document.getElementById('qrAmount').textContent = '฿' + Number(total).toLocaleString()
-    switchPayTab('card')
+    const amt = Number(total)
+    document.getElementById('qrAmount').textContent = '฿' + amt.toLocaleString()
+
+    // สร้าง PromptPay QR จริง
+    const phone = '0957562647'.replace(/-/g,'')
+    const promptpayId = '0066' + phone.substring(1)
+    const qrUrl = `https://promptpay.io/${promptpayId}/${amt}.png`
+    document.getElementById('promptpayQRImg').src = qrUrl
+
+    // reset slip
+    _slipFile = null
+    document.getElementById('slipInput').value = ''
+    document.getElementById('slipPreviewWrap').style.display = 'none'
+    document.getElementById('slipUploadText').style.display = 'block'
+    document.getElementById('slipVerifyStatus').textContent = ''
+
+    // reset card
     document.getElementById('cardNumber').value  = ''
     document.getElementById('cardHolder').value  = ''
     document.getElementById('cardExp').value     = ''
@@ -2161,56 +2170,103 @@ footer strong { color: var(--pink-d); }
     document.getElementById('cardPreview').textContent = 'xxxx xxxx xxxx xxxx'
     document.getElementById('cardHolderPreview').textContent = 'YOUR NAME'
     document.getElementById('cardExpPreview').textContent = 'MM/YY'
-    document.getElementById('confirmPayBtn').textContent = 'Confirm Payment'
+    document.getElementById('confirmPayBtn').textContent = '✅ Confirm Payment'
     document.getElementById('confirmPayBtn').disabled = false
+
+    // แสดง guest email box ถ้าเป็น guest + มี digital item
+    const token = localStorage.getItem('mochi_token')
+    const orderItems = window._buyNowItems || cart
+    const hasDigital = orderItems.some(i => i.type === 'digital')
+    const guestEmailBox = document.getElementById('guestEmailBox')
+    if (!token && hasDigital) {
+      guestEmailBox.style.display = 'block'
+      document.getElementById('guestEmailInput').value = ''
+    } else {
+      guestEmailBox.style.display = 'none'
+    }
+
+    switchPayTab('qr') // default QR
     document.getElementById('paymentOverlay').classList.remove('closing')
     document.getElementById('paymentOverlay').classList.add('open')
   }
 
-  function closePayment() {
-    const o = document.getElementById('paymentOverlay')
-    o.classList.add('closing')
-    setTimeout(() => o.classList.remove('open','closing'), 220)
-  }
-
-  function switchPayTab(tab) {
-    currentPayTab = tab
-    document.getElementById('payCardForm').style.display = tab==='card' ? 'block' : 'none'
-    document.getElementById('payQRForm').style.display   = tab==='qr'   ? 'block' : 'none'
-    const cardBtn = document.getElementById('payTabCard')
-    const qrBtn   = document.getElementById('payTabQR')
-    if (tab==='card') {
-      cardBtn.style.background='var(--pink-d)'; cardBtn.style.color='#fff'; cardBtn.style.borderColor='var(--pink-d)'
-      qrBtn.style.background='#fff'; qrBtn.style.color='var(--text-s)'; qrBtn.style.borderColor='var(--pink-l)'
-    } else {
-      qrBtn.style.background='var(--pink-d)'; qrBtn.style.color='#fff'; qrBtn.style.borderColor='var(--pink-d)'
-      cardBtn.style.background='#fff'; cardBtn.style.color='var(--text-s)'; cardBtn.style.borderColor='var(--pink-l)'
+  function previewSlip(input) {
+    _slipFile = input.files[0]
+    if (!_slipFile) return
+    const reader = new FileReader()
+    reader.onload = e => {
+      document.getElementById('slipPreviewImg').src = e.target.result
+      document.getElementById('slipPreviewWrap').style.display = 'block'
+      document.getElementById('slipUploadText').style.display = 'none'
     }
+    reader.readAsDataURL(_slipFile)
+    document.getElementById('slipVerifyStatus').textContent = ''
+    document.getElementById('slipUploadBox').style.borderColor = 'var(--mint)'
   }
 
-  function formatCard(el) {
-    let v = el.value.replace(/\D/g,'').substring(0,16)
-    el.value = v.replace(/(.{4})/g,'$1 ').trim()
-    const preview = v.padEnd(16,'x')
-    document.getElementById('cardPreview').textContent =
-      preview.substring(0,4)+' '+preview.substring(4,8)+' '+preview.substring(8,12)+' '+preview.substring(12,16)
-  }
-
-  function formatExp(el) {
-    let v = el.value.replace(/\D/g,'')
-    if (v.length >= 2) v = v.substring(0,2)+'/'+v.substring(2,4)
-    el.value = v
-    document.getElementById('cardExpPreview').textContent = v || 'MM/YY'
-  }
-
-  function confirmPayment() {
+  async function confirmPayment() {
     if (currentPayTab === 'card') {
-      const num = document.getElementById('cardNumber').value.replace(/\s/g,'')
+      const num    = document.getElementById('cardNumber').value.replace(/\s/g,'')
       const holder = document.getElementById('cardHolder').value.trim()
-      const exp = document.getElementById('cardExp').value
-      const cvv = document.getElementById('cardCvv').value
+      const exp    = document.getElementById('cardExp').value
+      const cvv    = document.getElementById('cardCvv').value
       if (!num || num.length < 16 || !holder || !exp || !cvv) { showToast('Please fill in all card details'); return }
     }
+
+    if (currentPayTab === 'qr') {
+      if (!_slipFile) { showToast('กรุณาอัพโหลดสลิปการโอนเงินก่อนนะคะ 📎'); return }
+
+      // เช็ค guest email ถ้าจำเป็น
+      const token = localStorage.getItem('mochi_token')
+      const orderItems = window._buyNowItems || cart
+      const hasDigital = orderItems.some(i => i.type === 'digital')
+      if (!token && hasDigital) {
+        const guestEmail = document.getElementById('guestEmailInput').value.trim()
+        if (!guestEmail || !guestEmail.includes('@')) { showToast('กรุณากรอกอีเมลสำหรับรับ download link ค่ะ 📧'); return }
+      }
+
+      const btn = document.getElementById('confirmPayBtn')
+      btn.textContent = 'Verifying slip...'
+      btn.disabled = true
+      const status = document.getElementById('slipVerifyStatus')
+      status.style.color = 'var(--text-s)'
+      status.textContent = '🔍 กำลังตรวจสอบสลิป...'
+
+      try {
+        // ส่ง slip ไป verify ที่ server
+        const formData = new FormData()
+        formData.append('slip', _slipFile)
+        const total = Number(document.getElementById('qrAmount').textContent.replace(/[^0-9.]/g,''))
+        formData.append('amount', total)
+
+        const res = await fetch(`${API}/api/verify-slip`, {
+          method: 'POST',
+          headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+          body: formData
+        })
+        const data = await res.json()
+
+        if (!res.ok || !data.valid) {
+          status.style.color = 'var(--red)'
+          status.textContent = '❌ ' + (data.message || 'สลิปไม่ถูกต้อง กรุณาลองใหม่')
+          btn.textContent = '✅ Confirm Payment'
+          btn.disabled = false
+          return
+        }
+
+        status.style.color = 'var(--mint-d)'
+        status.textContent = '✅ ยืนยันการชำระเงินแล้ว!'
+        setTimeout(() => { closePayment(); submitOrder() }, 800)
+      } catch(e) {
+        status.style.color = 'var(--red)'
+        status.textContent = '❌ เกิดข้อผิดพลาด กรุณาลองใหม่'
+        btn.textContent = '✅ Confirm Payment'
+        btn.disabled = false
+      }
+      return
+    }
+
+    // card payment
     const btn = document.getElementById('confirmPayBtn')
     btn.textContent = 'Processing...'
     btn.disabled = true
@@ -2220,25 +2276,21 @@ footer strong { color: var(--pink-d); }
   async function submitOrder() {
     const token = localStorage.getItem('mochi_token')
     const orderItems = window._buyNowItems || cart
-    const isPreorder  = orderItems.some(i => i.type === 'preorder')
+    const isPreorder   = orderItems.some(i => i.type === 'preorder')
     const isAllDigital = orderItems.every(i => i.type === 'digital')
     const total = orderItems.reduce((s,i) => s + i.price*i.qty, 0)
     const note  = document.getElementById('checkoutNote')?.value?.trim() || ''
     const items = orderItems.map(i => ({ product_id:i.id, quantity:i.qty, price:i.price }))
-
-    const guest_info = userProfile ? {
-      full_name: userProfile.full_name,
-      phone:     userProfile.phone,
-      country:   userProfile.country,
-      address:   userProfile.address
-    } : null
+    const guest_info = userProfile ? { full_name:userProfile.full_name, phone:userProfile.phone, country:userProfile.country, address:userProfile.address } : null
+    const guestEmailEl = document.getElementById('guestEmailInput')
+    const guest_email  = (!token && guestEmailEl) ? guestEmailEl.value.trim() : null
 
     try {
       const headers = { 'Content-Type':'application/json' }
       if (token) headers['Authorization'] = 'Bearer ' + token
       const res = await fetch(`${API}/api/orders`, {
         method:'POST', headers,
-        body: JSON.stringify({ total, note, items, guest_info })
+        body: JSON.stringify({ total, note, items, guest_info, guest_email })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -2252,9 +2304,7 @@ footer strong { color: var(--pink-d); }
       updateCartBadge()
       setTimeout(() => { co.style.display = '' }, 500)
 
-      // ถ้าเป็น digital ทั้งหมด — auto confirm แล้วดึง download links มาโชว์ทันที
       if (isAllDigital) {
-        // เรียก auto-confirm สำหรับ digital order
         try {
           const confirmRes = await fetch(`${API}/api/orders/${data.id}/auto-confirm`, {
             method: 'POST',
@@ -2263,29 +2313,24 @@ footer strong { color: var(--pink-d); }
           const confirmData = await confirmRes.json()
           if (confirmData.download_links && confirmData.download_links.length > 0) {
             showDigitalDownloadPopup(confirmData.download_links)
-          } else {
-            showOrderSuccess(data.id, false)
-          }
-        } catch(e) {
-          showOrderSuccess(data.id, false)
-        }
+          } else { showOrderSuccess(isPreorder) }
+        } catch(e) { showOrderSuccess(isPreorder) }
       } else {
-        showOrderSuccess(data.id, isPreorder)
+        showOrderSuccess(isPreorder)
       }
     } catch(e) {
       showToast('❌ ' + (e.message || 'Failed to place order'))
     }
   }
 
-  function showOrderSuccess(orderId, isPreorder) {
+  function showOrderSuccess(isPreorder) {
     const el = document.createElement('div')
     el.id = 'orderSuccessOverlay'
     el.style.cssText = 'position:fixed;inset:0;background:rgba(74,63,92,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:overlayIn .25s ease forwards;'
     el.innerHTML = `
       <div style="background:#fff;border-radius:28px;padding:2.5rem 2rem;width:340px;max-width:92vw;text-align:center;box-shadow:0 24px 80px rgba(180,140,200,.4);animation:prodModalIn .45s cubic-bezier(0.34,1.4,0.64,1) forwards;">
         <div style="font-size:64px;margin-bottom:1rem;">${isPreorder?'⏳':'🎉'}</div>
-        <h2 style="font-family:Quicksand,sans-serif;font-size:22px;font-weight:700;color:var(--pink-d);margin-bottom:8px;">${isPreorder?'Pre-order Received!':'Order Placed!'}</h2>
-        <p style="font-size:13px;color:var(--text-s);margin-bottom:6px;">Order <strong>#${orderId}</strong></p>
+        <h2 style="font-family:Quicksand,sans-serif;font-size:22px;font-weight:700;color:var(--pink-d);margin-bottom:12px;">${isPreorder?'Pre-order Received!':'Order Placed!'}</h2>
         <p style="font-size:13px;color:var(--text-s);line-height:1.7;margin-bottom:1.75rem;">
           ${isPreorder?'เราได้รับ pre-order ของคุณแล้ว<br>จะยืนยันโดยเร็วที่สุดนะคะ 🌸':'รับออเดอร์เรียบร้อยแล้ว!<br>ขอบคุณที่ซื้อสินค้ากับเราค่ะ 🌸'}
         </p>
