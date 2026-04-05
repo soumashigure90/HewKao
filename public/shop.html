@@ -715,6 +715,7 @@ footer strong { color: var(--pink-d); }
     <button class="btn-login" id="loginBtn" onclick="toggleDropdown()" style="position:relative;">
       🔑 <span id="loginBtnText">Login</span>
       <span class="cart-badge-nav" id="cartBadgeNav">0</span>
+      <span id="adminOrderBadge" style="display:none;position:absolute;top:-6px;left:-6px;background:var(--red);color:#fff;width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:700;align-items:center;justify-content:center;animation:badgePop .3s cubic-bezier(0.34,1.8,0.64,1);">0</span>
     </button>
     <div class="user-dropdown" id="userDropdown">
       <div class="dropdown-header" id="dropdownHeader">My Account</div>
@@ -1316,8 +1317,11 @@ footer strong { color: var(--pink-d); }
     localStorage.removeItem('mochi_token')
     localStorage.removeItem('mochi_role')
     localStorage.removeItem('mochi_user')
+    userProfile = null
     checkLoginState()
     checkEditBtn()
+    document.getElementById('adminOrderBadge').style.display = 'none'
+    document.getElementById('adminOrderBanner')?.remove()
     showToast('Logged out 👋')
   }
 
@@ -1855,10 +1859,22 @@ footer strong { color: var(--pink-d); }
     const total = orderItems.reduce((s,i) => s + i.price*i.qty, 0)
     const note  = document.getElementById('checkoutNote')?.value?.trim() || ''
     const items = orderItems.map(i => ({ product_id:i.id, quantity:i.qty, price:i.price }))
+
+    // ส่ง guest_info ถ้ามีที่อยู่แต่ยังไม่ได้ login
+    const guest_info = userProfile ? {
+      full_name: userProfile.full_name,
+      phone:     userProfile.phone,
+      country:   userProfile.country,
+      address:   userProfile.address
+    } : null
+
     try {
       const headers = { 'Content-Type':'application/json' }
       if (token) headers['Authorization'] = 'Bearer ' + token
-      const res = await fetch(`${API}/api/orders`, { method:'POST', headers, body:JSON.stringify({ total, note, items }) })
+      const res = await fetch(`${API}/api/orders`, {
+        method:'POST', headers,
+        body: JSON.stringify({ total, note, items, guest_info })
+      })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       cart = []; saveCart(); window._buyNowItems = null
@@ -1871,7 +1887,7 @@ footer strong { color: var(--pink-d); }
       showOrderSuccess(data.id, isPreorder)
       setTimeout(() => { co.style.display = '' }, 500)
     } catch(e) {
-      showToast((e.message || 'Failed to place order'))
+      showToast('❌ ' + (e.message || 'Failed to place order'))
     }
   }
 
@@ -1894,6 +1910,51 @@ footer strong { color: var(--pink-d); }
     document.body.appendChild(el)
   }
 
+  // ── ADMIN NOTIFICATION (เฉพาะ admin เท่านั้น) ──
+  let _lastOrderCount = -1
+
+  async function pollAdminOrders() {
+    const role  = localStorage.getItem('mochi_role')
+    const token = localStorage.getItem('mochi_token')
+    if (role !== 'admin' || !token) return
+    try {
+      const res = await fetch(`${API}/api/admin/orders/new-count`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      if (!res.ok) return
+      const { count } = await res.json()
+      // แสดง banner ครั้งแรกหรือถ้ามี order ใหม่เพิ่ม
+      if (_lastOrderCount >= 0 && count > _lastOrderCount) {
+        showAdminOrderBanner(count)
+      }
+      // อัพเดท badge บน login btn
+      const badge = document.getElementById('adminOrderBadge')
+      if (badge) {
+        badge.textContent = count
+        badge.style.display = count > 0 ? 'flex' : 'none'
+      }
+      _lastOrderCount = count
+    } catch(e) {}
+  }
+
+  function showAdminOrderBanner(count) {
+    // ลบ banner เก่าถ้ามี
+    document.getElementById('adminOrderBanner')?.remove()
+    const b = document.createElement('div')
+    b.id = 'adminOrderBanner'
+    b.style.cssText = 'position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:9000;background:#fff;border:2px solid var(--pink-l);border-radius:20px;padding:12px 20px;box-shadow:0 8px 32px rgba(180,140,200,.3);display:flex;align-items:center;gap:12px;animation:dropIn .3s cubic-bezier(0.34,1.4,0.64,1);white-space:nowrap;'
+    b.innerHTML = `
+      <span style="font-size:22px;">🛍️</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);">New Order${count>1?'s':''} Pending!</div>
+        <div style="font-size:11px;color:var(--text-s);">${count} order${count>1?'s':''} waiting for review</div>
+      </div>
+      <a href="/admin.html" style="background:var(--pink-d);color:#fff;border:none;border-radius:12px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;text-decoration:none;margin-left:4px;">View →</a>
+      <button onclick="document.getElementById('adminOrderBanner').remove()" style="background:var(--cream);border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">✕</button>`
+    document.body.appendChild(b)
+    setTimeout(() => b?.remove(), 10000)
+  }
+
   // ── INIT ──
   async function init() {
     document.body.style.opacity = '0'
@@ -1903,6 +1964,9 @@ footer strong { color: var(--pink-d); }
     checkEditBtn()
     await Promise.all([ loadPageContent(), loadProducts(), loadShopSettings(), loadProfile() ])
     document.body.style.opacity = '1'
+    // เริ่ม poll admin orders ถ้าเป็น admin
+    pollAdminOrders()
+    setInterval(pollAdminOrders, 30000)
   }
 
   init()
