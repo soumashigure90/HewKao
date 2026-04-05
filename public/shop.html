@@ -1805,17 +1805,22 @@ footer strong { color: var(--pink-d); }
     document.getElementById('coSubtotal').textContent = '฿' + subtotal.toLocaleString()
     document.getElementById('coDiscount').textContent = discount > 0 ? '-฿' + discount.toLocaleString() : '-฿0'
     document.getElementById('coTotal').textContent    = '฿' + total.toLocaleString()
-    // แสดงข้อมูลผู้รับเสมอ
+    // แสดงที่อยู่เฉพาะถ้ามี physical/preorder
     const addrBox = document.getElementById('checkoutAddr')
-    addrBox.style.display = 'block'
-    const p = userProfile
-    const lines = [
-      p?.full_name ? `👤 ${p.full_name}` : null,
-      p?.phone     ? `📞 ${p.phone}`     : null,
-      p?.address   ? `📍 ${p.address}`   : null,
-      p?.country   ? `🌍 ${p.country}`   : null,
-    ].filter(Boolean)
-    document.getElementById('coAddrText').innerHTML = lines.join('<br>') || '—'
+    const hasPhysical = items.some(i => i.type==='physical'||i.type==='preorder')
+    if (hasPhysical) {
+      addrBox.style.display = 'block'
+      const p = userProfile
+      const lines = [
+        p?.full_name ? `👤 ${p.full_name}` : null,
+        p?.phone     ? `📞 ${p.phone}`     : null,
+        p?.address   ? `📍 ${p.address}`   : null,
+        p?.country   ? `🌍 ${p.country}`   : null,
+      ].filter(Boolean)
+      document.getElementById('coAddrText').innerHTML = lines.join('<br>') || '—'
+    } else {
+      addrBox.style.display = 'none'
+    }
     document.getElementById('checkoutNote').value = ''
     document.getElementById('checkoutOverlay').classList.remove('closing')
     document.getElementById('checkoutOverlay').classList.add('open')
@@ -1823,8 +1828,9 @@ footer strong { color: var(--pink-d); }
 
   function openCheckout() {
     if (!cart.length) return
-    // บังคับกรอกที่อยู่ทุก order เสมอ
-    if (!hasAddress()) { openAddrCollect(() => openCheckout()); return }
+    // บังคับที่อยู่เฉพาะ physical และ preorder เท่านั้น
+    const needAddr = cart.some(i => i.type === 'physical' || i.type === 'preorder')
+    if (needAddr && !hasAddress()) { openAddrCollect(() => openCheckout()); return }
     const subtotal = cart.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
     const total    = cart.reduce((s,i) => s + i.price*i.qty, 0)
     _buildCheckoutModal(cart, subtotal, total, subtotal - total)
@@ -1832,9 +1838,10 @@ footer strong { color: var(--pink-d); }
 
   function buyNowFromModal() {
     if (!currentProduct) return
-    // บังคับกรอกที่อยู่ทุก order เสมอ
-    if (!hasAddress()) { openAddrCollect(() => buyNowFromModal()); return }
     const p = currentProduct
+    // บังคับที่อยู่เฉพาะ physical และ preorder
+    const needAddr = p.type === 'physical' || p.type === 'preorder'
+    if (needAddr && !hasAddress()) { openAddrCollect(() => buyNowFromModal()); return }
     const origPrice  = Number(p.price)
     const finalPrice = discountedPrice || origPrice
     const buyItem = [{ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved:origPrice-finalPrice, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 }]
