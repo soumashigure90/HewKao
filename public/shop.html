@@ -2093,15 +2093,41 @@ footer strong { color: var(--pink-d); }
   }
 
   // ── CHECKOUT ──
-  function getShipping(subtotalTHB) {
-    const settings = window._shopSettings || {}
-    const shippingTHB  = parseFloat(settings.shipping_thb  || 0)
-    const shippingUSD  = parseFloat(settings.shipping_usd  || 0)
-    const freeThreshold = parseFloat(settings.free_shipping || 0)
-    // ส่งฟรีถ้าซื้อครบ threshold (0 = ส่งฟรีทุก order)
-    if (freeThreshold > 0 && subtotalTHB >= freeThreshold) return { thb:0, usd:0, free:true }
-    if (freeThreshold === 0 && shippingTHB === 0) return { thb:0, usd:0, free:true }
-    return { thb: shippingTHB, usd: shippingUSD, free: false }
+  function isInternational() {
+    const country = userProfile?.country || ''
+    if (!country) return false
+    const lower = country.toLowerCase().trim()
+    return !(lower === 'thailand' || lower === 'ไทย' || lower === 'th' || lower === 'thai')
+  }
+
+  function getShipping(items, subtotalTHB, subtotalUSD) {
+    const s   = window._shopSettings || {}
+    const intl = isInternational()
+
+    if (intl) {
+      // ต่างประเทศ — หาค่าส่งสูงสุดจากสินค้า (USD ก่อน THB)
+      const freeUSD = parseFloat(s.free_shipping_intl || 0)
+      if (freeUSD > 0 && subtotalUSD >= freeUSD) return { thb:0, usd:0, free:true, intl:true }
+
+      let maxTHB = parseFloat(s.shipping_intl_thb || 0)
+      let maxUSD = parseFloat(s.shipping_usd || 0)
+      items.filter(i => i.type==='physical'||i.type==='preorder').forEach(i => {
+        if (i.shipping_intl_thb != null && i.shipping_intl_thb > maxTHB) maxTHB = i.shipping_intl_thb
+        if (i.shipping_intl_usd != null && i.shipping_intl_usd > maxUSD) maxUSD = i.shipping_intl_usd
+      })
+      return { thb: maxTHB, usd: maxUSD, free: false, intl: true }
+    } else {
+      // ในประเทศ — THB เท่านั้น
+      const freeTHB = parseFloat(s.free_shipping || 0)
+      if (freeTHB > 0 && subtotalTHB >= freeTHB) return { thb:0, usd:0, free:true, intl:false }
+      if (freeTHB === 0 && parseFloat(s.shipping_thb||0) === 0) return { thb:0, usd:0, free:true, intl:false }
+
+      let maxTHB = parseFloat(s.shipping_thb || 0)
+      items.filter(i => i.type==='physical'||i.type==='preorder').forEach(i => {
+        if (i.shipping_dom_thb != null && i.shipping_dom_thb > maxTHB) maxTHB = i.shipping_dom_thb
+      })
+      return { thb: maxTHB, usd: 0, free: false, intl: false }
+    }
   }
 
   function fmtPrice(thb, usd) {
@@ -2117,7 +2143,7 @@ footer strong { color: var(--pink-d); }
     const discountUSD = 0
 
     // คำนวณค่าส่ง (based on THB subtotal)
-    const ship = getShipping(total)
+    const ship = getShipping(items, total, totalUSD)
     const hasPhysical = items.some(i => i.type==='physical'||i.type==='preorder')
     const shippingTHB = hasPhysical ? ship.thb : 0
     const shippingUSD = hasPhysical ? ship.usd : 0
@@ -2184,20 +2210,26 @@ footer strong { color: var(--pink-d); }
       addrBox.style.display = 'none'
     }
 
-    // แสดง free shipping progress ถ้ายังไม่ถึง threshold
-    const freeThreshold = parseFloat(window._shopSettings?.free_shipping || 0)
+    // แสดง free shipping progress
+    const s = window._shopSettings || {}
+    const intl = isInternational()
+    const freeThreshold = intl
+      ? parseFloat(s.free_shipping_intl || 0)
+      : parseFloat(s.free_shipping || 0)
+    const progressBase = intl ? totalUSD : total
     let progressRow = document.getElementById('coFreeShipProgress')
     if (hasPhysical && freeThreshold > 0 && !ship.free) {
-      const remaining = freeThreshold - total
+      const remaining = freeThreshold - progressBase
+      const currency  = intl ? '$' : '฿'
       if (!progressRow) {
         progressRow = document.createElement('div')
         progressRow.id = 'coFreeShipProgress'
         progressRow.style.cssText = 'margin:8px 0 0;padding:10px 12px;background:var(--lav-l);border-radius:10px;font-size:12px;color:var(--lav-d);'
         document.querySelector('.checkout-summary').after(progressRow)
       }
-      const pct = Math.min(100, Math.round(total / freeThreshold * 100))
+      const pct = Math.min(100, Math.round(progressBase / freeThreshold * 100))
       progressRow.style.display = 'block'
-      progressRow.innerHTML = `✨ ซื้ออีก ฿${remaining.toLocaleString()} เพื่อรับ <strong>ส่งฟรี!</strong>
+      progressRow.innerHTML = `✨ ซื้ออีก ${currency}${remaining.toLocaleString()} เพื่อรับ <strong>ส่งฟรี!</strong>
         <div style="background:var(--pink-l);border-radius:10px;height:6px;margin-top:6px;overflow:hidden;">
           <div style="background:var(--lav-d);height:100%;width:${pct}%;border-radius:10px;transition:width .5s;"></div>
         </div>`
