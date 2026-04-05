@@ -257,14 +257,30 @@ app.post('/api/orders', auth, async (req, res) => {
   }
 })
 
-// GET /api/admin/orders
+// GET /api/admin/orders?page=1&limit=10
 app.get('/api/admin/orders', auth, adminOnly, async (req, res) => {
-  const { data, error } = await supabase
+  const page  = parseInt(req.query.page)  || 1
+  const limit = parseInt(req.query.limit) || 10
+  const from  = (page - 1) * limit
+  const to    = from + limit - 1
+
+  const { data, error, count } = await supabase
     .from('orders')
-    .select(`*, members(username, email, address, phone), order_items(quantity, price, products(name, name_th, emoji, type))`)
+    .select(`*, members(username, email, address, phone, full_name, country), order_items(quantity, price, products(name, name_th, emoji, type))`, { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(from, to)
   if (error) return res.status(500).json({ error: error.message })
-  res.json(data)
+  res.json({ orders: data, total: count, page, limit })
+})
+
+// GET /api/admin/orders/new-count — จำนวน order pending ใหม่
+app.get('/api/admin/orders/new-count', auth, adminOnly, async (req, res) => {
+  const { count, error } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'pending')
+  if (error) return res.status(500).json({ error: error.message })
+  res.json({ count })
 })
 
 // PUT /api/admin/orders/:id — confirm or reject
@@ -281,6 +297,16 @@ app.put('/api/admin/orders/:id', auth, adminOnly, async (req, res) => {
     .single()
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
+})
+
+// DELETE /api/admin/orders/:id
+app.delete('/api/admin/orders/:id', auth, adminOnly, async (req, res) => {
+  const { id } = req.params
+  // ลบ order_items ก่อน
+  await supabase.from('order_items').delete().eq('order_id', id)
+  const { error } = await supabase.from('orders').delete().eq('id', id)
+  if (error) return res.status(500).json({ error: error.message })
+  res.json({ message: 'Deleted' })
 })
 
 // ═══════════════════════════════════════
@@ -310,25 +336,30 @@ app.delete('/api/admin/members/:id', auth, adminOnly, async (req, res) => {
   res.json({ message: 'Deleted' })
 })
 
-// GET /api/profile — ดึงข้อมูลโปรไฟล์ตัวเอง
+// GET /api/profile
 app.get('/api/profile', auth, async (req, res) => {
   const { data, error } = await supabase
     .from('members')
-    .select('id, username, email, address, phone, created_at')
+    .select('id, username, email, address, phone, full_name, country, created_at')
     .eq('id', req.user.id)
     .single()
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
 })
 
-// PUT /api/profile — อัพเดทโปรไฟล์ตัวเอง
+// PUT /api/profile
 app.put('/api/profile', auth, async (req, res) => {
-  const { address, phone } = req.body
+  const { address, phone, full_name, country } = req.body
   const { data, error } = await supabase
     .from('members')
-    .update({ address: address||null, phone: phone||null })
+    .update({
+      address:   address   || null,
+      phone:     phone     || null,
+      full_name: full_name || null,
+      country:   country   || null
+    })
     .eq('id', req.user.id)
-    .select('id, username, email, address, phone')
+    .select('id, username, email, address, phone, full_name, country')
     .single()
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
