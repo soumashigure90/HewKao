@@ -694,9 +694,15 @@ async function loadOrders(page) {
       const items = o.order_items?.map(i =>
         `${i.products?.emoji||'📦'} ${i.products?.name||'?'} ×${i.quantity}`
       ).join('<br>') || '—'
-      const addrParts = [o.members?.full_name, o.members?.address, o.members?.country].filter(Boolean)
+      // แสดงที่อยู่จาก member หรือ guest_info
+      const gi = o.guest_info
+      const addrName    = o.members?.full_name || gi?.full_name || ''
+      const addrPhone   = o.members?.phone     || gi?.phone     || ''
+      const addrAddress = o.members?.address   || gi?.address   || ''
+      const addrCountry = o.members?.country   || gi?.country   || ''
+      const addrParts = [addrName, addrPhone, addrAddress, addrCountry].filter(Boolean)
       const addr = addrParts.length
-        ? `<span style="font-size:11px;color:var(--text-s);max-width:150px;display:block;line-height:1.5;">${addrParts.join('<br>')}</span>`
+        ? `<span style="font-size:11px;color:var(--text-s);max-width:150px;display:block;line-height:1.6;">${addrParts.join('<br>')}${!o.member_id?'<br><span style="color:var(--peach);font-weight:700;">👤 Guest</span>':''}</span>`
         : '<span style="color:#ccc;">—</span>'
       const date = new Date(o.created_at).toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'2-digit'})
       const statusColors = { pending:'preorder', paid:'active', shipped:'digital', cancelled:'hidden' }
