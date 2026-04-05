@@ -739,9 +739,32 @@ footer strong { color: var(--pink-d); }
   from { width: 0%; }
   to   { width: 100%; }
 }
+
+/* SUSHI RAIN */
+.sushi-rain {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.sushi-drop {
+  position: absolute;
+  font-size: 28px;
+  opacity: 0.4;
+  animation: sushiFall linear infinite;
+  top: -60px;
+  user-select: none;
+}
+@keyframes sushiFall {
+  0%   { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(110vh) rotate(30deg); }
+}
 </style>
 </head>
 <body>
+
+<!-- SUSHI RAIN -->
+<div class="sushi-rain" id="sushiRain"></div>
 
 <!-- NAV -->
 <nav>
@@ -2408,6 +2431,28 @@ footer strong { color: var(--pink-d); }
       }).join('') + `</div>`
   }
 
+  // ── SUSHI RAIN ──
+  function initSushiRain() {
+    const container = document.getElementById('sushiRain')
+    const count = 18
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('span')
+      el.className = 'sushi-drop'
+      el.textContent = '🍣'
+      const left     = Math.random() * 100
+      const duration = 6 + Math.random() * 8   // 6–14s
+      const delay    = Math.random() * 10        // 0–10s delay
+      const size     = 20 + Math.random() * 18  // 20–38px
+      el.style.cssText = `
+        left: ${left}%;
+        font-size: ${size}px;
+        animation-duration: ${duration}s;
+        animation-delay: -${delay}s;
+      `
+      container.appendChild(el)
+    }
+  }
+
   // ── INIT ──
   async function init() {
     document.body.style.opacity = '0'
@@ -2415,6 +2460,7 @@ footer strong { color: var(--pink-d); }
     checkLoginState()
     updateCartBadge()
     checkEditBtn()
+    initSushiRain()
     await Promise.all([ loadPageContent(), loadProducts(), loadShopSettings(), loadProfile() ])
     document.body.style.opacity = '1'
     // เริ่ม poll admin orders ถ้าเป็น admin
