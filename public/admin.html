@@ -160,7 +160,10 @@ textarea{resize:vertical;min-height:80px;}
       <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon">📊</span> Dashboard</button>
       <div class="nav-section">STORE</div>
       <button class="nav-item" onclick="showPage('products',this)"><span class="icon">📦</span> Products</button>
-      <button class="nav-item" onclick="showPage('orders',this)"><span class="icon">🛍️</span> Orders</button>
+      <button class="nav-item" id="ordersNavBtn" onclick="showPage('orders',this)" style="position:relative;">
+        <span class="icon">🛍️</span> Orders
+        <span id="ordersBadge" style="display:none;position:absolute;top:8px;right:10px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;animation:badgePop .3s cubic-bezier(0.34,1.8,0.64,1);">0</span>
+      </button>
       <button class="nav-item" onclick="showPage('discounts',this)"><span class="icon">🎟️</span> Discount Codes</button>
       <div class="nav-section">CONTENT</div>
       <button class="nav-item" onclick="showPage('members',this)"><span class="icon">👥</span> Members</button>
@@ -201,11 +204,26 @@ textarea{resize:vertical;min-height:80px;}
     </div>
 
     <div class="page" id="page-orders">
-      <div class="page-header"><h1>🛍️ Orders</h1><p>View and manage all customer orders.</p></div>
-      <div class="card"><div class="tbl-wrap">
-        <table><thead><tr><th>ORDER ID</th><th>CUSTOMER</th><th>ITEMS</th><th>ADDRESS</th><th>TOTAL</th><th>NOTE</th><th>DATE</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
-        <tbody id="ordersBody"><tr class="loading-row"><td colspan="9">Loading...</td></tr></tbody></table>
-      </div></div>
+      <div class="page-header">
+        <h1>🛍️ Orders</h1>
+        <p>View and manage all customer orders.</p>
+        <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+          <select id="orderStatusFilter" onchange="loadOrders(1)" style="padding:7px 12px;border:1.5px solid var(--pink-l);border-radius:10px;font-size:13px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;background:#fff;cursor:pointer;">
+            <option value="">All Status</option>
+            <option value="pending">⏳ Pending</option>
+            <option value="paid">✅ Paid</option>
+            <option value="shipped">🚚 Shipped</option>
+            <option value="cancelled">🚫 Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table><thead><tr><th>ORDER ID</th><th>CUSTOMER</th><th>ITEMS</th><th>ADDRESS</th><th>TOTAL</th><th>NOTE</th><th>DATE</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+          <tbody id="ordersBody"><tr class="loading-row"><td colspan="9">Loading...</td></tr></tbody>
+        </table></div>
+        <div id="ordersPagination" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 0;flex-wrap:wrap;gap:8px;"></div>
+      </div>
     </div>
 
     <div class="page" id="page-discounts">
@@ -651,36 +669,48 @@ async function deleteDiscount(id) {
   } catch(e) { toast('❌ Failed','error') }
 }
 
-async function loadOrders() {
+let ordersCurrentPage = 1
+const ORDERS_PER_PAGE = 10
+
+async function loadOrders(page) {
+  if (page) ordersCurrentPage = page
   document.getElementById('ordersBody').innerHTML='<tr class="loading-row"><td colspan="9">Loading...</td></tr>'
   try {
-    const res = await fetch(`${API}/api/admin/orders`, {headers:authHeader()})
-    const orders = await res.json()
-    if (!orders.length) {
-      document.getElementById('ordersBody').innerHTML='<tr class="loading-row"><td colspan="9">No orders yet</td></tr>'
+    const statusFilter = document.getElementById('orderStatusFilter')?.value || ''
+    let url = `${API}/api/admin/orders?page=${ordersCurrentPage}&limit=${ORDERS_PER_PAGE}`
+    const res = await fetch(url, {headers:authHeader()})
+    const { orders, total } = await res.json()
+
+    // กรอง status ถ้ามี
+    const filtered = statusFilter ? orders.filter(o => o.status === statusFilter) : orders
+
+    if (!filtered.length) {
+      document.getElementById('ordersBody').innerHTML='<tr class="loading-row"><td colspan="9">No orders found</td></tr>'
+      document.getElementById('ordersPagination').innerHTML = ''
       return
     }
-    document.getElementById('ordersBody').innerHTML = orders.map(o => {
+
+    document.getElementById('ordersBody').innerHTML = filtered.map(o => {
       const items = o.order_items?.map(i =>
         `${i.products?.emoji||'📦'} ${i.products?.name||'?'} ×${i.quantity}`
       ).join('<br>') || '—'
-      const addr = o.members?.address
-        ? `<span style="font-size:11px;color:var(--text-s);max-width:140px;display:block;">${o.members.address}</span>`
+      const addrParts = [o.members?.full_name, o.members?.address, o.members?.country].filter(Boolean)
+      const addr = addrParts.length
+        ? `<span style="font-size:11px;color:var(--text-s);max-width:150px;display:block;line-height:1.5;">${addrParts.join('<br>')}</span>`
         : '<span style="color:#ccc;">—</span>'
       const date = new Date(o.created_at).toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'2-digit'})
-      const statusColors = {
-        pending: 'preorder', paid: 'active', shipped: 'digital', cancelled: 'hidden'
-      }
-      const actions = o.status === 'pending'
-        ? `<div class="action-btns">
-            <button class="btn-icon" style="background:var(--mint-l);border-color:var(--mint);color:var(--mint-d);" onclick="updateOrder(${o.id},'paid')" title="Confirm">✅</button>
-            <button class="btn-icon del" onclick="updateOrder(${o.id},'cancelled')" title="Cancel">✕</button>
-          </div>`
-        : o.status === 'paid'
-        ? `<button class="btn-icon" style="background:var(--lav-l);border-color:var(--lav);color:var(--lav-d);" onclick="updateOrder(${o.id},'shipped')" title="Mark Shipped">🚚</button>`
-        : '—'
-      return `<tr>
-        <td><strong>#${o.id}</strong></td>
+      const statusColors = { pending:'preorder', paid:'active', shipped:'digital', cancelled:'hidden' }
+      const isPending = o.status === 'pending'
+      const actions = `<div class="action-btns">
+        ${o.status === 'pending' ? `
+          <button class="btn-icon" style="background:var(--mint-l);border-color:var(--mint);color:var(--mint-d);" onclick="updateOrder(${o.id},'paid')" title="Confirm">✅</button>
+          <button class="btn-icon del" onclick="updateOrder(${o.id},'cancelled')" title="Cancel">✕</button>` : ''}
+        ${o.status === 'paid' ? `
+          <button class="btn-icon" style="background:var(--lav-l);border-color:var(--lav);color:var(--lav-d);" onclick="updateOrder(${o.id},'shipped')" title="Shipped">🚚</button>` : ''}
+        <button class="btn-icon del" onclick="deleteOrder(${o.id})" title="Delete">🗑️</button>
+      </div>`
+      return `<tr style="${isPending?'background:var(--yellow-l);':''}">
+        <td><strong>#${o.id}</strong>${isPending?'<span style="display:block;font-size:9px;font-weight:700;color:var(--pink-d);letter-spacing:.5px;">NEW</span>':''}</td>
         <td>
           <div style="font-weight:700;">${o.members?.username||'—'}</div>
           <div style="font-size:11px;color:var(--text-s);">${o.members?.phone||''}</div>
@@ -694,24 +724,90 @@ async function loadOrders() {
         <td>${actions}</td>
       </tr>`
     }).join('')
+
+    // Pagination
+    const totalPages = Math.ceil(total / ORDERS_PER_PAGE)
+    if (totalPages > 1) {
+      let pages = ''
+      for (let i = 1; i <= totalPages; i++) {
+        pages += `<button onclick="loadOrders(${i})" style="padding:6px 12px;border-radius:8px;border:1.5px solid ${i===ordersCurrentPage?'var(--pink-d)':'var(--pink-l)'};background:${i===ordersCurrentPage?'var(--pink-d)':'#fff'};color:${i===ordersCurrentPage?'#fff':'var(--text-s)'};font-size:13px;font-weight:700;cursor:pointer;">${i}</button>`
+      }
+      document.getElementById('ordersPagination').innerHTML = `
+        <span style="font-size:13px;color:var(--text-s);">Total ${total} orders</span>
+        <div style="display:flex;gap:6px;">${pages}</div>`
+    } else {
+      document.getElementById('ordersPagination').innerHTML = `<span style="font-size:13px;color:var(--text-s);">Total ${total} orders</span>`
+    }
   } catch(e) {
     document.getElementById('ordersBody').innerHTML='<tr class="loading-row"><td colspan="9">❌ Failed to load</td></tr>'
   }
 }
 
 async function updateOrder(id, status) {
-  const labels = { paid: 'Confirm this order?', cancelled: 'Cancel this order?', shipped: 'Mark as shipped?' }
+  const labels = { paid:'Confirm this order?', cancelled:'Cancel this order?', shipped:'Mark as shipped?' }
   if (!confirm(labels[status] || 'Update order?')) return
   try {
     const res = await fetch(`${API}/api/admin/orders/${id}`, {
-      method: 'PUT', headers: authHeader(),
-      body: JSON.stringify({ status })
+      method:'PUT', headers:authHeader(), body:JSON.stringify({ status })
     })
     if (!res.ok) throw new Error()
-    const icons = { paid: '✅', cancelled: '🚫', shipped: '🚚' }
-    toast(`${icons[status]||''} Order #${id} updated to ${status}`, 'success')
+    const icons = { paid:'✅', cancelled:'🚫', shipped:'🚚' }
+    toast(`${icons[status]||''} Order #${id} → ${status}`, 'success')
     loadOrders()
-  } catch(e) { toast('❌ Failed to update', 'error') }
+    checkNewOrders()
+  } catch(e) { toast('❌ Failed to update','error') }
+}
+
+async function deleteOrder(id) {
+  if (!confirm(`Delete Order #${id}? This cannot be undone.`)) return
+  try {
+    const res = await fetch(`${API}/api/admin/orders/${id}`, {method:'DELETE', headers:authHeader()})
+    if (!res.ok) throw new Error()
+    toast('🗑️ Order deleted','error')
+    loadOrders()
+  } catch(e) { toast('❌ Failed to delete','error') }
+}
+
+// ── ORDER NOTIFICATION ──
+let lastOrderCount = 0
+
+async function checkNewOrders() {
+  try {
+    const res = await fetch(`${API}/api/admin/orders/new-count`, {headers:authHeader()})
+    if (!res.ok) return
+    const { count } = await res.json()
+    const badge = document.getElementById('ordersBadge')
+    if (count > 0) {
+      badge.textContent = count
+      badge.style.display = 'inline-block'
+    } else {
+      badge.style.display = 'none'
+    }
+    // แจ้งเตือนถ้ามี order ใหม่เพิ่มขึ้น
+    if (count > lastOrderCount && lastOrderCount >= 0) {
+      const diff = count - lastOrderCount
+      if (diff > 0 && lastOrderCount >= 0) {
+        showNewOrderNotif(diff)
+        // รีโหลด dashboard recent orders ด้วย
+        loadDashboard()
+      }
+    }
+    lastOrderCount = count
+  } catch(e) {}
+}
+
+function showNewOrderNotif(count) {
+  const el = document.createElement('div')
+  el.style.cssText = 'position:fixed;top:80px;right:24px;z-index:999;background:#fff;border:1.5px solid var(--pink-l);border-radius:16px;padding:14px 18px;box-shadow:0 8px 32px rgba(180,140,200,.25);display:flex;align-items:center;gap:12px;animation:slideIn .3s cubic-bezier(0.34,1.4,0.64,1);max-width:280px;'
+  el.innerHTML = `
+    <div style="font-size:28px;">🛍️</div>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);">New Order${count>1?'s':''} Received!</div>
+      <div style="font-size:12px;color:var(--text-s);margin-top:2px;">${count} new pending order${count>1?'s':''}</div>
+    </div>
+    <button onclick="this.parentElement.remove();showPage('orders',document.getElementById('ordersNavBtn'))" style="margin-left:auto;background:var(--pink-d);color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">View</button>`
+  document.body.appendChild(el)
+  setTimeout(() => el.remove(), 8000)
 }
 
 async function loadMembers() {
@@ -805,6 +901,13 @@ document.getElementById('productModal').addEventListener('click',function(e){if(
 document.getElementById('discountModal').addEventListener('click',function(e){if(e.target===this)closeDiscountModal()})
 
 checkSession()
+
+// เช็ค new orders ทุก 30 วินาที
+async function startOrderPolling() {
+  await checkNewOrders()
+  setInterval(checkNewOrders, 30000)
+}
+startOrderPolling()
 </script>
 </body>
 </html>
