@@ -313,6 +313,7 @@ nav {
   transition: transform 0.22s, box-shadow 0.22s;
   cursor: pointer;
   position: relative;
+  z-index: 2;
 }
 .card:hover { transform: translateY(-6px); box-shadow: 0 12px 36px rgba(180,140,200,0.2); }
 .card-img {
@@ -746,7 +747,7 @@ footer strong { color: var(--pink-d); }
 .sushi-rain {
   position: fixed; inset: 0;
   pointer-events: none;
-  z-index: 9998;
+  z-index: 0;
   overflow: hidden;
 }
 .sushi-drop {
