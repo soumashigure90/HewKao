@@ -2353,6 +2353,7 @@ footer strong { color: var(--pink-d); }
 
         status.style.color = 'var(--mint-d)'
         status.textContent = '✅ ยืนยันการชำระเงินแล้ว!'
+        window._slipRef = data.ref || null
         setTimeout(() => { closePayment(); submitOrder() }, 800)
       } catch(e) {
         status.style.color = 'var(--red)'
@@ -2381,13 +2382,15 @@ footer strong { color: var(--pink-d); }
     const guest_info = userProfile ? { full_name:userProfile.full_name, phone:userProfile.phone, country:userProfile.country, address:userProfile.address } : null
     const guestEmailEl = document.getElementById('guestEmailInput')
     const guest_email  = (!token && guestEmailEl) ? guestEmailEl.value.trim() : null
+    const slip_ref     = window._slipRef || null
+    window._slipRef    = null
 
     try {
       const headers = { 'Content-Type':'application/json' }
       if (token) headers['Authorization'] = 'Bearer ' + token
       const res = await fetch(`${API}/api/orders`, {
         method:'POST', headers,
-        body: JSON.stringify({ total, note, items, guest_info, guest_email })
+        body: JSON.stringify({ total, note, items, guest_info, guest_email, slip_ref })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
