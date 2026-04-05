@@ -285,6 +285,26 @@ app.post('/api/verify-slip', upload.single('slip'), async (req, res) => {
     }
 
     const slip = data.data
+
+    // ✅ ตรวจว่าโอนมาให้เราจริง — เช็คเบอร์ปลายทาง
+    const PROMPTPAY_NUMBER = '0957562647'
+    const receiverAcct = slip?.receiver?.account?.value || ''
+    // เบอร์ใน slip อาจอยู่ในรูป 095-756-2647 หรือ 0957562647 หรือ 66957562647
+    const receiverClean = receiverAcct.replace(/[-\s]/g, '')
+    const ourNumber     = PROMPTPAY_NUMBER.replace(/[-\s]/g, '')
+    const ourNumberIntl = '66' + ourNumber.substring(1) // 66957562647
+
+    const receiverMatch =
+      receiverClean === ourNumber ||
+      receiverClean === ourNumberIntl ||
+      receiverClean.endsWith(ourNumber.substring(1)) // ลงท้ายด้วย 957562647
+
+    if (!receiverMatch) {
+      console.log('Receiver mismatch:', receiverAcct, '!= ', PROMPTPAY_NUMBER)
+      return res.json({ valid: false, message: 'สลิปนี้ไม่ได้โอนมาที่ร้านเรานะคะ กรุณาตรวจสอบอีกครั้ง 🙏' })
+    }
+
+    // ✅ ตรวจยอดเงิน (±1 บาท)
     const slipAmount = slip?.amount?.amount || 0
     if (Math.abs(slipAmount - amount) > 1) {
       return res.json({ valid: false, message: `ยอดเงินไม่ตรง (สลิป: ฿${slipAmount} / ที่ต้องชำระ: ฿${amount})` })
