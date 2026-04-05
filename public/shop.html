@@ -2082,22 +2082,83 @@ footer strong { color: var(--pink-d); }
   }
 
   // ── CHECKOUT ──
+  function getShipping(subtotalTHB) {
+    const settings = window._shopSettings || {}
+    const shippingTHB  = parseFloat(settings.shipping_thb  || 0)
+    const shippingUSD  = parseFloat(settings.shipping_usd  || 0)
+    const freeThreshold = parseFloat(settings.free_shipping || 0)
+    // ส่งฟรีถ้าซื้อครบ threshold (0 = ส่งฟรีทุก order)
+    if (freeThreshold > 0 && subtotalTHB >= freeThreshold) return { thb:0, usd:0, free:true }
+    if (freeThreshold === 0 && shippingTHB === 0) return { thb:0, usd:0, free:true }
+    return { thb: shippingTHB, usd: shippingUSD, free: false }
+  }
+
+  function fmtPrice(thb, usd) {
+    if (lang === 'en' && usd > 0) return '$' + Number(usd).toFixed(2)
+    return '฿' + Number(thb).toLocaleString()
+  }
+
   function _buildCheckoutModal(items, subtotal, total, discount) {
+    const isUSD = lang === 'en'
+    // หา usd subtotal จาก items
+    const subtotalUSD = items.reduce((s,i) => s + ((i.price_usd||0) * i.qty), 0)
+    const totalUSD    = subtotalUSD // หลัง discount (simplified)
+    const discountUSD = 0
+
+    // คำนวณค่าส่ง (based on THB subtotal)
+    const ship = getShipping(total)
+    const hasPhysical = items.some(i => i.type==='physical'||i.type==='preorder')
+    const shippingTHB = hasPhysical ? ship.thb : 0
+    const shippingUSD = hasPhysical ? ship.usd : 0
+    const grandTotalTHB = total + shippingTHB
+    const grandTotalUSD = totalUSD + shippingUSD
+
     document.getElementById('checkoutItems').innerHTML = items.map(item => {
       const thumb = item.image_url ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">` : item.emoji
+      const priceStr = isUSD && item.price_usd
+        ? '$' + (Number(item.price_usd) * item.qty).toFixed(2)
+        : '฿' + (item.price * item.qty).toLocaleString()
       return `<div class="checkout-item">
         <div class="checkout-item-img bg1">${thumb}</div>
         <div class="checkout-item-name">${lang==='en'?item.name:(item.name_th||item.name)}</div>
         <div class="checkout-item-qty">×${item.qty}</div>
-        <div class="checkout-item-price">฿${(item.price*item.qty).toLocaleString()}</div>
+        <div class="checkout-item-price">${priceStr}</div>
       </div>`
     }).join('')
-    document.getElementById('coSubtotal').textContent = '฿' + subtotal.toLocaleString()
-    document.getElementById('coDiscount').textContent = discount > 0 ? '-฿' + discount.toLocaleString() : '-฿0'
-    document.getElementById('coTotal').textContent    = '฿' + total.toLocaleString()
+
+    const cur = isUSD ? 'USD' : 'THB'
+    document.getElementById('coSubtotal').textContent = isUSD && subtotalUSD > 0 ? '$'+subtotalUSD.toFixed(2) : '฿'+subtotal.toLocaleString()
+    document.getElementById('coDiscount').textContent = discount > 0 ? '-฿'+discount.toLocaleString() : '-฿0'
+
+    // แสดงแถวค่าส่ง
+    let shippingRow = document.getElementById('coShippingRow')
+    if (!shippingRow) {
+      const totalRow = document.querySelector('.checkout-summary-row.total')
+      shippingRow = document.createElement('div')
+      shippingRow.id = 'coShippingRow'
+      shippingRow.className = 'checkout-summary-row'
+      totalRow.parentNode.insertBefore(shippingRow, totalRow)
+    }
+    if (hasPhysical && (shippingTHB > 0 || shippingUSD > 0)) {
+      const shipStr = isUSD && shippingUSD > 0 ? '$'+shippingUSD.toFixed(2) : '฿'+shippingTHB.toLocaleString()
+      shippingRow.innerHTML = `<span>🚚 Shipping</span><span>${shipStr}</span>`
+      shippingRow.style.display = 'flex'
+    } else if (hasPhysical && ship.free) {
+      shippingRow.innerHTML = `<span>🚚 Shipping</span><span style="color:var(--mint-d);font-weight:700;">FREE ✨</span>`
+      shippingRow.style.display = 'flex'
+    } else {
+      shippingRow.style.display = 'none'
+    }
+
+    const grandStr = isUSD && grandTotalUSD > 0 ? '$'+grandTotalUSD.toFixed(2) : '฿'+grandTotalTHB.toLocaleString()
+    document.getElementById('coTotal').textContent = grandStr
+
+    // เก็บ total จริงไว้ให้ submitOrder ใช้
+    window._orderTotalTHB = grandTotalTHB
+    window._orderTotalUSD = grandTotalUSD
+
     // แสดงที่อยู่เฉพาะถ้ามี physical/preorder
     const addrBox = document.getElementById('checkoutAddr')
-    const hasPhysical = items.some(i => i.type==='physical'||i.type==='preorder')
     if (hasPhysical) {
       addrBox.style.display = 'block'
       const p = userProfile
@@ -2111,6 +2172,28 @@ footer strong { color: var(--pink-d); }
     } else {
       addrBox.style.display = 'none'
     }
+
+    // แสดง free shipping progress ถ้ายังไม่ถึง threshold
+    const freeThreshold = parseFloat(window._shopSettings?.free_shipping || 0)
+    let progressRow = document.getElementById('coFreeShipProgress')
+    if (hasPhysical && freeThreshold > 0 && !ship.free) {
+      const remaining = freeThreshold - total
+      if (!progressRow) {
+        progressRow = document.createElement('div')
+        progressRow.id = 'coFreeShipProgress'
+        progressRow.style.cssText = 'margin:8px 0 0;padding:10px 12px;background:var(--lav-l);border-radius:10px;font-size:12px;color:var(--lav-d);'
+        document.querySelector('.checkout-summary').after(progressRow)
+      }
+      const pct = Math.min(100, Math.round(total / freeThreshold * 100))
+      progressRow.style.display = 'block'
+      progressRow.innerHTML = `✨ ซื้ออีก ฿${remaining.toLocaleString()} เพื่อรับ <strong>ส่งฟรี!</strong>
+        <div style="background:var(--pink-l);border-radius:10px;height:6px;margin-top:6px;overflow:hidden;">
+          <div style="background:var(--lav-d);height:100%;width:${pct}%;border-radius:10px;transition:width .5s;"></div>
+        </div>`
+    } else if (progressRow) {
+      progressRow.style.display = 'none'
+    }
+
     document.getElementById('checkoutNote').value = ''
     document.getElementById('checkoutOverlay').classList.remove('closing')
     document.getElementById('checkoutOverlay').classList.add('open')
@@ -2376,7 +2459,8 @@ footer strong { color: var(--pink-d); }
     const orderItems = window._buyNowItems || cart
     const isPreorder   = orderItems.some(i => i.type === 'preorder')
     const isAllDigital = orderItems.every(i => i.type === 'digital')
-    const total = orderItems.reduce((s,i) => s + i.price*i.qty, 0)
+    const total = window._orderTotalTHB || orderItems.reduce((s,i) => s + i.price*i.qty, 0)
+    window._orderTotalTHB = null
     const note  = document.getElementById('checkoutNote')?.value?.trim() || ''
     const items = orderItems.map(i => ({ product_id:i.id, quantity:i.qty, price:i.price }))
     const guest_info = userProfile ? { full_name:userProfile.full_name, phone:userProfile.phone, country:userProfile.country, address:userProfile.address } : null
@@ -2523,6 +2607,7 @@ footer strong { color: var(--pink-d); }
     try {
       const res = await fetch(`${API}/api/settings`)
       const data = await res.json()
+      window._shopSettings = data // cache สำหรับ checkout
       const aboutDesc    = document.getElementById('aboutDesc')
       const aboutTitle   = document.getElementById('aboutTitle')
       const aboutContact = document.getElementById('aboutContact')
