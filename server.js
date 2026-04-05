@@ -266,14 +266,19 @@ app.post('/api/verify-slip', upload.single('slip'), async (req, res) => {
     const amount = parseFloat(req.body.amount) || 0
 
     const form = new FormData()
-    form.append('files', req.file.buffer, { filename: 'slip.jpg', contentType: req.file.mimetype })
+    form.append('file', req.file.buffer, {
+      filename: 'slip.jpg',
+      contentType: req.file.mimetype || 'image/jpeg'
+    })
 
     const easyRes = await fetch('https://developer.easyslip.com/api/v1/verify', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer fd52f6c2-f0a5-4153-8133-6f5ef6dac605', ...form.getHeaders() },
+      headers: { 'Authorization': `Bearer fd52f6c2-f0a5-4153-8133-6f5ef6dac605`, ...form.getHeaders() },
       body: form
     })
+
     const data = await easyRes.json()
+    console.log('EasySlip response:', JSON.stringify(data))
 
     if (!easyRes.ok || data.status !== 200) {
       return res.json({ valid: false, message: data.message || 'สลิปไม่ถูกต้อง' })
@@ -281,14 +286,13 @@ app.post('/api/verify-slip', upload.single('slip'), async (req, res) => {
 
     const slip = data.data
     const slipAmount = slip?.amount?.amount || 0
-    // ตรวจสอบยอดเงิน (±1 บาท)
     if (Math.abs(slipAmount - amount) > 1) {
       return res.json({ valid: false, message: `ยอดเงินไม่ตรง (สลิป: ฿${slipAmount} / ที่ต้องชำระ: ฿${amount})` })
     }
 
     res.json({ valid: true, amount: slipAmount, ref: slip?.transRef })
   } catch(e) {
-    console.error('EasySlip error:', e)
+    console.error('EasySlip error:', e.message)
     res.status(500).json({ valid: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบ' })
   }
 })
