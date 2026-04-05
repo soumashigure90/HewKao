@@ -2283,7 +2283,11 @@ footer strong { color: var(--pink-d); }
 
   // ── TITLE COLOR ──
   function applyTitleColor(color) {
-    document.getElementById('heroTitle').style.color = color
+    const title = document.getElementById('heroTitle')
+    if (!title) return
+    title.style.color = color
+    // ใส่สีให้ em และ span ข้างในด้วย เพราะ CSS override
+    title.querySelectorAll('em, span').forEach(el => el.style.color = color)
   }
 
   function saveTitleColor(color) {
