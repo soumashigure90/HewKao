@@ -316,6 +316,36 @@ app.get('/api/admin/orders', auth, adminOnly, async (req, res) => {
   res.json({ orders: data, total: count, page, limit })
 })
 
+// POST /api/orders/:id/auto-confirm — auto confirm digital orders
+app.post('/api/orders/:id/auto-confirm', async (req, res) => {
+  const { id } = req.params
+  try {
+    const { data: orderItems } = await supabase
+      .from('order_items')
+      .select('product_id, products(name, type, file_url)')
+      .eq('order_id', id)
+
+    const allDigital = orderItems?.every(i => i.products?.type === 'digital')
+    if (!allDigital) return res.status(400).json({ error: 'Not a digital-only order' })
+
+    await supabase.from('orders').update({ status: 'paid' }).eq('id', id)
+
+    const links = []
+    for (const item of orderItems) {
+      if (!item.products?.file_url) continue
+      let dlUrl = item.products.file_url
+      const match = dlUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)
+      if (match) dlUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`
+      await supabase.from('download_links').upsert({
+        order_id: parseInt(id), product_id: item.product_id,
+        url: dlUrl, created_at: new Date().toISOString()
+      }, { onConflict: 'order_id,product_id' })
+      links.push({ url: dlUrl, name: item.products.name })
+    }
+    res.json({ status: 'paid', download_links: links })
+  } catch(e) { res.status(500).json({ error: e.message }) }
+})
+
 // GET /api/admin/orders/new-count — จำนวน order pending ใหม่
 app.get('/api/admin/orders/new-count', auth, adminOnly, async (req, res) => {
   const { count, error } = await supabase
