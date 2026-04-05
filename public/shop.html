@@ -2238,6 +2238,14 @@ footer strong { color: var(--pink-d); }
           </div>
           <div class="order-card-items">${items}</div>
           ${o.note ? `<div class="order-note">📝 ${o.note}</div>` : ''}
+          ${o.download_links && o.download_links.length > 0 ? `
+          <div style="padding:12px 16px;background:var(--mint-l);border-top:1px solid var(--mint);">
+            <div style="font-size:11px;font-weight:700;color:var(--mint-d);letter-spacing:.5px;margin-bottom:8px;">💾 DIGITAL DOWNLOADS</div>
+            ${o.download_links.map(dl => `
+              <a href="${dl.url}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:var(--mint-d);color:#fff;padding:8px 16px;border-radius:12px;font-size:13px;font-weight:700;text-decoration:none;margin-right:8px;margin-bottom:6px;transition:opacity .2s;" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+                ⬇️ Download ${dl.products?.name||'File'}
+              </a>`).join('')}
+          </div>` : ''}
           <div class="order-card-footer">
             <div class="order-total-label">Total</div>
             <div class="order-total-amount">฿${Number(o.total).toLocaleString()}</div>
