@@ -1431,9 +1431,14 @@ footer strong { color: var(--pink-d); }
     document.querySelectorAll('.nav-lang button').forEach((b,i) => {
       b.classList.toggle('active', (i===0 && l==='en') || (i===1 && l==='th'))
     })
+    // อัพเดท data-en/data-th elements ทั้งหมด
+    document.querySelectorAll('[data-en]').forEach(el => {
+      if (el.children.length === 0) {
+        el.textContent = l === 'en' ? el.dataset.en : el.dataset.th
+      }
+    })
     applyPageContent(l)
     loadShopSettings()
-    document.getElementById('chatInput').placeholder = l === 'en' ? 'Type a message...' : 'พิมพ์ข้อความ...'
     const filtered = currentFilter === 'all' ? allProducts : allProducts.filter(p => p.type === currentFilter)
     renderProducts(filtered)
   }
@@ -2145,14 +2150,52 @@ footer strong { color: var(--pink-d); }
   let currentPayTab = 'card'
   let _slipFile = null
 
+  // สร้าง PromptPay QR payload (EMV QR standard)
+  function generatePromptPayPayload(phone, amount) {
+    const sanitized = phone.replace(/[^0-9]/g,'')
+    const target = '0066' + sanitized.substring(1) // แปลงเบอร์เป็น format PromptPay
+
+    function field(id, value) {
+      const len = value.length.toString().padStart(2,'0')
+      return id + len + value
+    }
+    function crc16(str) {
+      let crc = 0xFFFF
+      for (let i=0;i<str.length;i++) {
+        crc ^= str.charCodeAt(i) << 8
+        for (let j=0;j<8;j++) {
+          crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1)
+        }
+      }
+      return ((crc & 0xFFFF).toString(16).toUpperCase()).padStart(4,'0')
+    }
+
+    const aid    = field('00','A000000677010111') // PromptPay AID
+    const acctId = field('01', target)
+    const mData  = field('29', field('00','A000000677010111') + field('01',target))
+
+    let payload =
+      field('00','01') +       // Payload format indicator
+      field('01','11') +       // Point of initiation - static
+      mData +                   // Merchant account info
+      field('52','0000') +     // Merchant category code
+      field('53','764') +      // Transaction currency (THB)
+      (amount > 0 ? field('54', amount.toFixed(2)) : '') +
+      field('58','TH') +       // Country code
+      '6304'                    // CRC placeholder
+
+    const checksum = crc16(payload)
+    return payload + checksum
+  }
+
   function openPayment(total) {
     const amt = Number(total)
     document.getElementById('qrAmount').textContent = '฿' + amt.toLocaleString()
 
-    // สร้าง PromptPay QR จริง
-    const phone = '0957562647'.replace(/-/g,'')
-    const promptpayId = '0066' + phone.substring(1)
-    const qrUrl = `https://promptpay.io/${promptpayId}/${amt}.png`
+    // สร้าง PromptPay QR payload แล้วให้ QR server generate
+    const phone = '0957562647'
+    const payload = generatePromptPayPayload(phone, amt)
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(payload)}&bgcolor=ffffff&color=000000&margin=4`
     document.getElementById('promptpayQRImg').src = qrUrl
 
     // reset slip
