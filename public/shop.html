@@ -1910,6 +1910,84 @@ footer strong { color: var(--pink-d); }
     document.body.appendChild(el)
   }
 
+  // ── PAGE EDITOR ──
+  let editMode = false
+
+  function checkEditBtn() {
+    const role = localStorage.getItem('mochi_role')
+    const btn  = document.getElementById('editPageBtn')
+    if (btn) btn.style.display = role === 'admin' ? 'flex' : 'none'
+  }
+
+  function toggleEditMode() {
+    editMode ? exitEditMode() : enterEditMode()
+  }
+
+  function enterEditMode() {
+    editMode = true
+    document.getElementById('editorToolbar').style.display = 'flex'
+    document.getElementById('editPageBtn').textContent = '✕ Exit Edit'
+    document.getElementById('editPageBtn').style.background = 'var(--red)'
+    ;['heroTag','heroTitle','heroDesc','heroSection'].forEach(id => {
+      document.getElementById(id)?.classList.add('edit-highlight')
+    })
+    showToast('✏️ Edit mode on')
+  }
+
+  function exitEditMode() {
+    editMode = false
+    document.getElementById('editorToolbar').style.display = 'none'
+    document.getElementById('editPageBtn').textContent = '✏️ Edit Page'
+    document.getElementById('editPageBtn').style.background = 'var(--lav-d)'
+    ;['heroTag','heroTitle','heroDesc','heroSection'].forEach(id => {
+      document.getElementById(id)?.classList.remove('edit-highlight')
+    })
+  }
+
+  function editHeroTag() {
+    const el = document.getElementById('heroTag')
+    const val = prompt('Hero tag text:', el.textContent)
+    if (val !== null) { el.textContent = val; el.setAttribute('data-en', val) }
+  }
+
+  function editHeroTitle() {
+    const val = prompt('Hero title (use | to separate lines):', document.getElementById('heroTitle').innerText.replace('\n','|'))
+    if (val !== null) {
+      const parts = val.split('|')
+      document.getElementById('heroTitle').innerHTML = `<em>${parts[0]||''}</em><br><span>${parts[1]||''}</span>`
+    }
+  }
+
+  function editHeroDesc() {
+    const el = document.getElementById('heroDesc')
+    const val = prompt('Hero description:', el.textContent)
+    if (val !== null) { el.textContent = val; el.setAttribute('data-en', val) }
+  }
+
+  function editHeroBg() { document.getElementById('heroBgInput').click() }
+
+  async function uploadHeroBg(input) {
+    const file = input.files[0]
+    if (!file) return
+    const token = localStorage.getItem('mochi_token')
+    if (!token) { showToast('❌ Please login as admin'); return }
+    showToast('Uploading...')
+    try {
+      const res = await fetch(`${API}/api/admin/upload`, {
+        method:'POST', headers:{'Authorization':`Bearer ${token}`,'Content-Type':file.type}, body:file
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      const hero = document.getElementById('heroSection')
+      hero.style.backgroundImage = `url('${data.url}')`
+      hero.style.backgroundSize = 'cover'
+      hero.style.backgroundPosition = 'center'
+      localStorage.setItem('hewkao_hero_bg', data.url)
+      showToast('✅ Hero image updated!')
+    } catch(e) { showToast('❌ ' + e.message) }
+    input.value = ''
+  }
+
   // ── ADMIN NOTIFICATION (เฉพาะ admin เท่านั้น) ──
   let _lastOrderCount = -1
 
