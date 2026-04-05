@@ -1648,10 +1648,112 @@ footer strong { color: var(--pink-d); }
     const total = cart.reduce((s,i)=>s+i.qty, 0)
     const badge = document.getElementById('cartBadgeNav')
     const label = document.getElementById('cartCountLabel')
-    badge.textContent = total
-    label.textContent = total
-    if (total > 0) badge.classList.add('show')
-    else badge.classList.remove('show')
+    if (badge) { badge.textContent = total; total > 0 ? badge.classList.add('show') : badge.classList.remove('show') }
+    if (label) label.textContent = total
+  }
+
+  function openCart() {
+    renderCart()
+    document.getElementById('cartPage').classList.add('open')
+    document.body.style.overflow = 'hidden'
+  }
+
+  function closeCart() {
+    document.getElementById('cartPage').classList.remove('open')
+    document.body.style.overflow = ''
+  }
+
+  function renderCart() {
+    const list     = document.getElementById('cartList')
+    const summary  = document.getElementById('cartSummary')
+    const checkout = document.getElementById('checkoutBtn')
+    const countEl  = document.getElementById('cartItemCount')
+
+    if (!cart.length) {
+      list.innerHTML = `<div class="cart-empty">
+        <div class="empty-icon">🛒</div>
+        <h3>Your cart is empty</h3>
+        <p style="font-size:14px;margin-bottom:1.5rem;">Add some items to get started!</p>
+        <button class="btn-primary" onclick="closeCart()">Continue Shopping 🌸</button>
+      </div>`
+      summary.style.display  = 'none'
+      checkout.style.display = 'none'
+      countEl.textContent    = '0 items'
+      return
+    }
+
+    const subtotal = cart.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
+    const total    = cart.reduce((s,i) => s + i.price*i.qty, 0)
+    const discount = subtotal - total
+    const count    = cart.reduce((s,i) => s + i.qty, 0)
+    countEl.textContent = count + ' item' + (count!==1?'s':'')
+
+    list.innerHTML = cart.map((item,idx) => {
+      const thumb = item.image_url
+        ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">`
+        : item.emoji
+      const priceHtml = item.saved && item.saved > 0
+        ? `<div style="text-align:right;">
+             <div class="cart-item-price">฿${(item.price*item.qty).toLocaleString()}</div>
+             <div style="font-size:10px;color:var(--text-s);text-decoration:line-through;">฿${((item.origPrice||item.price)*item.qty).toLocaleString()}</div>
+           </div>`
+        : `<div class="cart-item-price">฿${(item.price*item.qty).toLocaleString()}</div>`
+      return `<div class="cart-item">
+        <div class="cart-item-img ${item.image_url?'':'bg1'}">${thumb}</div>
+        <div class="cart-item-info">
+          <div class="cart-item-name">${lang==='en'?item.name:(item.name_th||item.name)}</div>
+          <div class="cart-item-type">${item.type}</div>
+        </div>
+        <div class="cart-qty">
+          <button class="qty-btn" onclick="changeQty(${idx},-1)">−</button>
+          <span class="qty-num">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
+        </div>
+        ${priceHtml}
+        <button class="cart-remove" onclick="removeFromCart(${idx})">✕</button>
+      </div>`
+    }).join('')
+
+    document.getElementById('summarySubtotal').textContent = '฿' + subtotal.toLocaleString()
+    document.getElementById('summaryDiscount').textContent = discount > 0 ? '-฿'+discount.toLocaleString() : '-฿0'
+    document.getElementById('summaryTotal').textContent    = '฿' + total.toLocaleString()
+    summary.style.display  = 'block'
+    checkout.style.display = 'block'
+  }
+
+  function changeQty(idx, delta) {
+    cart[idx].qty = Math.max(1, cart[idx].qty + delta)
+    saveCart(); renderCart()
+  }
+
+  function removeFromCart(idx) {
+    cart.splice(idx, 1)
+    saveCart(); renderCart()
+    showToast('Removed from cart')
+  }
+
+  // ── DIGITAL DOWNLOAD POPUP ──
+  function showDigitalDownloadPopup(links) {
+    const el = document.createElement('div')
+    el.id = 'digitalDlOverlay'
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(74,63,92,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:overlayIn .25s ease forwards;'
+    el.innerHTML = `
+      <div style="background:#fff;border-radius:28px;padding:2.5rem 2rem;width:380px;max-width:92vw;text-align:center;box-shadow:0 24px 80px rgba(180,140,200,.4);animation:prodModalIn .45s cubic-bezier(0.34,1.4,0.64,1) forwards;">
+        <div style="font-size:56px;margin-bottom:1rem;">💾</div>
+        <h2 style="font-family:Quicksand,sans-serif;font-size:22px;font-weight:700;color:var(--pink-d);margin-bottom:8px;">Your Download is Ready!</h2>
+        <p style="font-size:13px;color:var(--text-s);margin-bottom:1.5rem;line-height:1.6;">กดปุ่มด้านล่างเพื่อดาวน์โหลดไฟล์ของคุณได้เลยค่ะ 🌸</p>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1.5rem;">
+          ${links.map((l,i) => `
+            <a href="${l.url}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--pink-d);color:#fff;padding:13px 20px;border-radius:16px;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 4px 16px rgba(232,130,154,.3);">
+              ⬇️ Download${links.length>1?' '+(i+1):''}${l.name?' — '+l.name:''}
+            </a>`).join('')}
+        </div>
+        <p style="font-size:12px;color:var(--text-s);margin-bottom:1.25rem;">ลิงค์นี้ยังเข้าถึงได้ใน <strong>Order History</strong> ของคุณด้วยนะคะ</p>
+        <button onclick="document.getElementById('digitalDlOverlay').remove()" style="background:var(--cream);color:var(--text-s);border:1.5px solid var(--pink-l);padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">
+          Close
+        </button>
+      </div>`
+    document.body.appendChild(el)
   }
 
   // ── PROFILE ──
@@ -1928,12 +2030,12 @@ footer strong { color: var(--pink-d); }
   async function submitOrder() {
     const token = localStorage.getItem('mochi_token')
     const orderItems = window._buyNowItems || cart
-    const isPreorder = orderItems.some(i => i.type === 'preorder')
+    const isPreorder  = orderItems.some(i => i.type === 'preorder')
+    const isAllDigital = orderItems.every(i => i.type === 'digital')
     const total = orderItems.reduce((s,i) => s + i.price*i.qty, 0)
     const note  = document.getElementById('checkoutNote')?.value?.trim() || ''
     const items = orderItems.map(i => ({ product_id:i.id, quantity:i.qty, price:i.price }))
 
-    // ส่ง guest_info ถ้ามีที่อยู่แต่ยังไม่ได้ login
     const guest_info = userProfile ? {
       full_name: userProfile.full_name,
       phone:     userProfile.phone,
@@ -1950,6 +2052,7 @@ footer strong { color: var(--pink-d); }
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
+
       cart = []; saveCart(); window._buyNowItems = null
       const co = document.getElementById('checkoutOverlay')
       co.classList.remove('open','closing'); co.style.display = 'none'
@@ -1957,8 +2060,28 @@ footer strong { color: var(--pink-d); }
       document.body.style.overflow = ''
       window.scrollTo({ top:0, behavior:'smooth' })
       updateCartBadge()
-      showOrderSuccess(data.id, isPreorder)
       setTimeout(() => { co.style.display = '' }, 500)
+
+      // ถ้าเป็น digital ทั้งหมด — auto confirm แล้วดึง download links มาโชว์ทันที
+      if (isAllDigital) {
+        // เรียก auto-confirm สำหรับ digital order
+        try {
+          const confirmRes = await fetch(`${API}/api/orders/${data.id}/auto-confirm`, {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json', ...(token ? {'Authorization':'Bearer '+token} : {}) }
+          })
+          const confirmData = await confirmRes.json()
+          if (confirmData.download_links && confirmData.download_links.length > 0) {
+            showDigitalDownloadPopup(confirmData.download_links)
+          } else {
+            showOrderSuccess(data.id, false)
+          }
+        } catch(e) {
+          showOrderSuccess(data.id, false)
+        }
+      } else {
+        showOrderSuccess(data.id, isPreorder)
+      }
     } catch(e) {
       showToast('❌ ' + (e.message || 'Failed to place order'))
     }
