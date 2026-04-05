@@ -305,6 +305,13 @@ textarea{resize:vertical;min-height:80px;}
           </div>
         </div>
       </div>
+      <div class="form-group span2" id="fileUrlGroup">
+        <label>💾 DIGITAL FILE URL <span style="font-size:11px;color:var(--text-s);font-weight:400;">(Google Drive / Dropbox link — สำหรับ Digital เท่านั้น)</span></label>
+        <input type="url" id="pFileUrl" placeholder="https://drive.google.com/file/d/..." />
+        <div style="margin-top:6px;padding:8px 12px;background:var(--lav-l);border-radius:10px;font-size:11px;color:var(--lav-d);">
+          💡 ตั้ง Google Drive เป็น "Anyone with the link" แล้ววาง link ที่นี่ ลูกค้าจะได้ link หลัง order confirmed
+        </div>
+      </div>
     </div>
     <div class="form-actions">
       <button class="btn-secondary" onclick="closeProductModal()">Cancel</button>
@@ -545,29 +552,39 @@ async function openProductModal(id) {
       const products = await res.json()
       const p = products.find(x => x.id===id)
       if (p) {
-        document.getElementById('pName').value   = p.name||''
-        document.getElementById('pNameTh').value = p.name_th||''
-        document.getElementById('pType').value   = p.type||'physical'
-        document.getElementById('pEmoji').value  = p.emoji||''
+        document.getElementById('pName').value     = p.name||''
+        document.getElementById('pNameTh').value   = p.name_th||''
+        document.getElementById('pType').value     = p.type||'physical'
+        document.getElementById('pEmoji').value    = p.emoji||''
         document.getElementById('pPrice').value    = p.price||''
         document.getElementById('pPriceUsd').value = p.price_usd||''
         document.getElementById('pStock').value    = p.stock??''
-        document.getElementById('pDesc').value   = p.description||''
-        document.getElementById('pStatus').value = p.status||'active'
-        document.getElementById('pBadge').value  = p.badge||''
+        document.getElementById('pDesc').value     = p.description||''
+        document.getElementById('pStatus').value   = p.status||'active'
+        document.getElementById('pBadge').value    = p.badge||''
+        document.getElementById('pFileUrl').value  = p.file_url||''
         if (p.image_url) {
           document.getElementById('imgPreview').src = p.image_url
           document.getElementById('imgPreviewWrap').style.display = 'block'
         }
+        toggleFileUrlField(p.type)
       }
     } catch(e) {}
   } else {
-    ['pName','pNameTh','pEmoji','pPrice','pPriceUsd','pStock','pDesc','pBadge'].forEach(i => document.getElementById(i).value='')
-    document.getElementById('pType').value = 'physical'
+    ['pName','pNameTh','pEmoji','pPrice','pPriceUsd','pStock','pDesc','pBadge','pFileUrl'].forEach(i => document.getElementById(i).value='')
+    document.getElementById('pType').value   = 'physical'
     document.getElementById('pStatus').value = 'active'
+    toggleFileUrlField('physical')
   }
   document.getElementById('productModal').classList.add('open')
 }
+
+function toggleFileUrlField(type) {
+  document.getElementById('fileUrlGroup').style.display = type === 'digital' ? 'block' : 'none'
+}
+
+// ให้ pType onchange toggle field
+document.getElementById('pType')?.addEventListener('change', e => toggleFileUrlField(e.target.value))
 
 function closeProductModal() { document.getElementById('productModal').classList.remove('open') }
 
@@ -599,6 +616,7 @@ async function saveProduct() {
       description: document.getElementById('pDesc').value.trim(),
       status:      document.getElementById('pStatus').value,
       badge:       document.getElementById('pBadge').value.trim().toUpperCase(),
+      file_url:    document.getElementById('pFileUrl').value.trim() || null,
     }
     if (image_url) body.image_url = image_url
 
