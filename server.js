@@ -269,7 +269,9 @@ app.post('/api/orders', async (req, res) => {
 app.get('/api/my-orders', auth, async (req, res) => {
   const { data, error } = await supabase
     .from('orders')
-    .select(`id, total, status, note, created_at, order_items(quantity, price, products(name, name_th, emoji, image_url, type))`)
+    .select(`id, total, status, note, created_at, 
+      order_items(quantity, price, products(name, name_th, emoji, image_url, type)),
+      download_links(product_id, url, products(name, name_th))`)
     .eq('member_id', req.user.id)
     .order('created_at', { ascending: false })
   if (error) return res.status(500).json({ error: error.message })
@@ -300,12 +302,13 @@ app.get('/api/admin/orders/new-count', auth, adminOnly, async (req, res) => {
   res.json({ count })
 })
 
-// PUT /api/admin/orders/:id — confirm or reject
+// PUT /api/admin/orders/:id — confirm or reject + auto download link
 app.put('/api/admin/orders/:id', auth, adminOnly, async (req, res) => {
   const { id } = req.params
   const { status } = req.body
   if (!['pending','paid','shipped','cancelled'].includes(status))
     return res.status(400).json({ error: 'Invalid status' })
+
   const { data, error } = await supabase
     .from('orders')
     .update({ status })
@@ -313,6 +316,34 @@ app.put('/api/admin/orders/:id', auth, adminOnly, async (req, res) => {
     .select()
     .single()
   if (error) return res.status(500).json({ error: error.message })
+
+  // ถ้า confirm (paid) → สร้าง download links สำหรับ digital items
+  if (status === 'paid') {
+    try {
+      const { data: items } = await supabase
+        .from('order_items')
+        .select('product_id, products(name, type, file_url)')
+        .eq('order_id', id)
+
+      const digitalItems = items?.filter(i => i.products?.type === 'digital' && i.products?.file_url) || []
+
+      for (const item of digitalItems) {
+        // แปลง Google Drive view link → download link
+        let dlUrl = item.products.file_url
+        const match = dlUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)
+        if (match) {
+          dlUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`
+        }
+        await supabase.from('download_links').upsert({
+          order_id:   parseInt(id),
+          product_id: item.product_id,
+          url:        dlUrl,
+          created_at: new Date().toISOString()
+        }, { onConflict: 'order_id,product_id' })
+      }
+    } catch(e) { console.error('Download link error:', e) }
+  }
+
   res.json(data)
 })
 
