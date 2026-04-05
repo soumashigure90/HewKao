@@ -744,13 +744,13 @@ footer strong { color: var(--pink-d); }
 .sushi-rain {
   position: fixed; inset: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: 9998;
   overflow: hidden;
 }
 .sushi-drop {
   position: absolute;
   font-size: 28px;
-  opacity: 0.4;
+  opacity: 0.35;
   animation: sushiFall linear infinite;
   top: -60px;
   user-select: none;
@@ -758,6 +758,54 @@ footer strong { color: var(--pink-d); }
 @keyframes sushiFall {
   0%   { transform: translateY(0) rotate(0deg); }
   100% { transform: translateY(110vh) rotate(30deg); }
+}
+
+/* ── RESPONSIVE MOBILE ── */
+@media (max-width: 768px) {
+  nav {
+    padding: 0 1rem;
+    height: auto;
+    min-height: 56px;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .nav-logo { font-size: 18px; flex: 1; min-width: 100px; }
+  .nav-links { display: none; } /* ซ่อน links บนมือถือ */
+  .nav-lang button { padding: 4px 8px; font-size: 11px; }
+  .btn-login { padding: 7px 12px; font-size: 12px; }
+
+  .hero { padding: 2.5rem 1rem; }
+  .hero h1 { font-size: clamp(22px, 7vw, 36px); }
+
+  .section { padding: 1.5rem 1rem; }
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  .card-body h3 { font-size: 13px; }
+  .price { font-size: 14px; }
+  .btn-cart { font-size: 11px; padding: 6px 10px; }
+
+  .prod-modal { width: 98vw !important; max-height: 95vh; border-radius: 20px; }
+  .prod-img-wrap { aspect-ratio: 16/9; }
+  .prod-modal-name { font-size: 18px; }
+  .prod-modal-price { font-size: 22px; }
+
+  .cart-body { padding: 0 1rem; }
+  .cart-item { gap: 10px; }
+  .cart-item-img { width: 48px; height: 48px; }
+  .cart-item-name { font-size: 13px; }
+
+  .checkout-modal { width: 98vw !important; border-radius: 20px; }
+  .profile-modal  { width: 98vw !important; border-radius: 20px; }
+
+  #aboutSection { padding: 0 1rem; }
+
+  .chat-fab { width: 48px; height: 48px; font-size: 20px; bottom: 16px; right: 16px; }
+
+  footer { padding: 1.5rem 1rem; font-size: 13px; }
 }
 </style>
 </head>
@@ -769,7 +817,7 @@ footer strong { color: var(--pink-d); }
 <!-- NAV -->
 <nav>
   <div class="nav-logo">HewKao<span>Shop</span> 🌸</div>
-  <div class="nav-links">
+  <div class="nav-links" id="navLinks">
     <a href="#" class="active" data-en="Shop" data-th="ร้านค้า">Shop</a>
     <a href="#" data-en="Pre-order" data-th="พรีออเดอร์">Pre-order</a>
     <a href="#" data-en="Digital" data-th="ไฟล์ดิจิทัล">Digital</a>
@@ -792,6 +840,14 @@ footer strong { color: var(--pink-d); }
       <button class="dropdown-item" onclick="closeDropdown();showToast('❤️ Wishlist coming soon!')"><span class="di">❤️</span> Wishlist</button>
       <button class="dropdown-item" onclick="closeDropdown();openProfile()"><span class="di">⚙️</span> Settings / Profile</button>
       <div class="dropdown-divider"></div>
+      <!-- mobile nav links -->
+      <div id="mobileNavLinks" style="display:none;">
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="#" style="text-decoration:none;" data-en="🛍️ Shop" data-th="🛍️ ร้านค้า">🛍️ Shop</a>
+        <a class="dropdown-item" href="#" style="text-decoration:none;" data-en="📖 Pre-order" data-th="📖 พรีออเดอร์">📖 Pre-order</a>
+        <a class="dropdown-item" href="#" style="text-decoration:none;" data-en="💾 Digital" data-th="💾 ดิจิทัล">💾 Digital</a>
+        <a class="dropdown-item" href="#aboutSection" style="text-decoration:none;" data-en="ℹ️ About" data-th="ℹ️ เกี่ยวกับ">ℹ️ About</a>
+      </div>
       <button class="dropdown-item logout" onclick="doLogout()"><span class="di">🚪</span> Logout</button>
     </div>
   </div>
@@ -1384,7 +1440,11 @@ footer strong { color: var(--pink-d); }
   function toggleDropdown() {
     const token = localStorage.getItem('mochi_token')
     if (!token) { openLogin(); return }
-    document.getElementById('userDropdown').classList.toggle('open')
+    const dd = document.getElementById('userDropdown')
+    dd.classList.toggle('open')
+    // มือถือ — โชว์ nav links ใน dropdown
+    const mobileNav = document.getElementById('mobileNavLinks')
+    if (mobileNav) mobileNav.style.display = window.innerWidth <= 768 ? 'block' : 'none'
   }
   function closeDropdown() {
     document.getElementById('userDropdown').classList.remove('open')
