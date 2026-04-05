@@ -1105,6 +1105,14 @@ footer strong { color: var(--pink-d); }
   <button onclick="editHeroDesc()"   class="edbtn">💬 Description</button>
   <button onclick="editHeroBg()"     class="edbtn">🖼️ Hero Image</button>
   <div style="width:1px;height:20px;background:var(--pink-l);"></div>
+  <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--text-s);cursor:pointer;">
+    🎨 Title Color
+    <input type="color" id="titleColorPicker" value="#4a3f5c"
+      style="width:28px;height:28px;border:2px solid var(--pink-l);border-radius:8px;cursor:pointer;padding:2px;background:none;"
+      oninput="applyTitleColor(this.value)"
+      onchange="saveTitleColor(this.value)" />
+  </label>
+  <div style="width:1px;height:20px;background:var(--pink-l);"></div>
   <button onclick="savePageContent()" class="edbtn" style="color:var(--mint-d);border-color:var(--mint);">💾 Save</button>
   <button onclick="exitEditMode()"    class="edbtn" style="color:var(--red);border-color:#fcc;">✕ Exit</button>
 </div>
@@ -2261,6 +2269,9 @@ footer strong { color: var(--pink-d); }
     })
     const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
     if (heroBg) content['heroBg'] = heroBg
+    // บันทึกสี title
+    const titleColor = localStorage.getItem('hewkao_title_color') || ''
+    if (titleColor) content['titleColor'] = titleColor
     try {
       const res = await fetch(`${API}/api/admin/page-content`, {
         method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
@@ -2268,6 +2279,23 @@ footer strong { color: var(--pink-d); }
       })
       if (showMsg && res.ok) showToast(`💾 Saved (${lang.toUpperCase()})`)
     } catch(e) { if (showMsg) showToast('❌ Save failed') }
+  }
+
+  // ── TITLE COLOR ──
+  function applyTitleColor(color) {
+    document.getElementById('heroTitle').style.color = color
+  }
+
+  function saveTitleColor(color) {
+    localStorage.setItem('hewkao_title_color', color)
+    applyTitleColor(color)
+  }
+
+  function loadTitleColor(color) {
+    if (!color) return
+    applyTitleColor(color)
+    const picker = document.getElementById('titleColorPicker')
+    if (picker) picker.value = color
   }
 
   async function loadPageContent() {
@@ -2292,6 +2320,10 @@ footer strong { color: var(--pink-d); }
         hero.style.backgroundSize     = 'cover'
         hero.style.backgroundPosition = 'center'
         localStorage.setItem('hewkao_hero_bg', c.heroBg)
+      }
+      if (c.titleColor) {
+        loadTitleColor(c.titleColor)
+        localStorage.setItem('hewkao_title_color', c.titleColor)
       }
     } catch(e) {}
   }
