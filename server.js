@@ -1,9 +1,15 @@
 require('dotenv').config()
-const express = require('express')
-const cors    = require('cors')
-const jwt     = require('jsonwebtoken')
-const bcrypt  = require('bcrypt')
+const express  = require('express')
+const cors     = require('cors')
+const jwt      = require('jsonwebtoken')
+const bcrypt   = require('bcrypt')
+const multer   = require('multer')
+const FormData = require('form-data')
+const fetch    = require('node-fetch')
+const nodemailer = require('nodemailer')
 const { createClient } = require('@supabase/supabase-js')
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
 
 const app = express()
 app.use(cors())
@@ -229,39 +235,61 @@ app.post('/api/check-discount', auth, async (req, res) => {
 
 // POST /api/orders — create order (ไม่บังคับ login)
 app.post('/api/orders', async (req, res) => {
-  const { total, note, items, guest_info } = req.body
+  const { total, note, items, guest_info, guest_email } = req.body
   if (!items || !items.length) return res.status(400).json({ error: 'No items' })
 
-  // ถ้ามี token ก็ใช้ user id ได้ ถ้าไม่มีก็เป็น guest
   let member_id = null
   const token = req.headers.authorization?.split(' ')[1]
   if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET)
-      member_id = decoded.id
-    } catch(e) {}
+    try { const d = jwt.verify(token, JWT_SECRET); member_id = d.id } catch(e) {}
   }
 
   try {
     const { data: order, error: orderErr } = await supabase
       .from('orders')
-      .insert({ member_id, total, note: note||null, status: 'pending', guest_info: guest_info||null })
-      .select()
-      .single()
+      .insert({ member_id, total, note: note||null, status: 'pending', guest_info: guest_info||null, guest_email: guest_email||null })
+      .select().single()
     if (orderErr) throw orderErr
 
-    const orderItems = items.map(i => ({
-      order_id:   order.id,
-      product_id: i.product_id,
-      quantity:   i.quantity,
-      price:      i.price
-    }))
+    const orderItems = items.map(i => ({ order_id: order.id, product_id: i.product_id, quantity: i.quantity, price: i.price }))
     const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
     if (itemsErr) throw itemsErr
 
     res.json({ id: order.id, status: order.status })
+  } catch(e) { res.status(500).json({ error: e.message }) }
+})
+
+// POST /api/verify-slip — verify PromptPay slip via EasySlip
+app.post('/api/verify-slip', upload.single('slip'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ valid: false, message: 'No slip file' })
+    const amount = parseFloat(req.body.amount) || 0
+
+    const form = new FormData()
+    form.append('files', req.file.buffer, { filename: 'slip.jpg', contentType: req.file.mimetype })
+
+    const easyRes = await fetch('https://developer.easyslip.com/api/v1/verify', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer fd52f6c2-f0a5-4153-8133-6f5ef6dac605', ...form.getHeaders() },
+      body: form
+    })
+    const data = await easyRes.json()
+
+    if (!easyRes.ok || data.status !== 200) {
+      return res.json({ valid: false, message: data.message || 'สลิปไม่ถูกต้อง' })
+    }
+
+    const slip = data.data
+    const slipAmount = slip?.amount?.amount || 0
+    // ตรวจสอบยอดเงิน (±1 บาท)
+    if (Math.abs(slipAmount - amount) > 1) {
+      return res.json({ valid: false, message: `ยอดเงินไม่ตรง (สลิป: ฿${slipAmount} / ที่ต้องชำระ: ฿${amount})` })
+    }
+
+    res.json({ valid: true, amount: slipAmount, ref: slip?.transRef })
   } catch(e) {
-    res.status(500).json({ error: e.message })
+    console.error('EasySlip error:', e)
+    res.status(500).json({ valid: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบ' })
   }
 })
 
@@ -342,6 +370,32 @@ app.post('/api/orders/:id/auto-confirm', async (req, res) => {
       }, { onConflict: 'order_id,product_id' })
       links.push({ url: dlUrl, name: item.products.name })
     }
+
+    // ส่งเมล์ถ้ามี guest_email
+    const { data: order } = await supabase.from('orders').select('guest_email, member_id, members(email)').eq('id', id).single()
+    const toEmail = order?.guest_email || order?.members?.email
+    if (toEmail && links.length > 0) {
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: 'soumashigure2@gmail.com', pass: process.env.GMAIL_APP_PASSWORD }
+        })
+        const linksHtml = links.map(l => `<p><a href="${l.url}" style="background:#e8829a;color:#fff;padding:10px 20px;border-radius:10px;text-decoration:none;font-weight:bold;">⬇️ Download: ${l.name}</a></p>`).join('')
+        await transporter.sendMail({
+          from: '"HewKao Shop 🌸" <soumashigure2@gmail.com>',
+          to: toEmail,
+          subject: '🌸 Your HewKao Download is Ready!',
+          html: `<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+            <h2 style="color:#e8829a;">Thank you for your purchase! 🎉</h2>
+            <p>Your download link${links.length > 1 ? 's are' : ' is'} ready:</p>
+            ${linksHtml}
+            <p style="font-size:12px;color:#888;margin-top:20px;">If you have any issues, please contact us at soumashigure2@gmail.com</p>
+            <p style="font-size:12px;color:#888;">HewKao Shop 🌸</p>
+          </div>`
+        })
+      } catch(mailErr) { console.error('Email error:', mailErr) }
+    }
+
     res.json({ status: 'paid', download_links: links })
   } catch(e) { res.status(500).json({ error: e.message }) }
 })
