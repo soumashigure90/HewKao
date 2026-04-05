@@ -235,7 +235,7 @@ app.post('/api/check-discount', auth, async (req, res) => {
 
 // POST /api/orders — create order (ไม่บังคับ login)
 app.post('/api/orders', async (req, res) => {
-  const { total, note, items, guest_info, guest_email } = req.body
+  const { total, note, items, guest_info, guest_email, slip_ref } = req.body
   if (!items || !items.length) return res.status(400).json({ error: 'No items' })
 
   let member_id = null
@@ -247,7 +247,7 @@ app.post('/api/orders', async (req, res) => {
   try {
     const { data: order, error: orderErr } = await supabase
       .from('orders')
-      .insert({ member_id, total, note: note||null, status: 'pending', guest_info: guest_info||null, guest_email: guest_email||null })
+      .insert({ member_id, total, note: note||null, status: 'pending', guest_info: guest_info||null, guest_email: guest_email||null, slip_ref: slip_ref||null })
       .select().single()
     if (orderErr) throw orderErr
 
@@ -312,7 +312,20 @@ app.post('/api/verify-slip', upload.single('slip'), async (req, res) => {
       return res.json({ valid: false, message: `ยอดเงินไม่ตรง (สลิป: ฿${slipAmount} / ที่ต้องชำระ: ฿${amount})` })
     }
 
-    res.json({ valid: true, amount: slipAmount, ref: slip?.transRef })
+    // ✅ ตรวจ transRef ซ้ำ — สลิปเดิมใช้ซ้ำไม่ได้
+    const transRef = slip?.transRef
+    if (transRef) {
+      const { data: existing } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('slip_ref', transRef)
+        .single()
+      if (existing) {
+        return res.json({ valid: false, message: 'สลิปนี้ถูกใช้ไปแล้วนะคะ กรุณาโอนใหม่อีกครั้ง 🙏' })
+      }
+    }
+
+    res.json({ valid: true, amount: slipAmount, ref: transRef })
   } catch(e) {
     console.error('EasySlip error:', e.message)
     res.status(500).json({ valid: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบ' })
