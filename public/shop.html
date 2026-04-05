@@ -2146,6 +2146,42 @@ footer strong { color: var(--pink-d); }
     setTimeout(() => o.classList.remove('open','closing'), 220)
   }
 
+  function closePayment() {
+    const o = document.getElementById('paymentOverlay')
+    o.classList.add('closing')
+    setTimeout(() => o.classList.remove('open','closing'), 220)
+  }
+
+  function switchPayTab(tab) {
+    currentPayTab = tab
+    document.getElementById('payCardForm').style.display = tab==='card' ? 'block' : 'none'
+    document.getElementById('payQRForm').style.display   = tab==='qr'   ? 'block' : 'none'
+    const cardBtn = document.getElementById('payTabCard')
+    const qrBtn   = document.getElementById('payTabQR')
+    if (tab==='card') {
+      cardBtn.style.background='var(--pink-d)'; cardBtn.style.color='#fff'; cardBtn.style.borderColor='var(--pink-d)'
+      qrBtn.style.background='#fff'; qrBtn.style.color='var(--text-s)'; qrBtn.style.borderColor='var(--pink-l)'
+    } else {
+      qrBtn.style.background='var(--pink-d)'; qrBtn.style.color='#fff'; qrBtn.style.borderColor='var(--pink-d)'
+      cardBtn.style.background='#fff'; cardBtn.style.color='var(--text-s)'; cardBtn.style.borderColor='var(--pink-l)'
+    }
+  }
+
+  function formatCard(el) {
+    let v = el.value.replace(/\D/g,'').substring(0,16)
+    el.value = v.replace(/(.{4})/g,'$1 ').trim()
+    const preview = v.padEnd(16,'x')
+    document.getElementById('cardPreview').textContent =
+      preview.substring(0,4)+' '+preview.substring(4,8)+' '+preview.substring(8,12)+' '+preview.substring(12,16)
+  }
+
+  function formatExp(el) {
+    let v = el.value.replace(/\D/g,'')
+    if (v.length >= 2) v = v.substring(0,2)+'/'+v.substring(2,4)
+    el.value = v
+    document.getElementById('cardExpPreview').textContent = v || 'MM/YY'
+  }
+
   function goToPayment() {
     const total = parseFloat(document.getElementById('coTotal').textContent.replace(/[^0-9.]/g,''))
     // ปิด checkout ก่อน แล้วค่อยเปิด payment
