@@ -2283,6 +2283,7 @@ footer strong { color: var(--pink-d); }
     // เก็บ total จริงไว้ให้ submitOrder ใช้
     window._orderTotalTHB = grandTotalTHB
     window._orderTotalUSD = grandTotalUSD
+    console.log('[buildCheckout] total=', total, 'shipping=', shippingTHB, 'grandTotalTHB=', grandTotalTHB, '_orderTotalTHB set to', grandTotalTHB)
 
     // แสดงที่อยู่เฉพาะถ้ามี physical/preorder
     const addrBox = document.getElementById('checkoutAddr')
@@ -2398,12 +2399,14 @@ footer strong { color: var(--pink-d); }
 
   function goToPayment() {
     const total = window._orderTotalTHB || 0
+    console.log('[goToPayment] _orderTotalTHB =', window._orderTotalTHB, '→ using total =', total)
     const co = document.getElementById('checkoutOverlay')
     co.classList.remove('open','closing')
     co.style.display = 'none'
 
     // ถ้า total = 0 (คูปอง 100%) → ข้ามหน้า payment ไป submit เลย
     if (total === 0) {
+      console.log('[goToPayment] total=0 → skipping payment, submitting order directly')
       setTimeout(() => {
         co.style.display = ''
         submitOrder()
