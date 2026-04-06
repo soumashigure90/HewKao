@@ -2362,14 +2362,31 @@ footer strong { color: var(--pink-d); }
     const cfg = window._shopSettings || {}
     const exchangeRate = parseFloat(cfg.exchange_rate || 36)
 
-    // หา usd subtotal จาก items — ถ้าสินค้าไม่มี price_usd ให้แปลงจาก THB
+    // subtotal USD = ราคาเต็ม (origPrice) ก่อน discount
     const subtotalUSD = items.reduce((acc,i) => {
-      if (i.price_usd) return acc + (i.price_usd * i.qty)
+      const origP = i.origPrice || i.price
+      if (i.price_usd) {
+        // ถ้ามี price_usd ให้ใช้เป็น origPrice USD
+        return acc + (i.price_usd * i.qty)
+      }
+      return acc + ((origP * i.qty) / exchangeRate)
+    }, 0)
+
+    // total USD = หลัง discount (ใช้ finalPrice)
+    const totalUSD = items.reduce((acc,i) => {
+      if (i.price_usd) {
+        // หาก discount → คำนวณสัดส่วนลดเทียบจาก THB
+        const origTHB = (i.origPrice || i.price) * i.qty
+        const finalTHB = i.price * i.qty
+        const ratio = origTHB > 0 ? finalTHB / origTHB : 1
+        return acc + (i.price_usd * i.qty * ratio)
+      }
       return acc + ((i.price * i.qty) / exchangeRate)
     }, 0)
-    const totalUSD = subtotalUSD
 
-    // คำนวณค่าส่ง (based on THB subtotal)
+    const discountUSD = subtotalUSD - totalUSD
+
+    // คำนวณค่าส่ง (based on THB total หลัง discount)
     const ship = getShipping(items, total, totalUSD)
     const hasPhysical = items.some(i => i.type==='physical'||i.type==='preorder')
     const shippingTHB = hasPhysical ? ship.thb : 0
@@ -2379,8 +2396,16 @@ footer strong { color: var(--pink-d); }
 
     document.getElementById('checkoutItems').innerHTML = items.map(item => {
       const thumb = item.image_url ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">` : item.emoji
-      const priceStr = isUSD && item.price_usd
-        ? '$' + (Number(item.price_usd) * item.qty).toFixed(2)
+      // แสดงราคา item — ถ้า isUSD ให้คำนวณ USD จาก finalPrice
+      const itemFinalUSD = item.price_usd
+        ? (() => {
+            const origTHB = item.origPrice || item.price
+            const ratio   = origTHB > 0 ? item.price / origTHB : 1
+            return (item.price_usd * item.qty * ratio)
+          })()
+        : (item.price * item.qty) / exchangeRate
+      const priceStr = isUSD
+        ? '$' + itemFinalUSD.toFixed(2)
         : '฿' + (item.price * item.qty).toLocaleString()
       return `<div class="checkout-item">
         <div class="checkout-item-img bg1">${thumb}</div>
@@ -2391,8 +2416,10 @@ footer strong { color: var(--pink-d); }
     }).join('')
 
     const cur = isUSD ? 'USD' : 'THB'
-    document.getElementById('coSubtotal').textContent = isUSD && subtotalUSD > 0 ? '$'+subtotalUSD.toFixed(2) : '฿'+subtotal.toLocaleString()
-    document.getElementById('coDiscount').textContent = discount > 0 ? '-฿'+discount.toLocaleString() : '-฿0'
+    document.getElementById('coSubtotal').textContent = isUSD ? '$'+subtotalUSD.toFixed(2) : '฿'+subtotal.toLocaleString()
+    document.getElementById('coDiscount').textContent = isUSD
+      ? (discountUSD > 0 ? '-$'+discountUSD.toFixed(2) : '-$0.00')
+      : (discount > 0 ? '-฿'+discount.toLocaleString() : '-฿0')
 
     // แสดงแถวค่าส่ง
     let shippingRow = document.getElementById('coShippingRow')
