@@ -2809,15 +2809,8 @@ footer strong { color: var(--pink-d); }
       updateCartBadge()
       setTimeout(() => { co.style.display = '' }, 500)
 
-      // ── ดึง freebies ที่เพิ่งสร้าง (รอ server process ก่อนสักครู่)
-      let orderFreebies = []
-      try {
-        await new Promise(r => setTimeout(r, 1200)) // รอ processFreebie เสร็จ
-        const fbRes = await fetch(`${API}/api/orders/${data.id}/freebies`, {
-          headers: token ? { 'Authorization': 'Bearer ' + token } : {}
-        })
-        if (fbRes.ok) orderFreebies = await fbRes.json()
-      } catch(e) {}
+      // ── freebies มาพร้อม order response เลย
+      const orderFreebies = data.freebies || []
 
       if (isAllDigital) {
         try {
