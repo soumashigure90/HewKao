@@ -1187,48 +1187,86 @@ footer strong { color: var(--pink-d); }
 
 <!-- ADDRESS COLLECTION MODAL (สำหรับ physical/preorder ที่ยังไม่มีที่อยู่) -->
 <div class="profile-overlay" id="addrCollectOverlay" onclick="if(event.target===this)closeAddrCollect()">
-  <div class="profile-modal">
+  <div class="profile-modal" style="max-width:520px;">
     <div class="profile-header" style="background:linear-gradient(135deg,var(--yellow-l),var(--pink-l));">
       <div class="profile-avatar" style="background:var(--pink-d);font-size:20px;">📍</div>
       <div class="profile-header-info">
-        <h3>Delivery Information</h3>
-        <p>Required for this order type</p>
+        <h3>Delivery Information <span style="font-size:12px;font-weight:400;color:var(--text-s);">ข้อมูลการจัดส่ง</span></h3>
+        <p>กรุณากรอกข้อมูลให้ครบถ้วน · Required for shipping</p>
       </div>
       <button onclick="closeAddrCollect()" style="margin-left:auto;background:rgba(255,255,255,0.7);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform=''">✕</button>
     </div>
-    <div class="profile-body">
+    <div class="profile-body" style="max-height:70vh;overflow-y:auto;">
+
+      <!-- Name -->
       <div class="profile-field">
-        <label>👤 FULL NAME <span style="color:var(--red);">*</span></label>
-        <input type="text" id="acFullName" placeholder="ชื่อ-นามสกุล / Full name" />
+        <label>👤 NAME · ชื่อ-นามสกุล <span style="color:var(--pink-d);">*</span></label>
+        <input type="text" id="acFullName" placeholder="Full name / ชื่อ-นามสกุล" />
       </div>
+
+      <!-- Email — guest only -->
+      <div class="profile-field" id="acEmailField">
+        <label>✉️ EMAIL · อีเมล <span style="color:var(--pink-d);">*</span></label>
+        <input type="email" id="acEmail" placeholder="your@email.com" />
+        <p style="font-size:11px;color:var(--text-s);margin-top:4px;">ใช้รับการยืนยันคำสั่งซื้อ · For order confirmation</p>
+      </div>
+
+      <!-- Phone -->
       <div class="profile-field">
-        <label>📞 PHONE <span style="color:var(--red);">*</span></label>
-        <input type="text" id="acPhone" placeholder="เบอร์โทรศัพท์" />
+        <label>📞 PHONE · เบอร์โทรศัพท์ <span style="font-size:11px;color:var(--text-s);font-weight:400;">(optional)</span></label>
+        <input type="tel" id="acPhone" placeholder="เบอร์โทรศัพท์ (ไม่บังคับ)" />
       </div>
+
+      <!-- Address -->
       <div class="profile-field">
-        <label>🌍 COUNTRY <span style="color:var(--red);">*</span></label>
-        <select id="acCountry" style="width:100%;padding:10px 14px;border:2px solid var(--pink-l);border-radius:12px;font-size:14px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;">
-          <option value="">Select country...</option>
-          <option value="Thailand">🇹🇭 Thailand</option>
-          <option value="Japan">🇯🇵 Japan</option>
-          <option value="USA">🇺🇸 USA</option>
-          <option value="UK">🇬🇧 UK</option>
-          <option value="Singapore">🇸🇬 Singapore</option>
-          <option value="Other">🌐 Other</option>
-        </select>
+        <label>🏠 ADDRESS · ที่อยู่ <span style="color:var(--pink-d);">*</span></label>
+        <textarea id="acAddress" placeholder="เลขที่ / ถนน / หมู่บ้าน&#10;House number / Street / Village" rows="2"></textarea>
       </div>
-      <div class="profile-field">
-        <label>📍 ADDRESS <span style="color:var(--red);">*</span></label>
-        <textarea id="acAddress" placeholder="เลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์" rows="3"></textarea>
+
+      <!-- City + State row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="profile-field" style="margin-bottom:0;">
+          <label>🏙️ CITY / DISTRICT <span style="color:var(--pink-d);">*</span><br><span style="font-size:10px;color:var(--text-s);font-weight:400;">เมือง / เขต / อำเภอ</span></label>
+          <input type="text" id="acCity" placeholder="City / เมือง-อำเภอ" />
+        </div>
+        <div class="profile-field" style="margin-bottom:0;">
+          <label>🗺️ STATE / PROVINCE<br><span style="font-size:10px;color:var(--text-s);font-weight:400;">จังหวัด / รัฐ (ไม่บังคับ)</span></label>
+          <input type="text" id="acState" placeholder="Province / จังหวัด" />
+        </div>
       </div>
-      <p style="font-size:12px;color:var(--text-s);margin-top:-6px;">
+
+      <!-- Postcode + Country row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+        <div class="profile-field" style="margin-bottom:0;">
+          <label>📮 POSTCODE <span style="color:var(--pink-d);">*</span><br><span style="font-size:10px;color:var(--text-s);font-weight:400;">รหัสไปรษณีย์</span></label>
+          <input type="text" id="acPostcode" placeholder="รหัสไปรษณีย์" inputmode="numeric" />
+        </div>
+        <div class="profile-field" style="margin-bottom:0;">
+          <label>🌍 COUNTRY · ประเทศ <span style="color:var(--pink-d);">*</span></label>
+          <select id="acCountry" style="width:100%;padding:10px 14px;border:2px solid var(--pink-l);border-radius:12px;font-size:13px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;">
+            <option value="">เลือกประเทศ...</option>
+            <option value="Thailand">🇹🇭 Thailand</option>
+            <option value="Japan">🇯🇵 Japan</option>
+            <option value="USA">🇺🇸 USA</option>
+            <option value="UK">🇬🇧 UK</option>
+            <option value="Singapore">🇸🇬 Singapore</option>
+            <option value="Australia">🇦🇺 Australia</option>
+            <option value="Canada">🇨🇦 Canada</option>
+            <option value="Germany">🇩🇪 Germany</option>
+            <option value="France">🇫🇷 France</option>
+            <option value="Other">🌐 Other / อื่นๆ</option>
+          </select>
+        </div>
+      </div>
+
+      <p style="font-size:12px;color:var(--text-s);margin-top:14px;">
         <input type="checkbox" id="acSaveToProfile" checked style="margin-right:4px;">
-        Save to my profile for future orders
+        บันทึกสำหรับการสั่งซื้อครั้งต่อไป · Save to my profile for future orders
       </p>
     </div>
     <div class="profile-actions">
       <button class="btn-profile-cancel" onclick="closeAddrCollect()">Cancel</button>
-      <button class="btn-profile-save" onclick="confirmAddrCollect()">Continue →</button>
+      <button class="btn-profile-save" onclick="confirmAddrCollect()">Continue → ดำเนินการต่อ</button>
     </div>
   </div>
 </div>
@@ -2063,10 +2101,26 @@ footer strong { color: var(--pink-d); }
   // ── ADDRESS COLLECTION ──
   function openAddrCollect(callback) {
     window._afterAddrCollect = callback || null
-    document.getElementById('acFullName').value = userProfile?.full_name || ''
-    document.getElementById('acPhone').value    = userProfile?.phone    || ''
-    document.getElementById('acCountry').value  = userProfile?.country  || ''
-    document.getElementById('acAddress').value  = userProfile?.address  || ''
+    const token = localStorage.getItem('mochi_token')
+
+    // โหลดค่าเดิมจาก profile
+    document.getElementById('acFullName').value  = userProfile?.full_name || ''
+    document.getElementById('acPhone').value     = userProfile?.phone     || ''
+    document.getElementById('acCountry').value   = userProfile?.country   || ''
+    document.getElementById('acAddress').value   = userProfile?.address   || ''
+    document.getElementById('acCity').value      = userProfile?.city      || ''
+    document.getElementById('acState').value     = userProfile?.state     || ''
+    document.getElementById('acPostcode').value  = userProfile?.postcode  || ''
+    document.getElementById('acEmail').value     = userProfile?.email     || ''
+
+    // ซ่อน email field ถ้า login แล้ว (มี email ใน profile อยู่แล้ว)
+    const emailField = document.getElementById('acEmailField')
+    if (token && userProfile?.email) {
+      emailField.style.display = 'none'
+    } else {
+      emailField.style.display = 'block'
+    }
+
     document.getElementById('addrCollectOverlay').classList.remove('closing')
     document.getElementById('addrCollectOverlay').classList.add('open')
   }
@@ -2079,25 +2133,54 @@ footer strong { color: var(--pink-d); }
   }
 
   async function confirmAddrCollect() {
+    const token     = localStorage.getItem('mochi_token')
     const full_name = document.getElementById('acFullName').value.trim()
     const phone     = document.getElementById('acPhone').value.trim()
     const country   = document.getElementById('acCountry').value
     const address   = document.getElementById('acAddress').value.trim()
-    if (!full_name || !phone || !country || !address) { showToast('Please fill in all fields'); return }
+    const city      = document.getElementById('acCity').value.trim()
+    const state     = document.getElementById('acState').value.trim()
+    const postcode  = document.getElementById('acPostcode').value.trim()
+
+    // email — บังคับเฉพาะ guest
+    const emailField = document.getElementById('acEmailField')
+    const isGuestEmailVisible = emailField.style.display !== 'none'
+    const guestEmail = document.getElementById('acEmail').value.trim()
+
+    // validate ช่องบังคับ
+    if (!full_name) { showToast('กรุณากรอกชื่อ-นามสกุล · Name is required'); return }
+    if (isGuestEmailVisible && !guestEmail) { showToast('กรุณากรอกอีเมล · Email is required'); return }
+    if (isGuestEmailVisible && !guestEmail.includes('@')) { showToast('รูปแบบอีเมลไม่ถูกต้อง · Invalid email'); return }
+    if (!address) { showToast('กรุณากรอกที่อยู่ · Address is required'); return }
+    if (!city)    { showToast('กรุณากรอกเมือง/เขต · City is required'); return }
+    if (!postcode){ showToast('กรุณากรอกรหัสไปรษณีย์ · Postcode is required'); return }
+    if (!country) { showToast('กรุณาเลือกประเทศ · Country is required'); return }
+
     if (!userProfile) userProfile = {}
     userProfile.full_name = full_name
     userProfile.phone     = phone
     userProfile.country   = country
     userProfile.address   = address
-    const token = localStorage.getItem('mochi_token')
+    userProfile.city      = city
+    userProfile.state     = state
+    userProfile.postcode  = postcode
+    if (isGuestEmailVisible && guestEmail) {
+      userProfile.email = guestEmail
+      // เก็บ guest email ไว้ส่ง order ด้วย
+      window._guestEmail = guestEmail
+    }
+
+    // บันทึกที่อยู่แบบ full string สำหรับ checkout display
+    userProfile.address_full = [address, city, state, postcode, country].filter(Boolean).join(', ')
+
     const shouldSave = document.getElementById('acSaveToProfile')?.checked
     if (token && shouldSave) {
       try {
         const res = await fetch(`${API}/api/profile`, {
           method:'PUT', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-          body: JSON.stringify({ full_name, phone, country, address })
+          body: JSON.stringify({ full_name, phone, country, address: userProfile.address_full })
         })
-        if (res.ok) userProfile = await res.json()
+        if (res.ok) userProfile = { ...userProfile, ...(await res.json()) }
       } catch(e) {}
     }
     closeAddrCollect()
@@ -2109,7 +2192,7 @@ footer strong { color: var(--pink-d); }
   // ── ADDRESS WARNING ──
   function showAddrWarn() { document.getElementById('addrWarnOverlay').classList.add('open') }
   function closeAddrWarn() { document.getElementById('addrWarnOverlay').classList.remove('open') }
-  function hasAddress() { return userProfile?.address?.trim().length > 0 }
+  function hasAddress() { return !!(userProfile?.address?.trim() && userProfile?.city?.trim() && userProfile?.postcode?.trim() && userProfile?.country?.trim()) }
   function needsAddress(items) { return items.some(i => i.type==='physical'||i.type==='preorder') }
   function showAddrWarnThen(cb) { window._afterAddrSave = cb; showAddrWarn() }
 
@@ -2291,8 +2374,10 @@ footer strong { color: var(--pink-d); }
       const p = userProfile
       const lines = [
         p?.full_name ? `👤 ${p.full_name}` : null,
+        p?.email     ? `✉️ ${p.email}`     : null,
         p?.phone     ? `📞 ${p.phone}`     : null,
-        p?.address   ? `📍 ${p.address}`   : null,
+        p?.address   ? `📍 ${p.address}` : null,
+        (p?.city||p?.state||p?.postcode) ? `🏙️ ${[p.city,p.state,p.postcode].filter(Boolean).join(' ')}` : null,
         p?.country   ? `🌍 ${p.country}`   : null,
       ].filter(Boolean)
       document.getElementById('coAddrText').innerHTML = lines.join('<br>') || '—'
@@ -2603,9 +2688,18 @@ footer strong { color: var(--pink-d); }
     window._orderTotalTHB = null
     const note  = document.getElementById('checkoutNote')?.value?.trim() || ''
     const items = orderItems.map(i => ({ product_id:i.id, quantity:i.qty, price:i.price }))
-    const guest_info = userProfile ? { full_name:userProfile.full_name, phone:userProfile.phone, country:userProfile.country, address:userProfile.address } : null
+    const guest_info = userProfile ? {
+      full_name: userProfile.full_name,
+      phone:     userProfile.phone,
+      email:     userProfile.email,
+      address:   userProfile.address_full || userProfile.address,
+      city:      userProfile.city,
+      state:     userProfile.state,
+      postcode:  userProfile.postcode,
+      country:   userProfile.country
+    } : null
     const guestEmailEl = document.getElementById('guestEmailInput')
-    const guest_email  = (!token && guestEmailEl) ? guestEmailEl.value.trim() : null
+    const guest_email  = window._guestEmail || ((!token && guestEmailEl) ? guestEmailEl.value.trim() : null)
     const slip_ref      = window._slipRef || null
     window._slipRef     = null
     const discount_code = window._appliedDiscountCode || null
