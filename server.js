@@ -245,6 +245,27 @@ app.post('/api/orders', async (req, res) => {
   }
 
   try {
+    // ── ตรวจ stock ก่อน create order ──
+    const productIds = items.map(i => i.product_id)
+    const { data: products, error: prodErr } = await supabase
+      .from('products')
+      .select('id, name, stock, status')
+      .in('id', productIds)
+    if (prodErr) throw prodErr
+
+    for (const item of items) {
+      const product = products.find(p => p.id === item.product_id)
+      if (!product) return res.status(400).json({ error: `Product not found` })
+      if (product.status !== 'active') return res.status(400).json({ error: `${product.name} is no longer available` })
+      if (product.stock !== null && product.stock < item.quantity) {
+        return res.status(400).json({
+          error: product.stock === 0
+            ? `${product.name} is out of stock`
+            : `Only ${product.stock} left in stock for ${product.name}`
+        })
+      }
+    }
+
     const { data: order, error: orderErr } = await supabase
       .from('orders')
       .insert({ member_id, total, note: note||null, status: 'pending', guest_info: guest_info||null, guest_email: guest_email||null, slip_ref: slip_ref||null })
@@ -254,6 +275,17 @@ app.post('/api/orders', async (req, res) => {
     const orderItems = items.map(i => ({ order_id: order.id, product_id: i.product_id, quantity: i.quantity, price: i.price }))
     const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
     if (itemsErr) throw itemsErr
+
+    // ── Deduct stock ──
+    for (const item of items) {
+      const product = products.find(p => p.id === item.product_id)
+      if (product.stock !== null) {
+        await supabase
+          .from('products')
+          .update({ stock: Math.max(0, product.stock - item.quantity) })
+          .eq('id', item.product_id)
+      }
+    }
 
     res.json({ id: order.id, status: order.status })
   } catch(e) { res.status(500).json({ error: e.message }) }
