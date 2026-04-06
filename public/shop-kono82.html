@@ -1318,6 +1318,9 @@ input:focus, textarea:focus, select:focus {
   </div>
 </div>
 
+<!-- PAGE BACKGROUND OVERLAY -->
+<div id="pageBgOverlay" style="position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;background-attachment:fixed;opacity:0.5;pointer-events:none;display:none;"></div>
+
 <!-- ADMIN PAGE EDITOR TOOLBAR -->
 <div id="editorToolbar" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:600;background:#fff;border-radius:20px;box-shadow:0 8px 32px rgba(180,140,200,0.3);border:1.5px solid var(--pink-l);padding:10px 16px;display:none;align-items:center;gap:10px;white-space:nowrap;">
   <span style="font-size:12px;font-weight:700;color:var(--text-s);">✏️ EDIT MODE</span>
@@ -1326,6 +1329,8 @@ input:focus, textarea:focus, select:focus {
   <button onclick="editHeroTitle()"  class="edbtn">📝 Title</button>
   <button onclick="editHeroDesc()"   class="edbtn">💬 Description</button>
   <button onclick="editHeroBg()"     class="edbtn">🖼️ Hero Image</button>
+  <button onclick="editPageBg()"     class="edbtn" style="color:#2A7FAF;border-color:#A8D8EA;">🖼️ Page BG</button>
+  <button onclick="clearPageBg()"    class="edbtn" style="color:#e8829a;border-color:#fcc;">🗑️ Clear BG</button>
   <div style="width:1px;height:20px;background:var(--pink-l);"></div>
   <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--text-s);cursor:pointer;">
     🎨 Title Color
@@ -1339,6 +1344,7 @@ input:focus, textarea:focus, select:focus {
   <button onclick="exitEditMode()"    class="edbtn" style="color:var(--red);border-color:#fcc;">✕ Exit</button>
 </div>
 <input type="file" id="heroBgInput" accept="image/*" style="display:none" onchange="uploadHeroBg(this)" />
+<input type="file" id="pageBgInput" accept="image/*" style="display:none" onchange="uploadPageBg(this)" />
 
 <!-- FLOATING EDIT BUTTON (admin only) -->
 <button id="editPageBtn" style="display:none;position:fixed;bottom:24px;left:24px;z-index:300;background:var(--lav-d);color:#fff;border:none;border-radius:20px;padding:10px 18px;font-size:13px;font-weight:700;font-family:Nunito,sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(155,135,214,0.4);transition:all 0.2s;" onclick="toggleEditMode()">✏️ Edit Page</button>
@@ -3285,6 +3291,13 @@ input:focus, textarea:focus, select:focus {
         loadTitleColor(c.titleColor)
         localStorage.setItem('hewkao_title_color', c.titleColor)
       }
+      if (c.pageBg) {
+        loadPageBg(c.pageBg)
+      } else {
+        // ลอง load จาก localStorage ด้วย
+        const cached = localStorage.getItem('kono82_page_bg')
+        if (cached) loadPageBg(cached)
+      }
     } catch(e) {}
   }
 
@@ -3357,6 +3370,68 @@ input:focus, textarea:focus, select:focus {
   }
 
   function editHeroBg() { document.getElementById('heroBgInput').click() }
+
+  // ── Page Background ──
+  function editPageBg() { document.getElementById('pageBgInput').click() }
+
+  function clearPageBg() {
+    const overlay = document.getElementById('pageBgOverlay')
+    overlay.style.display = 'none'
+    overlay.style.backgroundImage = ''
+    localStorage.removeItem('kono82_page_bg')
+    // save ลง DB
+    const token = localStorage.getItem('mochi_token')
+    if (token) {
+      const ids = ['heroTag','heroTitle','heroDesc']
+      const c = {}
+      ids.forEach(id => { const el = document.getElementById(id); if (el) c[id] = id==='heroTitle'?el.innerHTML:el.textContent })
+      c['pageBg'] = ''
+      fetch(`${API}/api/admin/page-content`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ lang, content: c, shop: SHOP_ID })
+      })
+    }
+    showToast('🗑️ Page background cleared')
+  }
+
+  function loadPageBg(url) {
+    if (!url) return
+    const overlay = document.getElementById('pageBgOverlay')
+    overlay.style.backgroundImage = `url('${url}')`
+    overlay.style.display = 'block'
+    localStorage.setItem('kono82_page_bg', url)
+  }
+
+  async function uploadPageBg(input) {
+    const file = input.files[0]
+    if (!file) return
+    const token = localStorage.getItem('mochi_token')
+    if (!token) { showToast('❌ Please login as admin'); return }
+    showToast('Uploading background... 🖼️')
+    try {
+      const res = await fetch(`${API}/api/admin/upload`, {
+        method:'POST', headers:{'Authorization':`Bearer ${token}`,'Content-Type':file.type}, body:file
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+
+      loadPageBg(data.url)
+
+      // save ลง page_content
+      const ids = ['heroTag','heroTitle','heroDesc']
+      const c = {}
+      ids.forEach(id => { const el = document.getElementById(id); if (el) c[id] = id==='heroTitle'?el.innerHTML:el.textContent })
+      const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
+      if (heroBg) c['heroBg'] = heroBg
+      c['pageBg'] = data.url
+      await fetch(`${API}/api/admin/page-content`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ lang, content: c, shop: SHOP_ID })
+      })
+      showToast('✅ Page background updated!')
+    } catch(e) { showToast('❌ ' + e.message) }
+    input.value = ''
+  }
 
   async function uploadHeroBg(input) {
     const file = input.files[0]
