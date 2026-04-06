@@ -1591,6 +1591,7 @@ input:focus, textarea:focus, select:focus {
 
 <script>
   const API = 'https://hewkao.shop'
+  const SHOP_ID = 'kono82'
   let lang = 'en'
   let allProducts = []
   let currentFilter = 'all'
@@ -3230,7 +3231,7 @@ input:focus, textarea:focus, select:focus {
     try {
       const res = await fetch(`${API}/api/admin/page-content`, {
         method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-        body: JSON.stringify({ lang, content })
+        body: JSON.stringify({ lang, content, shop: SHOP_ID })
       })
       if (showMsg && res.ok) showToast(`💾 Saved (${lang.toUpperCase()})`)
     } catch(e) { if (showMsg) showToast('❌ Save failed') }
@@ -3268,7 +3269,7 @@ input:focus, textarea:focus, select:focus {
 
   async function applyPageContent(l) {
     try {
-      const res = await fetch(`${API}/api/page-content?lang=${l}`)
+      const res = await fetch(`${API}/api/page-content?lang=${l}&shop=${SHOP_ID}`)
       const c = await res.json()
       if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
       if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
