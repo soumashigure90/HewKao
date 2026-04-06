@@ -104,16 +104,15 @@ async function processFreebie(orderId, orderItems, toEmail, memberEmail) {
         if (existing && existing.length > 0) code = genCode('HEWK')
 
         // Create discount
-        const { data: dc } = await supabase.from('discounts').insert({
+        const { data: dc, error: dcErr } = await supabase.from('discounts').insert({
           code,
           type:      product.freebie_discount_type || 'percent',
           value:     product.freebie_discount_value || 10,
           max_uses:  product.freebie_discount_uses || 1,
-          used_count: 0,
           status:    'active',
-          expires_at: null,
         }).select().single()
 
+        if (dcErr) { console.error('Freebie discount insert error:', dcErr.message); continue }
         if (dc) {
           freebies.push({
             type: 'discount',
@@ -129,10 +128,13 @@ async function processFreebie(orderId, orderItems, toEmail, memberEmail) {
 
     if (freebies.length === 0) return
 
-    // บันทึก freebies ลง order (เก็บใน guest_info หรือ JSON column)
-    await supabase.from('order_freebies').upsert(
-      freebies.map(f => ({ order_id: parseInt(orderId), freebie: f }))
-    ).catch(() => {}) // ถ้าไม่มี table ก็ข้ามไป
+    // บันทึก freebies ลง order_freebies ทีละ row
+    for (const f of freebies) {
+      const { error: insertErr } = await supabase
+        .from('order_freebies')
+        .insert({ order_id: parseInt(orderId), freebie: f })
+      if (insertErr) console.error('order_freebies insert error:', insertErr.message)
+    }
 
     // ส่ง email
     const recipient = toEmail || memberEmail
