@@ -255,25 +255,9 @@ textarea{resize:vertical;min-height:80px;}
           <!-- SHIPPING -->
           <div class="form-group span2" style="background:var(--lav-l);border-radius:12px;padding:16px;grid-column:span 2;">
             <div style="font-size:12px;font-weight:700;color:var(--lav-d);letter-spacing:.5px;margin-bottom:12px;">🚚 SHIPPING SETTINGS (DEFAULT)</div>
-
-            <!-- Exchange Rate -->
-            <div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:14px;border:1.5px solid var(--lav);">
-              <div style="font-size:11px;font-weight:700;color:var(--lav-d);margin-bottom:8px;">💱 อัตราแลกเปลี่ยน (ใช้แปลง ฿ → $ อัตโนมัติ)</div>
-              <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:center;">
-                <div>
-                  <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">1 USD = ? THB</label>
-                  <input type="number" id="settingExchangeRate" placeholder="36" min="1" step="0.01" />
-                </div>
-                <div style="font-size:11px;color:var(--text-s);line-height:1.6;">
-                  💡 ใช้สำหรับแสดงค่าส่งเป็น $ เมื่อลูกค้าเลือกภาษา EN<br>
-                  เช่น ค่าส่ง ฿60 ÷ 36 = $1.67
-                </div>
-              </div>
-            </div>
-
             <!-- ในประเทศ -->
-            <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">🇹🇭 ในประเทศ (Thailand) — จ่ายผ่าน QR PromptPay</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">🇹🇭 ในประเทศ (Thailand)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
               <div>
                 <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง (฿)</label>
                 <input type="number" id="settingShippingTHB" placeholder="60" min="0" step="1" />
@@ -283,24 +267,23 @@ textarea{resize:vertical;min-height:80px;}
                 <input type="number" id="settingFreeShipping" placeholder="500" min="0" step="1" />
               </div>
             </div>
-
             <!-- ต่างประเทศ -->
-            <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">🌍 ต่างประเทศ (International) — แสดงเป็น $</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">🌍 ต่างประเทศ (International)</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
               <div>
-                <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง (฿) <span style="color:#bbb;">optional</span></label>
+                <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง (฿)</label>
                 <input type="number" id="settingShippingIntlTHB" placeholder="350" min="0" step="1" />
               </div>
               <div>
-                <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง ($) <span style="color:var(--lav-d);font-weight:700;">★ หลัก</span></label>
-                <input type="number" id="settingShippingUSD" placeholder="15.00" min="0" step="0.01" />
+                <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ค่าส่ง ($)</label>
+                <input type="number" id="settingShippingUSD" placeholder="10.00" min="0" step="0.01" />
               </div>
               <div>
                 <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ส่งฟรีเมื่อซื้อครบ ($)</label>
                 <input type="number" id="settingFreeShippingIntl" placeholder="50" min="0" step="0.01" />
               </div>
             </div>
-            <div style="font-size:11px;color:var(--text-s);margin-top:10px;">💡 ค่าส่งนี้เป็น default · แต่ละสินค้าตั้งค่าส่งของตัวเองได้ · ค่าส่งในประเทศจะแปลงเป็น $ อัตโนมัติตาม exchange rate</div>
+            <div style="font-size:11px;color:var(--text-s);margin-top:8px;">💡 ค่าส่งนี้เป็น default · แต่ละสินค้าสามารถตั้งค่าส่งของตัวเองได้ · ใส่ 0 = ส่งฟรีทุก order</div>
           </div>
         </div>
         <div class="form-actions">
@@ -378,6 +361,50 @@ textarea{resize:vertical;min-height:80px;}
             <div>
               <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">🌍 ค่าส่งต่างประเทศ ($)</label>
               <input type="number" id="pShippingIntlUSD" placeholder="default" min="0" step="0.01" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- FREEBIE -->
+      <div class="form-group span2" style="margin-top:4px;">
+        <div style="background:linear-gradient(135deg,#FFF8DC,#FFE4EC);border-radius:12px;padding:14px;border:1.5px solid var(--yellow);">
+          <div style="font-size:11px;font-weight:700;color:#c8860a;letter-spacing:.5px;margin-bottom:10px;">🎁 FREEBIE — ของแถมสำหรับสินค้านี้</div>
+          <div style="display:grid;grid-template-columns:160px 1fr;gap:10px;align-items:start;">
+            <div>
+              <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ประเภทของแถม</label>
+              <select id="pFreebieType" onchange="toggleFreebieFields(this.value)" style="width:100%;padding:8px 10px;border:2px solid var(--pink-l);border-radius:10px;font-size:13px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;">
+                <option value="">ไม่มีของแถม</option>
+                <option value="file">📁 ลิงค์โหลดไฟล์</option>
+                <option value="discount">🎫 Discount Code</option>
+              </select>
+            </div>
+            <div id="freebieFileGroup" style="display:none;">
+              <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">URL ไฟล์แนบ (Google Drive / Direct link)</label>
+              <input type="text" id="pFreebieFile" placeholder="https://drive.google.com/..." />
+            </div>
+            <div id="freebieDiscountGroup" style="display:none;">
+              <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ตั้งค่า Discount Code อัตโนมัติ</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;">
+                <div>
+                  <label style="font-size:10px;color:var(--text-s);display:block;margin-bottom:3px;">ประเภท</label>
+                  <select id="pFreebieDiscountType" style="width:100%;padding:8px;border:2px solid var(--pink-l);border-radius:10px;font-size:12px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;">
+                    <option value="percent">% Percent</option>
+                    <option value="fixed">฿ Fixed</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text-s);display:block;margin-bottom:3px;">ค่าลด</label>
+                  <input type="number" id="pFreebieDiscountValue" placeholder="10" min="1" step="1" />
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text-s);display:block;margin-bottom:3px;">ใช้ได้กี่ครั้ง</label>
+                  <input type="number" id="pFreebieDiscountUses" placeholder="1" min="1" step="1" />
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text-s);display:block;margin-bottom:3px;">&nbsp;</label>
+                  <div style="font-size:10px;color:var(--text-s);padding:8px 4px;line-height:1.4;">Code สุ่มอัตโนมัติ<br>เมื่อมีการสั่งซื้อ</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -636,6 +663,12 @@ async function openProductModal(id) {
         document.getElementById('pShippingDomTHB').value  = p.shipping_dom_thb != null ? p.shipping_dom_thb : ''
         document.getElementById('pShippingIntlTHB').value = p.shipping_intl_thb != null ? p.shipping_intl_thb : ''
         document.getElementById('pShippingIntlUSD').value = p.shipping_intl_usd != null ? p.shipping_intl_usd : ''
+        document.getElementById('pFreebieType').value          = p.freebie_type || ''
+        document.getElementById('pFreebieFile').value          = p.freebie_file || ''
+        document.getElementById('pFreebieDiscountType').value  = p.freebie_discount_type || 'percent'
+        document.getElementById('pFreebieDiscountValue').value = p.freebie_discount_value != null ? p.freebie_discount_value : ''
+        document.getElementById('pFreebieDiscountUses').value  = p.freebie_discount_uses != null ? p.freebie_discount_uses : '1'
+        toggleFreebieFields(p.freebie_type || '')
         if (p.image_url) {
           document.getElementById('imgPreview').src = p.image_url
           document.getElementById('imgPreviewWrap').style.display = 'block'
@@ -644,12 +677,21 @@ async function openProductModal(id) {
       }
     } catch(e) {}
   } else {
-    ['pName','pNameTh','pEmoji','pPrice','pPriceUsd','pStock','pDesc','pBadge','pFileUrl','pShippingDomTHB','pShippingIntlTHB','pShippingIntlUSD'].forEach(i => document.getElementById(i).value='')
+    ['pName','pNameTh','pEmoji','pPrice','pPriceUsd','pStock','pDesc','pBadge','pFileUrl','pShippingDomTHB','pShippingIntlTHB','pShippingIntlUSD',
+     'pFreebieFile','pFreebieDiscountValue','pFreebieDiscountUses'].forEach(i => document.getElementById(i).value='')
+    document.getElementById('pFreebieType').value = ''
+    document.getElementById('pFreebieDiscountType').value = 'percent'
+    toggleFreebieFields('')
     document.getElementById('pType').value   = 'physical'
     document.getElementById('pStatus').value = 'active'
     toggleFileUrlField('physical')
   }
   document.getElementById('productModal').classList.add('open')
+}
+
+function toggleFreebieFields(type) {
+  document.getElementById('freebieFileGroup').style.display     = type === 'file'     ? 'block' : 'none'
+  document.getElementById('freebieDiscountGroup').style.display = type === 'discount' ? 'block' : 'none'
 }
 
 function toggleFileUrlField(type) {
@@ -694,6 +736,11 @@ async function saveProduct() {
       shipping_dom_thb:   document.getElementById('pShippingDomTHB').value  !== '' ? parseFloat(document.getElementById('pShippingDomTHB').value)  : null,
       shipping_intl_thb:  document.getElementById('pShippingIntlTHB').value !== '' ? parseFloat(document.getElementById('pShippingIntlTHB').value) : null,
       shipping_intl_usd:  document.getElementById('pShippingIntlUSD').value !== '' ? parseFloat(document.getElementById('pShippingIntlUSD').value) : null,
+      freebie_type:          document.getElementById('pFreebieType').value || null,
+      freebie_file:          document.getElementById('pFreebieFile').value.trim() || null,
+      freebie_discount_type: document.getElementById('pFreebieDiscountType').value || null,
+      freebie_discount_value:document.getElementById('pFreebieDiscountValue').value !== '' ? parseFloat(document.getElementById('pFreebieDiscountValue').value) : null,
+      freebie_discount_uses: document.getElementById('pFreebieDiscountUses').value !== '' ? parseInt(document.getElementById('pFreebieDiscountUses').value) : 1,
     }
     if (image_url) body.image_url = image_url
 
@@ -956,7 +1003,6 @@ async function loadSettings() {
     document.getElementById('settingFreeShipping').value     = data.free_shipping       || ''
     document.getElementById('settingShippingIntlTHB').value  = data.shipping_intl_thb  || ''
     document.getElementById('settingFreeShippingIntl').value = data.free_shipping_intl  || ''
-    document.getElementById('settingExchangeRate').value     = data.exchange_rate       || ''
   } catch(e) {}
 }
 
@@ -971,7 +1017,6 @@ async function saveSettings() {
     free_shipping:     document.getElementById('settingFreeShipping').value || '0',
     shipping_intl_thb: document.getElementById('settingShippingIntlTHB').value || '0',
     free_shipping_intl:document.getElementById('settingFreeShippingIntl').value || '0',
-    exchange_rate:     document.getElementById('settingExchangeRate').value || '36',
   }
   try {
     const res = await fetch(`${API}/api/admin/settings`, {
