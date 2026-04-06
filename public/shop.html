@@ -2416,8 +2416,10 @@ footer strong { color: var(--pink-d); }
     }
 
     document.getElementById('checkoutNote').value = ''
-    document.getElementById('checkoutOverlay').classList.remove('closing')
-    document.getElementById('checkoutOverlay').classList.add('open')
+    const _co = document.getElementById('checkoutOverlay')
+    _co.style.display = ''   // reset inline display ที่อาจถูกซ่อนไว้
+    _co.classList.remove('closing')
+    _co.classList.add('open')
   }
 
   function openCheckout() {
@@ -2428,6 +2430,7 @@ footer strong { color: var(--pink-d); }
     if (needAddr && !hasAddress()) {
       openAddrCollect(() => {
         _buildCheckoutModal(cart, subtotal, total, subtotal - total)
+        // _buildCheckoutModal reset display + open checkout เอง
       })
       return
     }
@@ -2444,10 +2447,10 @@ footer strong { color: var(--pink-d); }
 
     const needAddr = p.type === 'physical' || p.type === 'preorder'
     if (needAddr && !hasAddress()) {
-      // เปิด addr form แล้วเด้งไป checkout เลยเมื่อกรอกเสร็จ
       closeProdModal()
       openAddrCollect(() => {
         _buildCheckoutModal(buyItem, origPrice, finalPrice, origPrice - finalPrice)
+        // _buildCheckoutModal reset display + open checkout เอง
       })
       return
     }
@@ -2462,15 +2465,16 @@ footer strong { color: var(--pink-d); }
   }
 
   function editDeliveryAddress() {
+    // ซ่อน checkout ก่อน แล้ว rebuild เมื่อแก้เสร็จ
     const co = document.getElementById('checkoutOverlay')
     co.classList.remove('open','closing')
     co.style.display = 'none'
     openAddrCollect(() => {
-      co.style.display = ''
       const items = window._buyNowItems || cart
       const subtotal = items.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
       const total    = items.reduce((s,i) => s + i.price*i.qty, 0)
       _buildCheckoutModal(items, subtotal, total, subtotal - total)
+      // _buildCheckoutModal จะ reset display และ open overlay เอง
     })
   }
 
