@@ -1155,30 +1155,50 @@ footer strong { color: var(--pink-d); }
       </div>
       <button onclick="closeProfile()" style="margin-left:auto;background:rgba(255,255,255,0.7);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform=''">✕</button>
     </div>
-    <div class="profile-body">
+    <div class="profile-body" style="max-height:70vh;overflow-y:auto;">
       <div class="profile-field">
-        <label>👤 FULL NAME</label>
-        <input type="text" id="profileFullName" placeholder="e.g. John Doe" />
+        <label>👤 FULL NAME · ชื่อ-นามสกุล</label>
+        <input type="text" id="profileFullName" placeholder="ชื่อ-นามสกุล / Full name" />
       </div>
       <div class="profile-field">
-        <label>📞 PHONE NUMBER</label>
-        <input type="text" id="profilePhone" placeholder="e.g. 0812345678" />
+        <label>📞 PHONE · เบอร์โทรศัพท์</label>
+        <input type="tel" id="profilePhone" placeholder="เบอร์โทรศัพท์ (ไม่บังคับ)" />
       </div>
       <div class="profile-field">
-        <label>🌍 COUNTRY</label>
-        <select id="profileCountry" style="width:100%;padding:10px 14px;border:2px solid var(--pink-l);border-radius:12px;font-size:14px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;">
-          <option value="">Select country...</option>
-          <option value="Thailand">🇹🇭 Thailand</option>
-          <option value="Japan">🇯🇵 Japan</option>
-          <option value="USA">🇺🇸 USA</option>
-          <option value="UK">🇬🇧 UK</option>
-          <option value="Singapore">🇸🇬 Singapore</option>
-          <option value="Other">🌐 Other</option>
-        </select>
+        <label>🏠 ADDRESS · ที่อยู่</label>
+        <textarea id="profileAddress" placeholder="เลขที่ / ถนน / หมู่บ้าน&#10;House number / Street" rows="2"></textarea>
       </div>
-      <div class="profile-field">
-        <label>📍 DELIVERY ADDRESS</label>
-        <textarea id="profileAddress" placeholder="เลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์"></textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="profile-field" style="margin-bottom:0;">
+          <label>🏙️ CITY / DISTRICT<br><span style="font-size:10px;color:var(--text-s);font-weight:400;">เมือง / เขต / อำเภอ</span></label>
+          <input type="text" id="profileCity" placeholder="City / เมือง-อำเภอ" />
+        </div>
+        <div class="profile-field" style="margin-bottom:0;">
+          <label>🗺️ STATE / PROVINCE<br><span style="font-size:10px;color:var(--text-s);font-weight:400;">จังหวัด / รัฐ</span></label>
+          <input type="text" id="profileState" placeholder="Province / จังหวัด" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+        <div class="profile-field" style="margin-bottom:0;">
+          <label>📮 POSTCODE<br><span style="font-size:10px;color:var(--text-s);font-weight:400;">รหัสไปรษณีย์</span></label>
+          <input type="text" id="profilePostcode" placeholder="รหัสไปรษณีย์" inputmode="numeric" />
+        </div>
+        <div class="profile-field" style="margin-bottom:0;">
+          <label>🌍 COUNTRY · ประเทศ</label>
+          <select id="profileCountry" style="width:100%;padding:10px 14px;border:2px solid var(--pink-l);border-radius:12px;font-size:13px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;">
+            <option value="">เลือกประเทศ...</option>
+            <option value="Thailand">🇹🇭 Thailand</option>
+            <option value="Japan">🇯🇵 Japan</option>
+            <option value="USA">🇺🇸 USA</option>
+            <option value="UK">🇬🇧 UK</option>
+            <option value="Singapore">🇸🇬 Singapore</option>
+            <option value="Australia">🇦🇺 Australia</option>
+            <option value="Canada">🇨🇦 Canada</option>
+            <option value="Germany">🇩🇪 Germany</option>
+            <option value="France">🇫🇷 France</option>
+            <option value="Other">🌐 Other / อื่นๆ</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="profile-actions">
@@ -2051,7 +2071,14 @@ footer strong { color: var(--pink-d); }
     if (!token) return
     try {
       const res = await fetch(`${API}/api/profile`, { headers: { 'Authorization': `Bearer ${token}` } })
-      if (res.ok) userProfile = await res.json()
+      if (res.ok) {
+        userProfile = await res.json()
+        // merge city/state/postcode จาก localStorage (ไม่มีใน DB)
+        const saved = JSON.parse(localStorage.getItem('hewkao_addr_extra') || '{}')
+        userProfile.city     = saved.city     || ''
+        userProfile.state    = saved.state    || ''
+        userProfile.postcode = saved.postcode || ''
+      }
     } catch(e) {}
   }
 
@@ -2065,6 +2092,9 @@ footer strong { color: var(--pink-d); }
     document.getElementById('profileFullName').value = userProfile?.full_name || ''
     document.getElementById('profilePhone').value    = userProfile?.phone    || ''
     document.getElementById('profileAddress').value  = userProfile?.address  || ''
+    document.getElementById('profileCity').value     = userProfile?.city     || ''
+    document.getElementById('profileState').value    = userProfile?.state    || ''
+    document.getElementById('profilePostcode').value = userProfile?.postcode || ''
     document.getElementById('profileCountry').value  = userProfile?.country  || ''
     document.getElementById('profileOverlay').classList.remove('closing')
     document.getElementById('profileOverlay').classList.add('open')
@@ -2079,11 +2109,17 @@ footer strong { color: var(--pink-d); }
   async function saveProfile() {
     const token = localStorage.getItem('mochi_token')
     if (!token) return
+    const pAddress   = document.getElementById('profileAddress').value.trim()
+    const pCity      = document.getElementById('profileCity').value.trim()
+    const pState     = document.getElementById('profileState').value.trim()
+    const pPostcode  = document.getElementById('profilePostcode').value.trim()
+    const pCountry   = document.getElementById('profileCountry').value
+    const addressFull = [pAddress, pCity, pState, pPostcode, pCountry].filter(Boolean).join(', ')
     const body = {
       full_name: document.getElementById('profileFullName').value.trim(),
       phone:     document.getElementById('profilePhone').value.trim(),
-      country:   document.getElementById('profileCountry').value,
-      address:   document.getElementById('profileAddress').value.trim(),
+      country:   pCountry,
+      address:   addressFull,
     }
     try {
       const res = await fetch(`${API}/api/profile`, {
@@ -2091,8 +2127,16 @@ footer strong { color: var(--pink-d); }
         body: JSON.stringify(body)
       })
       if (!res.ok) throw new Error()
-      userProfile = await res.json()
-      showToast('Profile saved!')
+      userProfile = {
+        ...(await res.json()),
+        city:     pCity,
+        state:    pState,
+        postcode: pPostcode,
+        address_full: addressFull,
+      }
+      // save city/state/postcode ลง localStorage
+      localStorage.setItem('hewkao_addr_extra', JSON.stringify({ city: pCity, state: pState, postcode: pPostcode }))
+      showToast('✅ Profile saved! · บันทึกแล้ว')
       closeProfile()
       if (window._afterAddrSave) {
         const cb = window._afterAddrSave; window._afterAddrSave = null
@@ -2182,6 +2226,8 @@ footer strong { color: var(--pink-d); }
 
     // บันทึกที่อยู่แบบ full string สำหรับ checkout display
     userProfile.address_full = [address, city, state, postcode, country].filter(Boolean).join(', ')
+    // save city/state/postcode ลง localStorage
+    localStorage.setItem('hewkao_addr_extra', JSON.stringify({ city, state, postcode }))
 
     const shouldSave = document.getElementById('acSaveToProfile')?.checked
     if (token && shouldSave) {
