@@ -2103,6 +2103,15 @@ footer strong { color: var(--pink-d); }
   function getShipping(items, subtotalTHB, subtotalUSD) {
     const s   = window._shopSettings || {}
     const intl = isInternational()
+    console.log('[SHIPPING DEBUG]', {
+      _shopSettings: s,
+      intl,
+      shipping_thb: s.shipping_thb,
+      free_shipping: s.free_shipping,
+      subtotalTHB,
+      subtotalUSD,
+      items_types: items.map(i => ({ name:i.name, type:i.type, shipping_dom_thb:i.shipping_dom_thb }))
+    })
 
     if (intl) {
       // ต่างประเทศ — หาค่าส่งสูงสุดจากสินค้า (USD ก่อน THB)
