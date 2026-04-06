@@ -1004,15 +1004,16 @@ app.post('/api/admin/change-password', auth, adminOnly, async (req, res) => {
 })
 // ═══════════════════════════════════════
 
-// GET /api/page-content?lang=en
+// GET /api/page-content?lang=en&shop=hewkao
 app.get('/api/page-content', async (req, res) => {
   const lang = req.query.lang || 'en'
+  const shop = req.query.shop || 'hewkao'
   const { data, error } = await supabase
     .from('page_content')
     .select('key, value')
     .eq('lang', lang)
+    .eq('shop', shop)
   if (error) return res.status(500).json({ error: error.message })
-  // แปลงเป็น object { key: value }
   const result = {}
   data.forEach(row => { result[row.key] = row.value })
   res.json(result)
@@ -1020,14 +1021,14 @@ app.get('/api/page-content', async (req, res) => {
 
 // POST /api/admin/page-content — save page content
 app.post('/api/admin/page-content', auth, adminOnly, async (req, res) => {
-  const { lang, content } = req.body
+  const { lang, content, shop } = req.body
   if (!lang || !content) return res.status(400).json({ error: 'Missing fields' })
+  const shopId = shop || 'hewkao'
   try {
-    // upsert ทุก key
-    const rows = Object.entries(content).map(([key, value]) => ({ lang, key, value }))
+    const rows = Object.entries(content).map(([key, value]) => ({ lang, key, value, shop: shopId }))
     const { error } = await supabase
       .from('page_content')
-      .upsert(rows, { onConflict: 'lang,key' })
+      .upsert(rows, { onConflict: 'lang,key,shop' })
     if (error) throw error
     res.json({ message: 'Saved' })
   } catch(e) {
