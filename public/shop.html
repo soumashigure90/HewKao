@@ -2119,13 +2119,21 @@ footer strong { color: var(--pink-d); }
     } else {
       // ในประเทศ — THB เท่านั้น
       const freeTHB = parseFloat(s.free_shipping || 0)
-      if (freeTHB > 0 && subtotalTHB >= freeTHB) return { thb:0, usd:0, free:true, intl:false }
-      if (freeTHB === 0 && parseFloat(s.shipping_thb||0) === 0) return { thb:0, usd:0, free:true, intl:false }
+      const baseTHB = parseFloat(s.shipping_thb || 0)
 
-      let maxTHB = parseFloat(s.shipping_thb || 0)
+      // ฟรีถ้าถึง threshold
+      if (freeTHB > 0 && subtotalTHB >= freeTHB) return { thb:0, usd:0, free:true, intl:false }
+
+      // หาค่าส่งจริง (settings + per-product)
+      let maxTHB = baseTHB
       items.filter(i => i.type==='physical'||i.type==='preorder').forEach(i => {
-        if (i.shipping_dom_thb != null && i.shipping_dom_thb > maxTHB) maxTHB = i.shipping_dom_thb
+        const dom = parseFloat(i.shipping_dom_thb)
+        if (!isNaN(dom) && dom > maxTHB) maxTHB = dom
       })
+
+      // ฟรีก็ต่อเมื่อไม่มีค่าส่งตั้งไว้เลย (ทั้ง settings และ product)
+      if (maxTHB === 0) return { thb:0, usd:0, free:true, intl:false }
+
       return { thb: maxTHB, usd: 0, free: false, intl: false }
     }
   }
