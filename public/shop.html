@@ -1863,7 +1863,12 @@ footer strong { color: var(--pink-d); }
     const discount    = subtotal - total
     const count       = cart.reduce((s,i) => s + i.qty, 0)
     const isUSD       = lang === 'en'
-    const subtotalUSD = cart.reduce((s,i) => s + (i.price_usd||0)*i.qty, 0)
+    const _s = window._shopSettings || {}
+    const _rate = parseFloat(_s.exchange_rate || 36)
+    const subtotalUSD = cart.reduce((s,i) => {
+      if (i.price_usd) return s + (i.price_usd * i.qty)
+      return s + ((i.price * i.qty) / _rate)
+    }, 0)
     const totalUSD    = subtotalUSD
     countEl.textContent = count + ' item' + (count!==1?'s':'')
 
@@ -1872,8 +1877,11 @@ footer strong { color: var(--pink-d); }
         ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">`
         : item.emoji
       const pTHB = (item.price*item.qty).toLocaleString()
-      const pUSD = item.price_usd ? '$'+(Number(item.price_usd)*item.qty).toFixed(2) : '฿'+pTHB
-      const pStr = isUSD && item.price_usd ? pUSD : '฿'+pTHB
+      const pItemUSD = item.price_usd
+        ? (Number(item.price_usd)*item.qty).toFixed(2)
+        : ((item.price * item.qty) / _rate).toFixed(2)
+      const pUSD = '$' + pItemUSD
+      const pStr = isUSD ? pUSD : '฿'+pTHB
       const origTHB = ((item.origPrice||item.price)*item.qty).toLocaleString()
       const priceHtml = item.saved && item.saved > 0
         ? `<div style="text-align:right;">
@@ -1897,8 +1905,8 @@ footer strong { color: var(--pink-d); }
       </div>`
     }).join('')
 
-    const subStr = isUSD && subtotalUSD > 0 ? '$'+subtotalUSD.toFixed(2) : '฿'+subtotal.toLocaleString()
-    const totStr = isUSD && totalUSD > 0    ? '$'+totalUSD.toFixed(2)    : '฿'+total.toLocaleString()
+    const subStr = isUSD ? '$'+subtotalUSD.toFixed(2) : '฿'+subtotal.toLocaleString()
+    const totStr = isUSD ? '$'+totalUSD.toFixed(2)    : '฿'+total.toLocaleString()
     document.getElementById('summarySubtotal').textContent = subStr
     document.getElementById('summaryDiscount').textContent = discount > 0 ? '-฿'+discount.toLocaleString() : '-฿0'
     document.getElementById('summaryTotal').textContent    = totStr
@@ -2146,7 +2154,10 @@ footer strong { color: var(--pink-d); }
       // ฟรีก็ต่อเมื่อไม่มีค่าส่งตั้งไว้เลย (ทั้ง settings และ product)
       if (maxTHB === 0) return { thb:0, usd:0, free:true, intl:false }
 
-      return { thb: maxTHB, usd: 0, free: false, intl: false }
+      // แปลง THB→USD ด้วย exchange_rate สำหรับแสดงใน EN mode
+      const rate = parseFloat(s.exchange_rate || 36)
+      const domUSD = rate > 0 ? Math.ceil((maxTHB / rate) * 100) / 100 : 0
+      return { thb: maxTHB, usd: domUSD, free: false, intl: false }
     }
   }
 
@@ -2157,10 +2168,15 @@ footer strong { color: var(--pink-d); }
 
   function _buildCheckoutModal(items, subtotal, total, discount) {
     const isUSD = lang === 'en'
-    // หา usd subtotal จาก items
-    const subtotalUSD = items.reduce((s,i) => s + ((i.price_usd||0) * i.qty), 0)
-    const totalUSD    = subtotalUSD // หลัง discount (simplified)
-    const discountUSD = 0
+    const s = window._shopSettings || {}
+    const exchangeRate = parseFloat(s.exchange_rate || 36)
+
+    // หา usd subtotal จาก items — ถ้าสินค้าไม่มี price_usd ให้แปลงจาก THB
+    const subtotalUSD = items.reduce((s,i) => {
+      if (i.price_usd) return s + (i.price_usd * i.qty)
+      return s + ((i.price * i.qty) / exchangeRate)
+    }, 0)
+    const totalUSD = subtotalUSD
 
     // คำนวณค่าส่ง (based on THB subtotal)
     const ship = getShipping(items, total, totalUSD)
@@ -2197,7 +2213,9 @@ footer strong { color: var(--pink-d); }
       totalRow.parentNode.insertBefore(shippingRow, totalRow)
     }
     if (hasPhysical && (shippingTHB > 0 || shippingUSD > 0)) {
-      const shipStr = isUSD && shippingUSD > 0 ? '$'+shippingUSD.toFixed(2) : '฿'+shippingTHB.toLocaleString()
+      const shipStr = isUSD && shippingUSD > 0
+        ? '$' + shippingUSD.toFixed(2)
+        : '฿' + shippingTHB.toLocaleString()
       shippingRow.innerHTML = `<span>🚚 Shipping</span><span>${shipStr}</span>`
       shippingRow.style.display = 'flex'
     } else if (hasPhysical && ship.free) {
