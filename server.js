@@ -65,6 +65,125 @@ function emailStyle() {
     </style>`
 }
 
+// ── Generate random discount code ──
+function genCode(prefix='GIFT') {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let code = prefix + '-'
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)]
+  return code
+}
+
+// ── Process freebie สำหรับ order ──
+async function processFreebie(orderId, orderItems, toEmail, memberEmail) {
+  try {
+    // หา products ที่มี freebie
+    const productIds = orderItems.map(i => i.product_id || i.id)
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, name, freebie_type, freebie_file, freebie_discount_type, freebie_discount_value, freebie_discount_uses')
+      .in('id', productIds)
+      .not('freebie_type', 'is', null)
+
+    if (!products || products.length === 0) return
+
+    const freebies = []
+
+    for (const product of products) {
+      if (product.freebie_type === 'file' && product.freebie_file) {
+        // แปลง Google Drive link
+        let dlUrl = product.freebie_file
+        const match = dlUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)
+        if (match) dlUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`
+        freebies.push({ type: 'file', name: product.name, url: dlUrl })
+
+      } else if (product.freebie_type === 'discount') {
+        // Generate unique code
+        let code = genCode('GIFT')
+        // ตรวจซ้ำ
+        const { data: existing } = await supabase.from('discounts').select('id').eq('code', code)
+        if (existing && existing.length > 0) code = genCode('HEWK')
+
+        // Create discount
+        const { data: dc } = await supabase.from('discounts').insert({
+          code,
+          type:      product.freebie_discount_type || 'percent',
+          value:     product.freebie_discount_value || 10,
+          max_uses:  product.freebie_discount_uses || 1,
+          used_count: 0,
+          status:    'active',
+          expires_at: null,
+        }).select().single()
+
+        if (dc) {
+          freebies.push({
+            type: 'discount',
+            name: product.name,
+            code: dc.code,
+            discount_type: dc.type,
+            discount_value: dc.value,
+            max_uses: dc.max_uses,
+          })
+        }
+      }
+    }
+
+    if (freebies.length === 0) return
+
+    // บันทึก freebies ลง order (เก็บใน guest_info หรือ JSON column)
+    await supabase.from('order_freebies').upsert(
+      freebies.map(f => ({ order_id: parseInt(orderId), freebie: f }))
+    ).catch(() => {}) // ถ้าไม่มี table ก็ข้ามไป
+
+    // ส่ง email
+    const recipient = toEmail || memberEmail
+    if (recipient) {
+      const freebieHtml = freebies.map(f => {
+        if (f.type === 'file') {
+          return `<div style="background:#E2F8F2;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+            <div style="font-size:12px;font-weight:700;color:#0f6e56;margin-bottom:6px;">🎁 ของแถมจาก ${f.name}</div>
+            <a href="${f.url}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:13px;">⬇️ Download ของแถม</a>
+          </div>`
+        } else {
+          const discStr = f.discount_type === 'percent' ? `${f.discount_value}%` : `฿${f.discount_value}`
+          return `<div style="background:#FFF8DC;border-radius:12px;padding:14px 16px;margin-bottom:10px;border:2px dashed #f0b429;">
+            <div style="font-size:12px;font-weight:700;color:#c8860a;margin-bottom:8px;">🎫 Discount Code จาก ${f.name}</div>
+            <div style="font-size:24px;font-weight:900;font-family:monospace;color:#4a3f5c;letter-spacing:3px;margin-bottom:6px;">${f.code}</div>
+            <div style="font-size:12px;color:#8a7a9a;">ลด ${discStr} · ใช้ได้ ${f.max_uses} ครั้ง</div>
+          </div>`
+        }
+      }).join('')
+
+      const html = `<!DOCTYPE html><html><head>${emailStyle()}</head><body>
+        <div class="wrap">
+          <div class="header" style="background:linear-gradient(135deg,#FFE5A0,#FFB7C5);">
+            <h1>🎁 ของแถมจาก HewKao!</h1>
+            <p>Order #${orderId} · สิทธิพิเศษสำหรับคุณ</p>
+          </div>
+          <div class="body">
+            <p style="color:#4a3f5c;font-size:14px;margin-bottom:20px;">
+              ขอบคุณสำหรับการสั่งซื้อค่ะ! 🌸 นี่คือของแถมพิเศษสำหรับคุณ<br>
+              <span style="color:#8a7a9a;font-size:13px;">Thank you for your purchase! Here are your special gifts.</span>
+            </p>
+            ${freebieHtml}
+            <p style="font-size:12px;color:#8a7a9a;text-align:center;margin-top:16px;">
+              มีคำถาม? ติดต่อเราได้เลยค่ะ · 
+              <a href="mailto:soumashigure2@gmail.com" style="color:#e8829a;">soumashigure2@gmail.com</a>
+            </p>
+          </div>
+          <div class="footer">HewKao Shop 🌸 · hewkao.shop</div>
+        </div>
+      </body></html>`
+
+      await sendOrderEmail(recipient, `🎁 ของแถมพิเศษจาก Order #${orderId} — HewKao Shop`, html)
+    }
+
+    return freebies
+  } catch(e) {
+    console.error('Freebie error:', e)
+    return []
+  }
+}
+
 async function sendOrderEmail(toEmail, subject, html) {
   try {
     const t = createTransporter()
@@ -176,12 +295,23 @@ app.get('/api/admin/products', auth, adminOnly, async (req, res) => {
 
 // POST /api/admin/products — add product
 app.post('/api/admin/products', auth, adminOnly, async (req, res) => {
-  const { name, name_th, type, emoji, price, stock, status, badge, description, file_url } = req.body
+  const { name, name_th, type, emoji, price, stock, status, badge, description, file_url,
+          shipping_dom_thb, shipping_intl_thb, shipping_intl_usd,
+          freebie_type, freebie_file, freebie_discount_type, freebie_discount_value, freebie_discount_uses } = req.body
   if (!name || !type || !price) return res.status(400).json({ error: 'Missing required fields' })
 
   const { data, error } = await supabase
     .from('products')
-    .insert({ name, name_th, type, emoji, price, stock: stock || null, status: status || 'active', badge, description, file_url })
+    .insert({ name, name_th, type, emoji, price, stock: stock || null, status: status || 'active', badge, description, file_url,
+      shipping_dom_thb: shipping_dom_thb ?? null,
+      shipping_intl_thb: shipping_intl_thb ?? null,
+      shipping_intl_usd: shipping_intl_usd ?? null,
+      freebie_type: freebie_type || null,
+      freebie_file: freebie_file || null,
+      freebie_discount_type: freebie_discount_type || null,
+      freebie_discount_value: freebie_discount_value ?? null,
+      freebie_discount_uses: freebie_discount_uses ?? 1,
+    })
     .select()
     .single()
 
@@ -390,6 +520,15 @@ app.post('/api/orders', async (req, res) => {
       }
     } catch(e) { console.error('Order confirmation email error:', e) }
 
+    // ── Process Freebie (ส่งทันทีที่ order สร้าง เพราะจ่ายเงินแล้ว) ──
+    const freebieItems = items.map(i => ({ product_id: i.product_id }))
+    let memberEmailForFreebie = null
+    if (member_id) {
+      const { data: mem } = await supabase.from('members').select('email').eq('id', member_id).single()
+      memberEmailForFreebie = mem?.email || null
+    }
+    processFreebie(order.id, freebieItems, guest_email, memberEmailForFreebie)
+
     res.json({ id: order.id, status: order.status })
   } catch(e) { res.status(500).json({ error: e.message }) }
 })
@@ -494,9 +633,25 @@ app.get('/api/my-orders', auth, async (req, res) => {
       }
     }
 
+    // ดึง order_freebies
+    let freebieMap = {}
+    if (orderIds.length > 0) {
+      const { data: freebies } = await supabase
+        .from('order_freebies')
+        .select('order_id, freebie')
+        .in('order_id', orderIds)
+      if (freebies) {
+        freebies.forEach(f => {
+          if (!freebieMap[f.order_id]) freebieMap[f.order_id] = []
+          freebieMap[f.order_id].push(f.freebie)
+        })
+      }
+    }
+
     const result = orders.map(o => ({
       ...o,
-      download_links: dlMap[o.id] || []
+      download_links: dlMap[o.id] || [],
+      freebies: freebieMap[o.id] || []
     }))
     res.json(result)
   } catch(e) {
