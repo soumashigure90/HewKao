@@ -948,20 +948,30 @@ async function saveSettings() {
     email:        document.getElementById('settingEmail').value.trim(),
     about_en:     document.getElementById('settingAbout').value.trim(),
     about_th:     document.getElementById('settingAboutTh').value.trim(),
-    shipping_thb:      document.getElementById('settingShippingTHB').value.trim(),
-    shipping_usd:      document.getElementById('settingShippingUSD').value.trim(),
-    free_shipping:     document.getElementById('settingFreeShipping').value.trim(),
-    shipping_intl_thb: document.getElementById('settingShippingIntlTHB').value.trim(),
-    free_shipping_intl:document.getElementById('settingFreeShippingIntl').value.trim(),
+    shipping_thb:      document.getElementById('settingShippingTHB').value || '0',
+    shipping_usd:      document.getElementById('settingShippingUSD').value || '0',
+    free_shipping:     document.getElementById('settingFreeShipping').value || '0',
+    shipping_intl_thb: document.getElementById('settingShippingIntlTHB').value || '0',
+    free_shipping_intl:document.getElementById('settingFreeShippingIntl').value || '0',
   }
+  console.log('[SAVE SETTINGS] sending:', settings)
   try {
     const res = await fetch(`${API}/api/admin/settings`, {
       method: 'POST', headers: authHeader(),
       body: JSON.stringify(settings)
     })
+    const data = await res.json()
+    console.log('[SAVE SETTINGS] response:', res.status, data)
     if (!res.ok) throw new Error()
     toast('✅ Settings saved!', 'success')
-  } catch(e) { toast('❌ Failed to save', 'error') }
+    // ทดสอบอ่านกลับทันที
+    const check = await fetch(`${API}/api/settings`)
+    const checkData = await check.json()
+    console.log('[SAVE SETTINGS] readback:', checkData)
+  } catch(e) { 
+    console.log('[SAVE SETTINGS] error:', e)
+    toast('❌ Failed to save', 'error') 
+  }
 }
 
 async function changePassword() {
