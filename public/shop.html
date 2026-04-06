@@ -1253,7 +1253,7 @@ footer strong { color: var(--pink-d); }
           <input type="text" id="acCity" placeholder="City / เมือง-อำเภอ" />
         </div>
         <div class="profile-field" style="margin-bottom:0;">
-          <label>🗺️ STATE / PROVINCE <span style="color:var(--pink-d);">*</span><br><span style="font-size:10px;color:var(--text-s);font-weight:400;">จังหวัด / รัฐ</span></label>
+          <label>🗺️ STATE / PROVINCE<br><span style="font-size:10px;color:var(--text-s);font-weight:400;">จังหวัด / รัฐ (ไม่บังคับ)</span></label>
           <input type="text" id="acState" placeholder="Province / จังหวัด" />
         </div>
       </div>
@@ -2206,7 +2206,7 @@ footer strong { color: var(--pink-d); }
     if (isGuestEmailVisible && !guestEmail.includes('@')) { showToast('รูปแบบอีเมลไม่ถูกต้อง · Invalid email'); return }
     if (!address) { showToast('กรุณากรอกที่อยู่ · Address is required'); return }
     if (!city)    { showToast('กรุณากรอกเมือง/เขต · City is required'); return }
-    if (!state)   { showToast('กรุณากรอกจังหวัด · State/Province is required'); return }
+
     if (!postcode){ showToast('กรุณากรอกรหัสไปรษณีย์ · Postcode is required'); return }
     if (!country) { showToast('กรุณาเลือกประเทศ · Country is required'); return }
 
