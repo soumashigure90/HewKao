@@ -1101,7 +1101,10 @@ footer strong { color: var(--pink-d); }
         <div class="checkout-summary-row total"><span>Total</span><span id="coTotal">฿0</span></div>
       </div>
       <div class="checkout-addr" id="checkoutAddr">
-        <strong>📍 DELIVERY ADDRESS</strong>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <strong>📍 DELIVERY ADDRESS</strong>
+          <button onclick="editDeliveryAddress()" style="background:none;border:1.5px solid var(--lav);border-radius:10px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--lav-d);cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;" onmouseover="this.style.background='var(--lav-l)'" onmouseout="this.style.background='none'">✏️ Edit</button>
+        </div>
         <span id="coAddrText">—</span>
       </div>
       <div class="checkout-note">
@@ -2443,6 +2446,23 @@ footer strong { color: var(--pink-d); }
     const o = document.getElementById('checkoutOverlay')
     o.classList.add('closing')
     setTimeout(() => o.classList.remove('open','closing'), 220)
+  }
+
+  function editDeliveryAddress() {
+    // ปิด checkout ชั่วคราว แล้วเปิด addr form
+    // เมื่อ confirm แล้ว rebuild checkout modal ใหม่พร้อมที่อยู่ที่อัพเดต
+    const co = document.getElementById('checkoutOverlay')
+    co.classList.remove('open','closing')
+    co.style.display = 'none'
+    openAddrCollect(() => {
+      co.style.display = ''
+      // rebuild checkout ด้วยข้อมูลเดิม
+      const items = window._buyNowItems || cart
+      const subtotal = items.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
+      const total    = items.reduce((s,i) => s + i.price*i.qty, 0)
+      _buildCheckoutModal(items, subtotal, total, subtotal - total)
+    })
+    setTimeout(() => { co.style.display = '' }, 50)
   }
 
   function closePayment() {
