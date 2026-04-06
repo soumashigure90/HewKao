@@ -60,6 +60,11 @@ app.get('/', (req, res) => {
   res.redirect('/shop.html')
 })
 
+// Artist shops
+app.get('/kono82', (req, res) => {
+  res.sendFile(__dirname + '/public/shop-kono82.html')
+})
+
 // ── Supabase ──
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -306,14 +311,19 @@ app.post('/api/register', async (req, res) => {
 // PRODUCTS ROUTES
 // ═══════════════════════════════════════
 
-// GET /api/products — public (active only)
+// GET /api/products — public (active only), รองรับ ?artist=xxx
 app.get('/api/products', async (req, res) => {
-  const { data, error } = await supabase
+  let query = supabase
     .from('products')
     .select('*')
     .eq('status', 'active')
     .order('created_at', { ascending: false })
 
+  if (req.query.artist) {
+    query = query.eq('artist', req.query.artist)
+  }
+
+  const { data, error } = await query
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
 })
@@ -333,7 +343,8 @@ app.get('/api/admin/products', auth, adminOnly, async (req, res) => {
 app.post('/api/admin/products', auth, adminOnly, async (req, res) => {
   const { name, name_th, type, emoji, price, stock, status, badge, description, file_url,
           shipping_dom_thb, shipping_intl_thb, shipping_intl_usd,
-          freebie_type, freebie_file, freebie_discount_type, freebie_discount_value, freebie_discount_uses } = req.body
+          freebie_type, freebie_file, freebie_discount_type, freebie_discount_value, freebie_discount_uses,
+          artist } = req.body
   if (!name || !type || !price) return res.status(400).json({ error: 'Missing required fields' })
 
   const { data, error } = await supabase
@@ -347,6 +358,7 @@ app.post('/api/admin/products', auth, adminOnly, async (req, res) => {
       freebie_discount_type: freebie_discount_type || null,
       freebie_discount_value: freebie_discount_value ?? null,
       freebie_discount_uses: freebie_discount_uses ?? 1,
+      artist: artist || 'hewkao',
     })
     .select()
     .single()
