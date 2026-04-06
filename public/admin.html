@@ -323,6 +323,14 @@ textarea{resize:vertical;min-height:80px;}
       <div class="form-group"><label>STATUS</label>
         <select id="pStatus"><option value="active">✅ Active</option><option value="hidden">🙈 Hidden</option></select>
       </div>
+      <div class="form-group"><label>🎨 ARTIST</label>
+        <select id="pArtist">
+          <option value="hewkao">🌸 HewKao (Souma)</option>
+          <option value="kono82">🎮 Kono82</option>
+          <option value="artist3">🎨 Artist 3</option>
+          <option value="artist4">🎨 Artist 4</option>
+        </select>
+      </div>
       <div class="form-group"><label>BADGE</label><input type="text" id="pBadge" placeholder="NEW, SALE, LIMITED..." /></div>
       <div class="form-group span2">
         <label>PRODUCT IMAGE</label>
@@ -663,6 +671,7 @@ async function openProductModal(id) {
         document.getElementById('pShippingDomTHB').value  = p.shipping_dom_thb != null ? p.shipping_dom_thb : ''
         document.getElementById('pShippingIntlTHB').value = p.shipping_intl_thb != null ? p.shipping_intl_thb : ''
         document.getElementById('pShippingIntlUSD').value = p.shipping_intl_usd != null ? p.shipping_intl_usd : ''
+        document.getElementById('pArtist').value               = p.artist || 'hewkao'
         document.getElementById('pFreebieType').value          = p.freebie_type || ''
         document.getElementById('pFreebieFile').value          = p.freebie_file || ''
         document.getElementById('pFreebieDiscountType').value  = p.freebie_discount_type || 'percent'
@@ -679,6 +688,7 @@ async function openProductModal(id) {
   } else {
     ['pName','pNameTh','pEmoji','pPrice','pPriceUsd','pStock','pDesc','pBadge','pFileUrl','pShippingDomTHB','pShippingIntlTHB','pShippingIntlUSD',
      'pFreebieFile','pFreebieDiscountValue','pFreebieDiscountUses'].forEach(i => document.getElementById(i).value='')
+    document.getElementById('pArtist').value = 'hewkao'
     document.getElementById('pFreebieType').value = ''
     document.getElementById('pFreebieDiscountType').value = 'percent'
     toggleFreebieFields('')
@@ -741,6 +751,7 @@ async function saveProduct() {
       freebie_discount_type: document.getElementById('pFreebieDiscountType').value || null,
       freebie_discount_value:document.getElementById('pFreebieDiscountValue').value !== '' ? parseFloat(document.getElementById('pFreebieDiscountValue').value) : null,
       freebie_discount_uses: document.getElementById('pFreebieDiscountUses').value !== '' ? parseInt(document.getElementById('pFreebieDiscountUses').value) : 1,
+      artist: document.getElementById('pArtist').value || 'hewkao',
     }
     if (image_url) body.image_url = image_url
 
