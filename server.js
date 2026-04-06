@@ -8,6 +8,8 @@ const FormData = require('form-data')
 const fetch    = require('node-fetch')
 const nodemailer = require('nodemailer')
 const { createClient } = require('@supabase/supabase-js')
+const Stripe = require('stripe')
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
 
@@ -15,6 +17,38 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 app.use(express.static('public')) // serve HTML files
+
+// GET /api/stripe-key — ส่ง publishable key ให้ frontend
+app.get('/api/stripe-key', (req, res) => {
+  res.json({ publishable_key: process.env.STRIPE_PUBLISHABLE_KEY || '' })
+})
+
+// POST /api/create-payment-intent — สร้าง Stripe PaymentIntent
+app.post('/api/create-payment-intent', async (req, res) => {
+  try {
+    const { amount_thb, currency, order_description } = req.body
+    if (!amount_thb || amount_thb <= 0) return res.status(400).json({ error: 'Invalid amount' })
+
+    // Stripe ใช้ smallest currency unit — THB = สตางค์ (x100), USD = cents (x100)
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount_thb * 100), // THB สตางค์
+      currency: (currency || 'thb').toLowerCase(),
+      automatic_payment_methods: { enabled: true },
+      description: order_description || 'HewKao Shop Order',
+      metadata: { shop: 'hewkao' }
+    })
+
+    res.json({
+      client_secret: paymentIntent.client_secret,
+      payment_intent_id: paymentIntent.id,
+      amount: amount_thb,
+      currency: currency || 'thb'
+    })
+  } catch(e) {
+    console.error('Stripe error:', e.message)
+    res.status(500).json({ error: e.message })
+  }
+})
 
 // GET /api/verify — ตรวจสอบ token ว่ายังใช้ได้ไหม
 app.get('/api/verify', auth, (req, res) => {
