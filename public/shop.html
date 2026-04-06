@@ -1233,7 +1233,7 @@ footer strong { color: var(--pink-d); }
           <input type="text" id="acCity" placeholder="City / เมือง-อำเภอ" />
         </div>
         <div class="profile-field" style="margin-bottom:0;">
-          <label>🗺️ STATE / PROVINCE<br><span style="font-size:10px;color:var(--text-s);font-weight:400;">จังหวัด / รัฐ (ไม่บังคับ)</span></label>
+          <label>🗺️ STATE / PROVINCE <span style="color:var(--pink-d);">*</span><br><span style="font-size:10px;color:var(--text-s);font-weight:400;">จังหวัด / รัฐ</span></label>
           <input type="text" id="acState" placeholder="Province / จังหวัด" />
         </div>
       </div>
@@ -2156,6 +2156,7 @@ footer strong { color: var(--pink-d); }
     if (isGuestEmailVisible && !guestEmail.includes('@')) { showToast('รูปแบบอีเมลไม่ถูกต้อง · Invalid email'); return }
     if (!address) { showToast('กรุณากรอกที่อยู่ · Address is required'); return }
     if (!city)    { showToast('กรุณากรอกเมือง/เขต · City is required'); return }
+    if (!state)   { showToast('กรุณากรอกจังหวัด · State/Province is required'); return }
     if (!postcode){ showToast('กรุณากรอกรหัสไปรษณีย์ · Postcode is required'); return }
     if (!country) { showToast('กรุณาเลือกประเทศ · Country is required'); return }
 
@@ -2421,23 +2422,35 @@ footer strong { color: var(--pink-d); }
 
   function openCheckout() {
     if (!cart.length) return
-    // บังคับที่อยู่เฉพาะ physical และ preorder เท่านั้น
-    const needAddr = cart.some(i => i.type === 'physical' || i.type === 'preorder')
-    if (needAddr && !hasAddress()) { openAddrCollect(() => openCheckout()); return }
     const subtotal = cart.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
     const total    = cart.reduce((s,i) => s + i.price*i.qty, 0)
+    const needAddr = cart.some(i => i.type === 'physical' || i.type === 'preorder')
+    if (needAddr && !hasAddress()) {
+      openAddrCollect(() => {
+        _buildCheckoutModal(cart, subtotal, total, subtotal - total)
+      })
+      return
+    }
     _buildCheckoutModal(cart, subtotal, total, subtotal - total)
   }
 
   function buyNowFromModal() {
     if (!currentProduct) return
     const p = currentProduct
-    const needAddr = p.type === 'physical' || p.type === 'preorder'
-    if (needAddr && !hasAddress()) { openAddrCollect(() => buyNowFromModal()); return }
-    const origPrice    = Number(p.price)
+    const origPrice  = Number(p.price)
     const finalPrice = discountedPrice !== null ? discountedPrice : origPrice
     const buyItem = [{ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved:origPrice-finalPrice, price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null }]
     window._buyNowItems = buyItem
+
+    const needAddr = p.type === 'physical' || p.type === 'preorder'
+    if (needAddr && !hasAddress()) {
+      // เปิด addr form แล้วเด้งไป checkout เลยเมื่อกรอกเสร็จ
+      closeProdModal()
+      openAddrCollect(() => {
+        _buildCheckoutModal(buyItem, origPrice, finalPrice, origPrice - finalPrice)
+      })
+      return
+    }
     _buildCheckoutModal(buyItem, origPrice, finalPrice, origPrice - finalPrice)
     closeProdModal()
   }
@@ -2449,20 +2462,16 @@ footer strong { color: var(--pink-d); }
   }
 
   function editDeliveryAddress() {
-    // ปิด checkout ชั่วคราว แล้วเปิด addr form
-    // เมื่อ confirm แล้ว rebuild checkout modal ใหม่พร้อมที่อยู่ที่อัพเดต
     const co = document.getElementById('checkoutOverlay')
     co.classList.remove('open','closing')
     co.style.display = 'none'
     openAddrCollect(() => {
       co.style.display = ''
-      // rebuild checkout ด้วยข้อมูลเดิม
       const items = window._buyNowItems || cart
       const subtotal = items.reduce((s,i) => s + (i.origPrice||i.price)*i.qty, 0)
       const total    = items.reduce((s,i) => s + i.price*i.qty, 0)
       _buildCheckoutModal(items, subtotal, total, subtotal - total)
     })
-    setTimeout(() => { co.style.display = '' }, 50)
   }
 
   function closePayment() {
