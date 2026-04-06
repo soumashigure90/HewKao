@@ -35,7 +35,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
       currency: (currency || 'thb').toLowerCase(),
       automatic_payment_methods: { enabled: true },
       description: order_description || 'HewKao Shop Order',
-      metadata: { shop: 'hewkao' }
+      metadata: { shop: 'Shigure_S' }
     })
 
     res.json({
@@ -358,7 +358,7 @@ app.post('/api/admin/products', auth, adminOnly, async (req, res) => {
       freebie_discount_type: freebie_discount_type || null,
       freebie_discount_value: freebie_discount_value ?? null,
       freebie_discount_uses: freebie_discount_uses ?? 1,
-      artist: artist || 'hewkao',
+      artist: artist || 'Shigure_S',
     })
     .select()
     .single()
@@ -1004,7 +1004,7 @@ app.post('/api/admin/change-password', auth, adminOnly, async (req, res) => {
 })
 // ═══════════════════════════════════════
 
-// GET /api/page-content?lang=en&shop=hewkao
+// GET /api/page-content?lang=en&shop=Shigure_S
 app.get('/api/page-content', async (req, res) => {
   const lang = req.query.lang || 'en'
   const shop = req.query.shop || 'hewkao'
