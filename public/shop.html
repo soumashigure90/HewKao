@@ -1360,6 +1360,18 @@ footer strong { color: var(--pink-d); }
       const res = await fetch(`${API}/api/products`)
       allProducts = await res.json()
       renderProducts(allProducts)
+      // sync shipping fields เข้า cart ที่โหลดมาจาก localStorage
+      // (cart เก่าอาจไม่มี shipping_dom_thb ถ้า add ไว้ก่อน fix นี้)
+      cart = cart.map(item => {
+        const p = allProducts.find(x => x.id === item.id)
+        if (!p) return item
+        return {
+          ...item,
+          shipping_dom_thb:  p.shipping_dom_thb  ?? null,
+          shipping_intl_thb: p.shipping_intl_thb ?? null,
+          shipping_intl_usd: p.shipping_intl_usd ?? null,
+        }
+      })
     } catch(e) {
       document.getElementById('products-grid').innerHTML = `
         <div style="grid-column:1/-1;text-align:center;padding:3rem;color:#bbb;font-size:14px;">
@@ -2069,7 +2081,7 @@ footer strong { color: var(--pink-d); }
     if (!p) return
     const existing = cart.find(i => i.id === id)
     if (existing) existing.qty++
-    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:Number(p.price), price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 })
+    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:Number(p.price), price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null })
     saveCart()
     if (btnEl) flyToCart(btnEl)
     else showToast('Added to cart!')
@@ -2085,7 +2097,7 @@ footer strong { color: var(--pink-d); }
     const finalPriceUSD = origPriceUSD // discount ไม่ adjust USD (simplified)
     const existing = cart.find(i => i.id === p.id)
     if (existing) existing.qty++
-    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved, price_usd:finalPriceUSD, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 })
+    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved, price_usd:finalPriceUSD, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null })
     saveCart()
     const btn = document.querySelector('.btn-add-cart')
     if (btn) flyToCart(btn)
@@ -2103,15 +2115,6 @@ footer strong { color: var(--pink-d); }
   function getShipping(items, subtotalTHB, subtotalUSD) {
     const s   = window._shopSettings || {}
     const intl = isInternational()
-    console.log('[SHIPPING DEBUG]', {
-      _shopSettings: s,
-      intl,
-      shipping_thb: s.shipping_thb,
-      free_shipping: s.free_shipping,
-      subtotalTHB,
-      subtotalUSD,
-      items_types: items.map(i => ({ name:i.name, type:i.type, shipping_dom_thb:i.shipping_dom_thb }))
-    })
 
     if (intl) {
       // ต่างประเทศ — หาค่าส่งสูงสุดจากสินค้า (USD ก่อน THB)
@@ -2276,7 +2279,7 @@ footer strong { color: var(--pink-d); }
     if (needAddr && !hasAddress()) { openAddrCollect(() => buyNowFromModal()); return }
     const origPrice    = Number(p.price)
     const finalPrice   = discountedPrice || origPrice
-    const buyItem = [{ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved:origPrice-finalPrice, price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1 }]
+    const buyItem = [{ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved:origPrice-finalPrice, price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null }]
     window._buyNowItems = buyItem
     _buildCheckoutModal(buyItem, origPrice, finalPrice, origPrice - finalPrice)
     closeProdModal()
