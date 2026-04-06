@@ -2809,6 +2809,16 @@ footer strong { color: var(--pink-d); }
       updateCartBadge()
       setTimeout(() => { co.style.display = '' }, 500)
 
+      // ── ดึง freebies ที่เพิ่งสร้าง (รอ server process ก่อนสักครู่)
+      let orderFreebies = []
+      try {
+        await new Promise(r => setTimeout(r, 1200)) // รอ processFreebie เสร็จ
+        const fbRes = await fetch(`${API}/api/orders/${data.id}/freebies`, {
+          headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+        })
+        if (fbRes.ok) orderFreebies = await fbRes.json()
+      } catch(e) {}
+
       if (isAllDigital) {
         try {
           const confirmRes = await fetch(`${API}/api/orders/${data.id}/auto-confirm`, {
@@ -2817,30 +2827,49 @@ footer strong { color: var(--pink-d); }
           })
           const confirmData = await confirmRes.json()
           if (confirmData.download_links && confirmData.download_links.length > 0) {
-            showDigitalDownloadPopup(confirmData.download_links)
-          } else { showOrderSuccess(isPreorder) }
-        } catch(e) { showOrderSuccess(isPreorder) }
+            showDigitalDownloadPopup(confirmData.download_links, orderFreebies)
+          } else { showOrderSuccess(isPreorder, orderFreebies) }
+        } catch(e) { showOrderSuccess(isPreorder, orderFreebies) }
       } else {
-        showOrderSuccess(isPreorder)
+        showOrderSuccess(isPreorder, orderFreebies)
       }
     } catch(e) {
       showToast('❌ ' + (e.message || 'Failed to place order'))
     }
   }
 
-  function showOrderSuccess(isPreorder) {
+  function showOrderSuccess(isPreorder, freebies=[]) {
+    const freebieHtml = freebies.length > 0 ? `
+      <div style="margin:0 0 1.5rem;text-align:left;">
+        <div style="font-size:12px;font-weight:800;color:#c8860a;letter-spacing:.5px;margin-bottom:10px;text-align:center;">🎁 ของแถมพิเศษสำหรับคุณ · Your Freebies</div>
+        ${freebies.map(f => f.type === 'file' ? `
+          <a href="${f.url}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1D9E75,#0f6e56);color:#fff;padding:12px 18px;border-radius:14px;text-decoration:none;font-weight:700;font-size:13px;margin-bottom:8px;">
+            ⬇️ Download ของแถม: ${f.name}
+          </a>` : `
+          <div style="background:linear-gradient(135deg,#FFF8DC,#FFE5A0);border:2px dashed #f0b429;border-radius:14px;padding:14px 16px;margin-bottom:8px;text-align:center;">
+            <div style="font-size:11px;font-weight:700;color:#c8860a;margin-bottom:6px;">🎫 DISCOUNT CODE จาก ${f.name}</div>
+            <div style="font-size:26px;font-weight:900;font-family:monospace;letter-spacing:4px;color:#4a3f5c;margin:6px 0;">${f.code}</div>
+            <div style="font-size:12px;color:#8a7a9a;margin-top:4px;">
+              ลด ${f.discount_type==='percent'?f.discount_value+'%':'฿'+f.discount_value} &nbsp;·&nbsp;
+              ใช้ได้ ${f.max_uses} ครั้ง · Valid for ${f.max_uses} use${f.max_uses>1?'s':'only once'}
+            </div>
+          </div>`
+        ).join('')}
+      </div>` : ''
+
     const el = document.createElement('div')
     el.id = 'orderSuccessOverlay'
     el.style.cssText = 'position:fixed;inset:0;background:rgba(74,63,92,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:overlayIn .25s ease forwards;'
     el.innerHTML = `
-      <div style="background:#fff;border-radius:28px;padding:2.5rem 2rem;width:340px;max-width:92vw;text-align:center;box-shadow:0 24px 80px rgba(180,140,200,.4);animation:prodModalIn .45s cubic-bezier(0.34,1.4,0.64,1) forwards;">
+      <div style="background:#fff;border-radius:28px;padding:2.5rem 2rem;width:${freebies.length?'400px':'340px'};max-width:94vw;max-height:90vh;overflow-y:auto;text-align:center;box-shadow:0 24px 80px rgba(180,140,200,.4);animation:prodModalIn .45s cubic-bezier(0.34,1.4,0.64,1) forwards;">
         <div style="font-size:64px;margin-bottom:1rem;">${isPreorder?'⏳':'🎉'}</div>
-        <h2 style="font-family:Quicksand,sans-serif;font-size:22px;font-weight:700;color:var(--pink-d);margin-bottom:12px;">${isPreorder?'Pre-order Received!':'Order Placed!'}</h2>
-        <p style="font-size:13px;color:var(--text-s);line-height:1.7;margin-bottom:1.75rem;">
+        <h2 style="font-family:Quicksand,sans-serif;font-size:22px;font-weight:700;color:var(--pink-d);margin-bottom:8px;">${isPreorder?'Pre-order Received!':'Order Placed!'}</h2>
+        <p style="font-size:13px;color:var(--text-s);line-height:1.7;margin-bottom:1.5rem;">
           ${isPreorder?'เราได้รับ pre-order ของคุณแล้ว<br>จะยืนยันโดยเร็วที่สุดนะคะ 🌸':'รับออเดอร์เรียบร้อยแล้ว!<br>ขอบคุณที่ซื้อสินค้ากับเราค่ะ 🌸'}
         </p>
-        <button onclick="document.getElementById('orderSuccessOverlay').remove()" style="background:var(--pink-d);color:#fff;border:none;padding:13px 32px;border-radius:20px;font-size:15px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">
-          Continue Shopping
+        ${freebieHtml}
+        <button onclick="document.getElementById('orderSuccessOverlay').remove()" style="background:var(--pink-d);color:#fff;border:none;padding:13px 32px;border-radius:20px;font-size:15px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;width:100%;">
+          Continue Shopping 🌸
         </button>
       </div>`
     document.body.appendChild(el)
