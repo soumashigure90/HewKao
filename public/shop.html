@@ -2308,7 +2308,8 @@ footer strong { color: var(--pink-d); }
   }
 
   function goToPayment() {
-    const total = parseFloat(document.getElementById('coTotal').textContent.replace(/[^0-9.]/g,''))
+    // ใช้ THB เสมอสำหรับ PromptPay — ไม่ดึงจาก coTotal ที่อาจแสดงเป็น USD
+    const total = window._orderTotalTHB || 0
     // ปิด checkout ก่อน แล้วค่อยเปิด payment
     const co = document.getElementById('checkoutOverlay')
     co.classList.remove('open','closing')
