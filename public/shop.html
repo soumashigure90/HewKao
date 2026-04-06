@@ -1759,6 +1759,7 @@ footer strong { color: var(--pink-d); }
     currentProduct  = p
     discountData    = null
     discountedPrice = null
+    window._appliedDiscountCode = null
 
     const bgMap2 = ['bg1','bg2','bg3','bg4']
     const idx = allProducts.indexOf(p) % 4
@@ -1820,6 +1821,7 @@ footer strong { color: var(--pink-d); }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       discountData = data
+      window._appliedDiscountCode = document.getElementById('discountInput').value.trim().toUpperCase()
       const orig = Number(currentProduct.price)
       discountedPrice = data.type==='percent'
         ? Math.round(orig * (1 - data.value/100))
@@ -2395,12 +2397,20 @@ footer strong { color: var(--pink-d); }
   }
 
   function goToPayment() {
-    // ใช้ THB เสมอสำหรับ PromptPay — ไม่ดึงจาก coTotal ที่อาจแสดงเป็น USD
     const total = window._orderTotalTHB || 0
-    // ปิด checkout ก่อน แล้วค่อยเปิด payment
     const co = document.getElementById('checkoutOverlay')
     co.classList.remove('open','closing')
     co.style.display = 'none'
+
+    // ถ้า total = 0 (คูปอง 100%) → ข้ามหน้า payment ไป submit เลย
+    if (total === 0) {
+      setTimeout(() => {
+        co.style.display = ''
+        submitOrder()
+      }, 50)
+      return
+    }
+
     setTimeout(() => {
       co.style.display = ''
       openPayment(total)
@@ -2596,15 +2606,17 @@ footer strong { color: var(--pink-d); }
     const guest_info = userProfile ? { full_name:userProfile.full_name, phone:userProfile.phone, country:userProfile.country, address:userProfile.address } : null
     const guestEmailEl = document.getElementById('guestEmailInput')
     const guest_email  = (!token && guestEmailEl) ? guestEmailEl.value.trim() : null
-    const slip_ref     = window._slipRef || null
-    window._slipRef    = null
+    const slip_ref      = window._slipRef || null
+    window._slipRef     = null
+    const discount_code = window._appliedDiscountCode || null
+    window._appliedDiscountCode = null
 
     try {
       const headers = { 'Content-Type':'application/json' }
       if (token) headers['Authorization'] = 'Bearer ' + token
       const res = await fetch(`${API}/api/orders`, {
         method:'POST', headers,
-        body: JSON.stringify({ total, note, items, guest_info, guest_email, slip_ref })
+        body: JSON.stringify({ total, note, items, guest_info, guest_email, slip_ref, discount_code })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
