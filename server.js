@@ -529,9 +529,10 @@ app.post('/api/orders', async (req, res) => {
       const { data: mem } = await supabase.from('members').select('email').eq('id', member_id).single()
       memberEmailForFreebie = mem?.email || null
     }
-    processFreebie(order.id, freebieItems, guest_email, memberEmailForFreebie)
+    // await เพื่อได้ freebies ก่อน return response
+    const freebies = await processFreebie(order.id, freebieItems, guest_email, memberEmailForFreebie) || []
 
-    res.json({ id: order.id, status: order.status })
+    res.json({ id: order.id, status: order.status, freebies })
   } catch(e) { res.status(500).json({ error: e.message }) }
 })
 
@@ -606,6 +607,19 @@ app.post('/api/verify-slip', upload.single('slip'), async (req, res) => {
     console.error('EasySlip error:', e.message)
     res.status(500).json({ valid: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบ' })
   }
+})
+
+// GET /api/orders/:id/freebies — ดึง freebies ของ order
+app.get('/api/orders/:id/freebies', async (req, res) => {
+  const { id } = req.params
+  try {
+    const { data, error } = await supabase
+      .from('order_freebies')
+      .select('freebie')
+      .eq('order_id', parseInt(id))
+    if (error) return res.json([])
+    res.json((data || []).map(r => r.freebie))
+  } catch(e) { res.json([]) }
 })
 
 // GET /api/my-orders — ดู order ของตัวเอง
