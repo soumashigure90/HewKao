@@ -2794,8 +2794,24 @@ footer strong { color: var(--pink-d); }
             return_url: window.location.href,
             payment_method_data: {
               billing_details: {
-                name: userProfile?.full_name || 'Customer',
-                email: userProfile?.email || undefined,
+                name:  userProfile?.full_name || 'Customer',
+                email: userProfile?.email     || undefined,
+                address: {
+                  country: userProfile?.country === 'Thailand' ? 'TH'
+                          : userProfile?.country === 'Japan'   ? 'JP'
+                          : userProfile?.country === 'USA'     ? 'US'
+                          : userProfile?.country === 'UK'      ? 'GB'
+                          : userProfile?.country === 'Singapore' ? 'SG'
+                          : userProfile?.country === 'Australia'  ? 'AU'
+                          : userProfile?.country === 'Canada'     ? 'CA'
+                          : userProfile?.country === 'Germany'    ? 'DE'
+                          : userProfile?.country === 'France'     ? 'FR'
+                          : 'TH',
+                  line1:       userProfile?.address  || undefined,
+                  city:        userProfile?.city     || undefined,
+                  state:       userProfile?.state    || undefined,
+                  postal_code: userProfile?.postcode || undefined,
+                }
               }
             }
           },
