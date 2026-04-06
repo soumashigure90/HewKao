@@ -1400,7 +1400,7 @@ footer strong { color: var(--pink-d); }
   // ── FETCH PRODUCTS FROM API ──
   async function loadProducts() {
     try {
-      const res = await fetch(`${API}/api/products`)
+      const res = await fetch(`${API}/api/products?artist=Shigure_S`)
       allProducts = await res.json()
       renderProducts(allProducts)
       // sync shipping fields เข้า cart ที่โหลดมาจาก localStorage
