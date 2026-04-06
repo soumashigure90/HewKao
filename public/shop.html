@@ -1865,9 +1865,9 @@ footer strong { color: var(--pink-d); }
     const isUSD       = lang === 'en'
     const _s = window._shopSettings || {}
     const _rate = parseFloat(_s.exchange_rate || 36)
-    const subtotalUSD = cart.reduce((s,i) => {
-      if (i.price_usd) return s + (i.price_usd * i.qty)
-      return s + ((i.price * i.qty) / _rate)
+    const subtotalUSD = cart.reduce((acc,i) => {
+      if (i.price_usd) return acc + (i.price_usd * i.qty)
+      return acc + ((i.price * i.qty) / _rate)
     }, 0)
     const totalUSD    = subtotalUSD
     countEl.textContent = count + ' item' + (count!==1?'s':'')
@@ -2168,13 +2168,13 @@ footer strong { color: var(--pink-d); }
 
   function _buildCheckoutModal(items, subtotal, total, discount) {
     const isUSD = lang === 'en'
-    const s = window._shopSettings || {}
-    const exchangeRate = parseFloat(s.exchange_rate || 36)
+    const cfg = window._shopSettings || {}
+    const exchangeRate = parseFloat(cfg.exchange_rate || 36)
 
     // หา usd subtotal จาก items — ถ้าสินค้าไม่มี price_usd ให้แปลงจาก THB
-    const subtotalUSD = items.reduce((s,i) => {
-      if (i.price_usd) return s + (i.price_usd * i.qty)
-      return s + ((i.price * i.qty) / exchangeRate)
+    const subtotalUSD = items.reduce((acc,i) => {
+      if (i.price_usd) return acc + (i.price_usd * i.qty)
+      return acc + ((i.price * i.qty) / exchangeRate)
     }, 0)
     const totalUSD = subtotalUSD
 
@@ -2249,16 +2249,15 @@ footer strong { color: var(--pink-d); }
     }
 
     // แสดง free shipping progress
-    const s = window._shopSettings || {}
-    const intl = isInternational()
-    const freeThreshold = intl
-      ? parseFloat(s.free_shipping_intl || 0)
-      : parseFloat(s.free_shipping || 0)
-    const progressBase = intl ? totalUSD : total
+    const freeIntl = isInternational()
+    const freeThreshold = freeIntl
+      ? parseFloat(cfg.free_shipping_intl || 0)
+      : parseFloat(cfg.free_shipping || 0)
+    const progressBase = freeIntl ? totalUSD : total
     let progressRow = document.getElementById('coFreeShipProgress')
     if (hasPhysical && freeThreshold > 0 && !ship.free) {
       const remaining = freeThreshold - progressBase
-      const currency  = intl ? '$' : '฿'
+      const currency  = freeIntl ? '$' : '฿'
       if (!progressRow) {
         progressRow = document.createElement('div')
         progressRow.id = 'coFreeShipProgress'
