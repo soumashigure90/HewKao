@@ -1189,7 +1189,7 @@ footer strong { color: var(--pink-d); }
 </div>
 
 <!-- ADDRESS COLLECTION MODAL (สำหรับ physical/preorder ที่ยังไม่มีที่อยู่) -->
-<div class="profile-overlay" id="addrCollectOverlay" onclick="if(event.target===this)closeAddrCollect()">
+<div class="profile-overlay" id="addrCollectOverlay" onclick="if(event.target===this)cancelAddrCollect()">
   <div class="profile-modal" style="max-width:520px;">
     <div class="profile-header" style="background:linear-gradient(135deg,var(--yellow-l),var(--pink-l));">
       <div class="profile-avatar" style="background:var(--pink-d);font-size:20px;">📍</div>
@@ -1197,7 +1197,7 @@ footer strong { color: var(--pink-d); }
         <h3>Delivery Information <span style="font-size:12px;font-weight:400;color:var(--text-s);">ข้อมูลการจัดส่ง</span></h3>
         <p>กรุณากรอกข้อมูลให้ครบถ้วน · Required for shipping</p>
       </div>
-      <button onclick="closeAddrCollect()" style="margin-left:auto;background:rgba(255,255,255,0.7);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform=''">✕</button>
+      <button onclick="cancelAddrCollect()" style="margin-left:auto;background:rgba(255,255,255,0.7);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform=''">✕</button>
     </div>
     <div class="profile-body" style="max-height:70vh;overflow-y:auto;">
 
@@ -1268,7 +1268,7 @@ footer strong { color: var(--pink-d); }
       </p>
     </div>
     <div class="profile-actions">
-      <button class="btn-profile-cancel" onclick="closeAddrCollect()">Cancel</button>
+      <button class="btn-profile-cancel" onclick="cancelAddrCollect()">Cancel</button>
       <button class="btn-profile-save" onclick="confirmAddrCollect()">Continue → ดำเนินการต่อ</button>
     </div>
   </div>
@@ -2132,7 +2132,13 @@ footer strong { color: var(--pink-d); }
     const o = document.getElementById('addrCollectOverlay')
     o.classList.add('closing')
     setTimeout(() => o.classList.remove('open','closing'), 220)
+    // ไม่ล้าง _afterAddrCollect ที่นี่ — confirmAddrCollect จัดการเอง
+    // ถ้าปิดด้วยปุ่ม Cancel ค่อยล้าง
+  }
+
+  function cancelAddrCollect() {
     window._afterAddrCollect = null
+    closeAddrCollect()
   }
 
   async function confirmAddrCollect() {
