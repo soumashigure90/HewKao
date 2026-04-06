@@ -650,7 +650,7 @@ app.put('/api/admin/orders/:id', auth, adminOnly, async (req, res) => {
       ).join('')
 
       const msgMap = {
-        paid:      'เราได้รับการชำระเงินของคุณแล้วค่ะ กำลังเตรียมสินค้าให้คุณ 🌸<br><span style="color:#8a7a9a;font-size:13px;">We've received your payment and are preparing your order.</span>',
+        paid:      'เราได้รับการชำระเงินของคุณแล้วค่ะ กำลังเตรียมสินค้าให้คุณ 🌸<br><span style="color:#8a7a9a;font-size:13px;">We have received your payment and are preparing your order.</span>',
         shipped:   'สินค้าของคุณถูกส่งออกแล้วค่ะ รอรับที่บ้านได้เลย! 📦<br><span style="color:#8a7a9a;font-size:13px;">Your order has been shipped! Please wait for delivery.</span>',
         cancelled: 'คำสั่งซื้อของคุณถูกยกเลิกแล้วค่ะ หากมีข้อสงสัยกรุณาติดต่อเราได้เลย<br><span style="color:#8a7a9a;font-size:13px;">Your order has been cancelled. Please contact us if you have questions.</span>',
       }
