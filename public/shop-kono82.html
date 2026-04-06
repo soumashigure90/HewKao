@@ -3,43 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kono82 Shop</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet">
+<title>Kono82 | Blue Archive Fan Shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init('ihPYyy1esTXMHcxHu')</script>
 <style>
 :root {
-  --pink:    #00FF41;
-  --pink-l:  #001a00;
-  --pink-d:  #00cc33;
-  --lav:     #FFD700;
-  --lav-l:   #1a1a00;
-  --mint:    #00BFFF;
-  --mint-l:  #001a26;
-  --yellow:  #FFD700;
-  --yellow-l:#1a1500;
-  --peach:   #FF6B35;
-  --cream:   #0a0a0a;
-  --text:    #00FF41;
-  --text-s:  #888888;
-  --white:   #111111;
-  --radius:  2px;
-  --shadow:  0 0 10px rgba(0,255,65,0.3), inset 0 0 10px rgba(0,255,65,0.05);
-}
-/* 8-bit pixel font */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
-body { background: #0a0a0a !important; image-rendering: pixelated; }
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.03) 2px, rgba(0,255,65,0.03) 4px);
-  pointer-events: none;
-  z-index: 9998;
+  --pink:    #7EC8E3;
+  --pink-l:  #E8F6FB;
+  --pink-d:  #2A7FAF;
+  --lav:     #5B9BD5;
+  --lav-l:   #EBF4FC;
+  --lav-d:   #1a5c8a;
+  --mint:    #A8D8EA;
+  --mint-l:  #EAF6FB;
+  --mint-d:  #2A7FAF;
+  --yellow:  #FFF9C4;
+  --yellow-l:#FFFDE7;
+  --peach:   #B3D9F2;
+  --cream:   #F0F8FF;
+  --text:    #1a2a3a;
+  --text-s:  #5a7a8a;
+  --white:   #ffffff;
+  --radius:  16px;
+  --shadow:  0 4px 24px rgba(42,127,175,0.12);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'VT323', monospace;
+  font-family: 'Nunito', sans-serif;
   background: var(--cream);
   color: var(--text);
   min-height: 100vh;
@@ -847,156 +838,201 @@ footer strong { color: var(--pink-d); }
 
 </style>
 
-<style>
-/* ═══ KONO82 8-BIT THEME OVERRIDES ═══ */
-* { image-rendering: pixelated; }
 
-/* Pixel border ทุก card */
+
+<style>
+/* ═══════════════════════════════════════
+   KONO82 × BLUE ARCHIVE THEME
+   โทนฟ้า-ขาว สไตล์ visual novel โรงเรียน
+═══════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;600;700&display=swap');
+
+/* ── Background — diamond argyle pattern ── */
+body {
+  background-color: #EAF5FB !important;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0px,
+      transparent 28px,
+      rgba(94,175,220,0.08) 28px,
+      rgba(94,175,220,0.08) 30px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0px,
+      transparent 28px,
+      rgba(94,175,220,0.08) 28px,
+      rgba(94,175,220,0.08) 30px
+    ) !important;
+}
+
+/* ── Nav ── */
+nav {
+  background: rgba(255,255,255,0.92) !important;
+  border-bottom: 2px solid #A8D8EA !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 2px 20px rgba(42,127,175,0.1) !important;
+}
+.nav-logo {
+  font-family: 'Quicksand', sans-serif !important;
+  font-weight: 700 !important;
+  color: #2A7FAF !important;
+  font-size: 20px !important;
+  letter-spacing: -0.5px !important;
+}
+.nav-logo span { color: #7EC8E3 !important; }
+
+/* ── Nav links ── */
+.nav-links a:hover, .nav-links a.active {
+  background: #EBF4FC !important;
+  color: #2A7FAF !important;
+}
+
+/* ── Product cards ── */
 .card {
-  border: 3px solid #00FF41 !important;
-  border-radius: 0 !important;
-  background: #111 !important;
-  box-shadow: 4px 4px 0 #005500, inset 0 0 20px rgba(0,255,65,0.05) !important;
-  transition: transform 0.1s !important;
+  background: #fff !important;
+  border: 1.5px solid #C8E8F5 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(42,127,175,0.08) !important;
+  transition: all 0.25s ease !important;
 }
 .card:hover {
-  transform: translate(-2px,-2px) !important;
-  box-shadow: 6px 6px 0 #005500 !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 32px rgba(42,127,175,0.16) !important;
+  border-color: #7EC8E3 !important;
+}
+.card h3 { color: #1a2a3a !important; font-family: 'Quicksand', sans-serif !important; font-weight: 700 !important; }
+.card-sub { color: #5a7a8a !important; }
+
+/* ── Price ── */
+.price { color: #2A7FAF !important; font-weight: 800 !important; }
+
+/* ── Buttons ── */
+.btn-cart {
+  background: linear-gradient(135deg, #5B9BD5, #2A7FAF) !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 20px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 3px 12px rgba(42,127,175,0.3) !important;
+}
+.btn-cart:hover {
+  background: linear-gradient(135deg, #2A7FAF, #1a5c8a) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 5px 16px rgba(42,127,175,0.4) !important;
 }
 
-/* Nav pixel style */
-nav {
-  background: #000 !important;
-  border-bottom: 3px solid #00FF41 !important;
-  box-shadow: 0 3px 0 #005500 !important;
+/* ── Buy Now button ── */
+.btn-buy {
+  background: linear-gradient(135deg, #7EC8E3, #5B9BD5) !important;
+  border: none !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(94,175,220,0.4) !important;
 }
 
-/* Buttons pixel style */
-.btn-cart, .btn-primary, .btn-buy {
-  border-radius: 0 !important;
-  border: 2px solid #00FF41 !important;
-  background: #001a00 !important;
-  color: #00FF41 !important;
-  font-family: 'VT323', monospace !important;
-  font-size: 16px !important;
-  letter-spacing: 1px !important;
-  text-transform: uppercase !important;
-  box-shadow: 3px 3px 0 #005500 !important;
-  transition: none !important;
-}
-.btn-cart:hover, .btn-primary:hover, .btn-buy:hover {
-  transform: translate(2px,2px) !important;
-  box-shadow: 1px 1px 0 #005500 !important;
-  background: #003300 !important;
+/* ── Primary button ── */
+.btn-primary, .btn-profile-save, .btn-checkout-confirm {
+  background: linear-gradient(135deg, #5B9BD5, #2A7FAF) !important;
+  border: none !important;
+  box-shadow: 0 3px 12px rgba(42,127,175,0.3) !important;
 }
 
-/* Price pixel style */
-.price {
-  color: #FFD700 !important;
-  font-family: 'Press Start 2P', monospace !important;
-  font-size: 11px !important;
-}
-
-/* Card text */
-.card h3 {
-  color: #00FF41 !important;
-  font-family: 'VT323', monospace !important;
-  font-size: 18px !important;
-  letter-spacing: 1px !important;
-}
-.card-sub { color: #888 !important; font-family: 'VT323', monospace !important; font-size: 14px !important; }
-
-/* Badge pixel */
-.card-badge {
-  border-radius: 0 !important;
-  border: 2px solid currentColor !important;
-  font-family: 'Press Start 2P', monospace !important;
-  font-size: 7px !important;
-}
-
-/* Hero section */
+/* ── Hero section ── */
 #heroSection {
-  background: #000 !important;
-  border-bottom: 4px solid #00FF41 !important;
+  background: linear-gradient(160deg, #1a4a6b 0%, #2A7FAF 40%, #7EC8E3 100%) !important;
   position: relative;
+  overflow: hidden;
+}
+#heroSection::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(45deg, transparent 0, transparent 30px, rgba(255,255,255,0.04) 30px, rgba(255,255,255,0.04) 32px),
+    repeating-linear-gradient(-45deg, transparent 0, transparent 30px, rgba(255,255,255,0.04) 30px, rgba(255,255,255,0.04) 32px);
+  pointer-events: none;
 }
 #heroTag {
-  background: #001a00 !important;
-  border: 2px solid #00FF41 !important;
-  border-radius: 0 !important;
-  color: #00FF41 !important;
-  font-family: 'Press Start 2P', monospace !important;
-  font-size: 9px !important;
+  background: rgba(255,255,255,0.2) !important;
+  border: 1.5px solid rgba(255,255,255,0.5) !important;
+  color: #fff !important;
+  backdrop-filter: blur(4px) !important;
+  border-radius: 20px !important;
+  font-size: 12px !important;
+  letter-spacing: 1px !important;
 }
 #heroTitle {
-  font-family: 'Press Start 2P', monospace !important;
-  color: #00FF41 !important;
-  text-shadow: 3px 3px 0 #005500, 0 0 20px rgba(0,255,65,0.5) !important;
-  font-size: clamp(16px,3vw,28px) !important;
+  color: #ffffff !important;
+  font-family: 'Quicksand', sans-serif !important;
+  font-weight: 700 !important;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.2) !important;
 }
-#heroDesc { color: #888 !important; font-family: 'VT323', monospace !important; font-size: 18px !important; }
+#heroDesc { color: rgba(255,255,255,0.85) !important; }
 
-/* Cart / Modal pixel */
-.modal, .prod-modal, .profile-modal, .checkout-modal {
-  border-radius: 0 !important;
-  border: 3px solid #00FF41 !important;
-  background: #0a0a0a !important;
-  box-shadow: 6px 6px 0 #005500 !important;
-}
-
-/* Scrollbar pixel */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #000; }
-::-webkit-scrollbar-thumb { background: #00FF41; border-radius: 0; }
-
-/* Category buttons */
+/* ── Category filter ── */
 .cat-btn {
-  border-radius: 0 !important;
-  border: 2px solid #333 !important;
-  background: #111 !important;
-  color: #888 !important;
-  font-family: 'VT323', monospace !important;
-  font-size: 15px !important;
+  border-color: #C8E8F5 !important;
+  color: #5a7a8a !important;
+  background: #fff !important;
+  border-radius: 20px !important;
 }
 .cat-btn.active, .cat-btn:hover {
-  border-color: #00FF41 !important;
-  color: #00FF41 !important;
-  background: #001a00 !important;
+  background: #EBF4FC !important;
+  border-color: #5B9BD5 !important;
+  color: #2A7FAF !important;
 }
 
-/* Input fields */
-input, textarea, select {
-  background: #0a0a0a !important;
-  border-color: #333 !important;
-  color: #00FF41 !important;
-  border-radius: 0 !important;
-  font-family: 'VT323', monospace !important;
+/* ── Discount badge ── */
+.card-badge.digital { background: #5B9BD5 !important; }
+.card-badge.preorder { background: #A8D8EA !important; color: #1a4a6b !important; }
+
+/* ── Modal / Overlay ── */
+.profile-modal, .checkout-modal, .prod-modal {
+  border: 1.5px solid #C8E8F5 !important;
+  box-shadow: 0 20px 60px rgba(42,127,175,0.15) !important;
 }
+
+/* ── Wishlist button ── */
+.wishlist { background: rgba(255,255,255,0.9) !important; }
+.wishlist:hover { background: #EBF4FC !important; color: #2A7FAF !important; }
+
+/* ── Cart / summary ── */
+.checkout-summary { background: #EBF4FC !important; }
+.checkout-summary-row.total { color: #2A7FAF !important; border-color: #C8E8F5 !important; }
+
+/* ── Input fields ── */
 input:focus, textarea:focus, select:focus {
-  border-color: #00FF41 !important;
-  box-shadow: 0 0 8px rgba(0,255,65,0.3) !important;
+  border-color: #5B9BD5 !important;
+  box-shadow: 0 0 0 3px rgba(94,175,220,0.2) !important;
 }
 
-/* Pixel cursor blink effect on header */
-#heroTitle::after {
-  content: '█';
-  animation: blink 1s step-end infinite;
-  color: #00FF41;
-}
-@keyframes blink { 50% { opacity: 0; } }
+/* ── Scrollbar ── */
+::-webkit-scrollbar-thumb { background: #A8D8EA !important; }
+::-webkit-scrollbar-track { background: #EAF5FB !important; }
 
-/* Out of stock pixel */
-.card.oos { opacity: 0.5 !important; filter: grayscale(100%) brightness(0.3) !important; }
+/* ── Login button ── */
+.btn-login { background: linear-gradient(135deg, #5B9BD5, #2A7FAF) !important; }
+.btn-login:hover { background: linear-gradient(135deg, #2A7FAF, #1a5c8a) !important; }
 
-/* Toast pixel */
-.toast {
-  border-radius: 0 !important;
-  border: 2px solid #00FF41 !important;
-  background: #001a00 !important;
-  color: #00FF41 !important;
-  font-family: 'VT323', monospace !important;
-  font-size: 16px !important;
+/* ── Lang toggle ── */
+.nav-lang button.active { background: #5B9BD5 !important; }
+
+/* ── Cart badge ── */
+.cart-badge { background: #2A7FAF !important; }
+
+/* ── Halo-style glow on hover cards ── */
+.card:hover .card-img {
+  box-shadow: 0 0 0 2px #7EC8E3 !important;
 }
+
+/* ── Bottom nav (mobile) ── */
+.bottom-nav { background: rgba(255,255,255,0.95) !important; border-top: 1.5px solid #C8E8F5 !important; }
+.bottom-nav button.active { color: #2A7FAF !important; }
+
+/* ── Page background stripe ── */
+#products-section { background: transparent !important; }
 </style>
 </head>
 <body>
