@@ -2797,11 +2797,24 @@ footer strong { color: var(--pink-d); }
       const res = await fetch(`${API}/api/my-orders`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
-      const orders = await res.json()
-      renderOrders(orders)
+      if (res.status === 401) {
+        // Token หมดอายุหรือไม่ valid — ล้าง session แล้วให้ login ใหม่
+        localStorage.removeItem('mochi_token')
+        localStorage.removeItem('mochi_role')
+        localStorage.removeItem('mochi_user')
+        checkLoginState()
+        closeOrders()
+        showToast('⚠️ Session expired, please login again')
+        openLogin()
+        return
+      }
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to load orders')
+      if (!Array.isArray(data)) throw new Error('Unexpected response from server')
+      renderOrders(data)
     } catch(e) {
       document.getElementById('ordersBody').innerHTML = `
-        <div style="text-align:center;padding:3rem;color:var(--red);">❌ Failed to load orders</div>`
+        <div style="text-align:center;padding:3rem;color:var(--red);">❌ ${e.message || 'Failed to load orders'}</div>`
     }
   }
 
@@ -2896,17 +2909,33 @@ footer strong { color: var(--pink-d); }
     }
   }
 
+  // ── VERIFY TOKEN ──
+  async function verifyToken() {
+    const token = localStorage.getItem('mochi_token')
+    if (!token) return
+    try {
+      const res = await fetch(`${API}/api/verify`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      if (res.status === 401) {
+        localStorage.removeItem('mochi_token')
+        localStorage.removeItem('mochi_role')
+        localStorage.removeItem('mochi_user')
+      }
+    } catch(e) {}
+  }
+
   // ── INIT ──
   async function init() {
     document.body.style.opacity = '0'
     document.body.style.transition = 'opacity 0.3s ease'
+    await verifyToken()
     checkLoginState()
     updateCartBadge()
     checkEditBtn()
     initSushiRain()
     await Promise.all([ loadPageContent(), loadProducts(), loadShopSettings(), loadProfile() ])
     document.body.style.opacity = '1'
-    // เริ่ม poll admin orders ถ้าเป็น admin
     pollAdminOrders()
     setInterval(pollAdminOrders, 30000)
   }
