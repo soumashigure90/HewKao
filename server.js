@@ -1036,43 +1036,47 @@ app.post('/api/admin/page-content', auth, adminOnly, async (req, res) => {
   }
 })
 // ═══════════════════════════════════════
-app.post('/api/admin/upload', auth, adminOnly, async (req, res) => {
+app.post('/api/admin/upload', auth, adminOnly, upload.single('file'), async (req, res) => {
   try {
-    const chunks = []
-    req.on('data', chunk => chunks.push(chunk))
-    req.on('end', async () => {
-      try {
-        const buffer = Buffer.concat(chunks)
-        const contentType = req.headers['content-type'] || 'image/jpeg'
-        const ext = contentType.split('/')[1]?.split(';')[0]?.split('+')[0] || 'jpg'
-        const filename = `product_${Date.now()}.${ext}`
+    let buffer, contentType, ext
 
-        const { data, error } = await supabase.storage
-          .from('products')
-          .upload(filename, buffer, {
-            contentType,
-            upsert: true
-          })
+    if (req.file) {
+      // multipart/form-data (จาก admin product image)
+      buffer = req.file.buffer
+      contentType = req.file.mimetype || 'image/jpeg'
+      ext = contentType.split('/')[1]?.split(';')[0]?.split('+')[0] || 'jpg'
+    } else {
+      // raw binary (จาก hero/page bg upload)
+      const chunks = []
+      await new Promise((resolve, reject) => {
+        req.on('data', chunk => chunks.push(chunk))
+        req.on('end', resolve)
+        req.on('error', reject)
+      })
+      buffer = Buffer.concat(chunks)
+      contentType = req.headers['content-type'] || 'image/jpeg'
+      ext = contentType.split('/')[1]?.split(';')[0]?.split('+')[0] || 'jpg'
+    }
 
-        if (error) {
-          console.error('Storage error:', error)
-          return res.status(500).json({ error: error.message })
-        }
+    if (!buffer || buffer.length === 0) {
+      return res.status(400).json({ error: 'No file data received' })
+    }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('products')
-          .getPublicUrl(filename)
+    const filename = `product_${Date.now()}.${ext}`
+    const { data, error } = await supabase.storage
+      .from('products')
+      .upload(filename, buffer, { contentType, upsert: true })
 
-        res.json({ url: publicUrl })
-      } catch(inner) {
-        console.error('Upload inner error:', inner)
-        res.status(500).json({ error: inner.message })
-      }
-    })
-    req.on('error', err => {
-      console.error('Request error:', err)
-      res.status(500).json({ error: err.message })
-    })
+    if (error) {
+      console.error('Storage error:', error)
+      return res.status(500).json({ error: error.message })
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('products')
+      .getPublicUrl(filename)
+
+    res.json({ url: publicUrl })
   } catch(e) {
     console.error('Upload error:', e)
     res.status(500).json({ error: e.message })
