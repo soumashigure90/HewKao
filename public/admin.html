@@ -288,7 +288,7 @@ textarea{resize:vertical;min-height:80px;}
         </div>
         <div class="form-actions">
           <button class="btn-secondary" onclick="loadSettings()">↺ Reset</button>
-          <button class="btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+          <button class="btn-primary" onclick="console.log('BUTTON CLICKED'); saveSettings()">💾 Save Settings</button>
         </div>
       </div>
       <div class="card">
@@ -943,34 +943,41 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
+  console.log('[saveSettings] called')
+  const el = (id) => document.getElementById(id)
+  console.log('[saveSettings] elements exist?', {
+    ShippingTHB: !!el('settingShippingTHB'),
+    FreeShipping: !!el('settingFreeShipping'),
+    ShippingTHBval: el('settingShippingTHB')?.value,
+    FreeShippingval: el('settingFreeShipping')?.value,
+  })
   const settings = {
-    shop_name:    document.getElementById('settingShopName').value.trim(),
-    email:        document.getElementById('settingEmail').value.trim(),
-    about_en:     document.getElementById('settingAbout').value.trim(),
-    about_th:     document.getElementById('settingAboutTh').value.trim(),
-    shipping_thb:      document.getElementById('settingShippingTHB').value || '0',
-    shipping_usd:      document.getElementById('settingShippingUSD').value || '0',
-    free_shipping:     document.getElementById('settingFreeShipping').value || '0',
-    shipping_intl_thb: document.getElementById('settingShippingIntlTHB').value || '0',
-    free_shipping_intl:document.getElementById('settingFreeShippingIntl').value || '0',
+    shop_name:    el('settingShopName').value.trim(),
+    email:        el('settingEmail').value.trim(),
+    about_en:     el('settingAbout').value.trim(),
+    about_th:     el('settingAboutTh').value.trim(),
+    shipping_thb:      el('settingShippingTHB').value || '0',
+    shipping_usd:      el('settingShippingUSD').value || '0',
+    free_shipping:     el('settingFreeShipping').value || '0',
+    shipping_intl_thb: el('settingShippingIntlTHB').value || '0',
+    free_shipping_intl:el('settingFreeShippingIntl').value || '0',
   }
-  console.log('[SAVE SETTINGS] sending:', settings)
+  console.log('[saveSettings] payload:', JSON.stringify(settings))
   try {
     const res = await fetch(`${API}/api/admin/settings`, {
       method: 'POST', headers: authHeader(),
       body: JSON.stringify(settings)
     })
-    const data = await res.json()
-    console.log('[SAVE SETTINGS] response:', res.status, data)
-    if (!res.ok) throw new Error()
+    const data = await res.json().catch(()=>({}))
+    console.log('[saveSettings] response:', res.status, data)
+    if (!res.ok) throw new Error(JSON.stringify(data))
     toast('✅ Settings saved!', 'success')
-    // ทดสอบอ่านกลับทันที
     const check = await fetch(`${API}/api/settings`)
     const checkData = await check.json()
-    console.log('[SAVE SETTINGS] readback:', checkData)
-  } catch(e) { 
-    console.log('[SAVE SETTINGS] error:', e)
-    toast('❌ Failed to save', 'error') 
+    console.log('[saveSettings] DB readback:', checkData)
+  } catch(e) {
+    console.error('[saveSettings] FAILED:', e)
+    toast('❌ Failed to save: ' + e.message, 'error')
   }
 }
 
