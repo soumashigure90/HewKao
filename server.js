@@ -235,7 +235,7 @@ app.post('/api/check-discount', auth, async (req, res) => {
 
 // POST /api/orders — create order (ไม่บังคับ login)
 app.post('/api/orders', async (req, res) => {
-  const { total, note, items, guest_info, guest_email, slip_ref } = req.body
+  const { total, note, items, guest_info, guest_email, slip_ref, discount_code } = req.body
   if (!items || !items.length) return res.status(400).json({ error: 'No items' })
 
   let member_id = null
@@ -285,6 +285,23 @@ app.post('/api/orders', async (req, res) => {
           .update({ stock: Math.max(0, product.stock - item.quantity) })
           .eq('id', item.product_id)
       }
+    }
+
+    // ── Increment discount used_count ──
+    if (discount_code) {
+      try {
+        const { data: dc } = await supabase
+          .from('discounts')
+          .select('id, used_count')
+          .eq('code', discount_code.toUpperCase())
+          .single()
+        if (dc) {
+          await supabase
+            .from('discounts')
+            .update({ used_count: (dc.used_count || 0) + 1 })
+            .eq('id', dc.id)
+        }
+      } catch(e) { console.error('Discount increment error:', e) }
     }
 
     res.json({ id: order.id, status: order.status })
