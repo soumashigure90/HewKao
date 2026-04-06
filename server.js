@@ -34,6 +34,45 @@ const supabase = createClient(
 
 const JWT_SECRET = process.env.JWT_SECRET || 'hewkao-secret-2025-xK9mP2nQ'
 
+// ── Email helper ──
+function createTransporter() {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: 'soumashigure2@gmail.com', pass: process.env.GMAIL_APP_PASSWORD }
+  })
+}
+
+function emailStyle() {
+  return `
+    <style>
+      body { font-family: 'Helvetica Neue', Arial, sans-serif; background:#FFF9F5; margin:0; padding:0; }
+      .wrap { max-width:560px; margin:0 auto; background:#fff; border-radius:20px; overflow:hidden; box-shadow:0 4px 24px rgba(180,140,200,.15); }
+      .header { background:linear-gradient(135deg,#FFB7C5,#C9B8F0); padding:32px 28px; text-align:center; }
+      .header h1 { margin:0; color:#fff; font-size:22px; font-weight:700; letter-spacing:-.3px; }
+      .header p { margin:6px 0 0; color:rgba(255,255,255,.85); font-size:13px; }
+      .body { padding:28px; }
+      .order-box { background:#FFF9F5; border-radius:14px; padding:16px 18px; margin-bottom:18px; }
+      .order-box h3 { margin:0 0 12px; font-size:13px; font-weight:700; color:#8a7a9a; letter-spacing:.5px; }
+      .item-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid #FFE4EC; font-size:14px; }
+      .item-row:last-child { border:none; }
+      .item-name { color:#4a3f5c; font-weight:600; }
+      .item-price { color:#e8829a; font-weight:700; }
+      .total-row { display:flex; justify-content:space-between; font-size:16px; font-weight:700; color:#e8829a; margin-top:14px; padding-top:12px; border-top:2px solid #FFE4EC; }
+      .addr-box { background:#EDE8FC; border-radius:12px; padding:14px 16px; margin-bottom:18px; font-size:13px; color:#4a3f5c; line-height:1.7; }
+      .addr-box strong { display:block; font-size:11px; color:#8a7a9a; letter-spacing:.5px; margin-bottom:4px; }
+      .btn { display:inline-block; background:#e8829a; color:#fff; padding:12px 28px; border-radius:12px; text-decoration:none; font-weight:700; font-size:14px; margin-top:6px; }
+      .footer { text-align:center; padding:20px 28px; font-size:11px; color:#bbb; border-top:1px solid #FFE4EC; }
+    </style>`
+}
+
+async function sendOrderEmail(toEmail, subject, html) {
+  try {
+    const t = createTransporter()
+    await t.sendMail({ from: '"HewKao Shop 🌸" <soumashigure2@gmail.com>', to: toEmail, subject, html })
+    console.log('Email sent to:', toEmail)
+  } catch(e) { console.error('Email error:', e.message) }
+}
+
 // ── Auth Middleware ──
 function auth(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1]
@@ -304,6 +343,53 @@ app.post('/api/orders', async (req, res) => {
       } catch(e) { console.error('Discount increment error:', e) }
     }
 
+    // ── ส่ง Order Confirmation Email ──
+    try {
+      const toEmail = guest_email || null
+      // ดึง email member ถ้า login
+      let memberEmail = null
+      if (member_id) {
+        const { data: mem } = await supabase.from('members').select('email').eq('id', member_id).single()
+        memberEmail = mem?.email || null
+      }
+      const recipient = toEmail || memberEmail
+      if (recipient) {
+        const itemsHtml = products.map(pr => {
+          const item = items.find(i => i.product_id === pr.id)
+          return `<div class="item-row">
+            <span class="item-name">${pr.name}${item?.quantity > 1 ? ' ×'+item.quantity : ''}</span>
+            <span class="item-price">฿${(item.price * item.quantity).toLocaleString()}</span>
+          </div>`
+        }).join('')
+        const addrInfo = guest_info
+          ? `${guest_info.full_name || ''}${guest_info.phone ? ' · '+guest_info.phone : ''}<br>${guest_info.address || ''}${guest_info.country ? ', '+guest_info.country : ''}`
+          : ''
+        const html = `<!DOCTYPE html><html><head>${emailStyle()}</head><body>
+          <div class="wrap">
+            <div class="header">
+              <h1>🎉 Order Received!</h1>
+              <p>Order #${order.id} · ได้รับคำสั่งซื้อแล้ว</p>
+            </div>
+            <div class="body">
+              <p style="color:#4a3f5c;font-size:14px;margin-bottom:20px;">ขอบคุณสำหรับการสั่งซื้อค่ะ! เราได้รับ order ของคุณแล้ว และจะดำเนินการโดยเร็วที่สุด 🌸<br>
+              <span style="color:#8a7a9a;font-size:13px;">Thank you for your order! We'll process it as soon as possible.</span></p>
+              <div class="order-box">
+                <h3>📦 ORDER SUMMARY</h3>
+                ${itemsHtml}
+                <div class="total-row"><span>Total</span><span>฿${Number(total).toLocaleString()}</span></div>
+              </div>
+              ${addrInfo ? `<div class="addr-box"><strong>📍 DELIVERY ADDRESS</strong>${addrInfo}</div>` : ''}
+              ${note ? `<div class="addr-box" style="background:#FFF8DC;"><strong>📝 NOTE</strong>${note}</div>` : ''}
+              <p style="font-size:13px;color:#8a7a9a;text-align:center;margin-top:8px;">มีคำถามหรือปัญหา? ติดต่อเราได้เลยค่ะ<br>
+              <a href="mailto:soumashigure2@gmail.com" style="color:#e8829a;">soumashigure2@gmail.com</a></p>
+            </div>
+            <div class="footer">HewKao Shop 🌸 · hewkao.shop</div>
+          </div>
+        </body></html>`
+        await sendOrderEmail(recipient, `🌸 Order #${order.id} Confirmed! · ยืนยันคำสั่งซื้อ`, html)
+      }
+    } catch(e) { console.error('Order confirmation email error:', e) }
+
     res.json({ id: order.id, status: order.status })
   } catch(e) { res.status(500).json({ error: e.message }) }
 })
@@ -539,6 +625,59 @@ app.put('/api/admin/orders/:id', auth, adminOnly, async (req, res) => {
       }
     } catch(e) { console.error('Download link error:', e) }
   }
+
+  // ── ส่ง Status Update Email ──
+  try {
+    const { data: fullOrder } = await supabase
+      .from('orders')
+      .select('guest_email, member_id, total, note, members(email), order_items(quantity, price, products(name, name_th))')
+      .eq('id', id)
+      .single()
+
+    const toEmail = fullOrder?.guest_email || fullOrder?.members?.email
+    if (toEmail && ['paid','shipped','cancelled'].includes(status)) {
+      const statusMap = {
+        paid:      { th: 'ยืนยันการชำระเงินแล้ว ✅',      en: 'Payment Confirmed ✅',       icon: '✅', color: '#4CAF50' },
+        shipped:   { th: 'กำลังจัดส่ง 🚚',                en: 'Your Order is on the Way 🚚', icon: '🚚', color: '#2196F3' },
+        cancelled: { th: 'คำสั่งซื้อถูกยกเลิก 🚫',         en: 'Order Cancelled 🚫',          icon: '🚫', color: '#e8829a' },
+      }
+      const st = statusMap[status]
+      const itemsHtml = (fullOrder.order_items || []).map(i =>
+        `<div class="item-row">
+          <span class="item-name">${i.products?.name || '?'}${i.quantity > 1 ? ' ×'+i.quantity : ''}</span>
+          <span class="item-price">฿${(i.price * i.quantity).toLocaleString()}</span>
+        </div>`
+      ).join('')
+
+      const msgMap = {
+        paid:      'เราได้รับการชำระเงินของคุณแล้วค่ะ กำลังเตรียมสินค้าให้คุณ 🌸<br><span style="color:#8a7a9a;font-size:13px;">We've received your payment and are preparing your order.</span>',
+        shipped:   'สินค้าของคุณถูกส่งออกแล้วค่ะ รอรับที่บ้านได้เลย! 📦<br><span style="color:#8a7a9a;font-size:13px;">Your order has been shipped! Please wait for delivery.</span>',
+        cancelled: 'คำสั่งซื้อของคุณถูกยกเลิกแล้วค่ะ หากมีข้อสงสัยกรุณาติดต่อเราได้เลย<br><span style="color:#8a7a9a;font-size:13px;">Your order has been cancelled. Please contact us if you have questions.</span>',
+      }
+
+      const html = `<!DOCTYPE html><html><head>${emailStyle()}</head><body>
+        <div class="wrap">
+          <div class="header" style="background:linear-gradient(135deg,${st.color}99,${st.color}55);">
+            <h1>${st.icon} ${st.en}</h1>
+            <p>Order #${id} · ${st.th}</p>
+          </div>
+          <div class="body">
+            <p style="color:#4a3f5c;font-size:14px;margin-bottom:20px;">${msgMap[status]}</p>
+            <div class="order-box">
+              <h3>📦 ORDER #${id}</h3>
+              ${itemsHtml}
+              <div class="total-row"><span>Total</span><span>฿${Number(fullOrder.total).toLocaleString()}</span></div>
+            </div>
+            <p style="font-size:13px;color:#8a7a9a;text-align:center;">มีคำถาม? ติดต่อเราได้เลยค่ะ<br>
+            <a href="mailto:soumashigure2@gmail.com" style="color:#e8829a;">soumashigure2@gmail.com</a></p>
+          </div>
+          <div class="footer">HewKao Shop 🌸 · hewkao.shop</div>
+        </div>
+      </body></html>`
+
+      await sendOrderEmail(toEmail, `${st.icon} Order #${id} — ${st.en}`, html)
+    }
+  } catch(e) { console.error('Status update email error:', e) }
 
   res.json(data)
 })
