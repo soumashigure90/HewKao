@@ -3030,7 +3030,7 @@ footer strong { color: var(--pink-d); }
     try {
       const res = await fetch(`${API}/api/admin/page-content`, {
         method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-        body: JSON.stringify({ lang, content, shop: 'hewkao' })
+        body: JSON.stringify({ lang, content, shop: 'Shigure_S' })
       })
       if (showMsg && res.ok) showToast(`💾 Saved (${lang.toUpperCase()})`)
       else if (showMsg && !res.ok) showToast('❌ Save failed')
@@ -3069,7 +3069,7 @@ footer strong { color: var(--pink-d); }
 
   async function applyPageContent(l) {
     try {
-      const res = await fetch(`${API}/api/page-content?lang=${l}&shop=hewkao`)
+      const res = await fetch(`${API}/api/page-content?lang=${l}&shop=Shigure_S`)
       const c = await res.json()
       if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
       if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
