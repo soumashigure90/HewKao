@@ -1305,45 +1305,23 @@ footer strong { color: var(--pink-d); }
       <!-- Payment method tabs -->
       <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
         <button id="payTabCard" onclick="switchPayTab('card')" style="flex:1;padding:10px;border-radius:12px;border:2px solid var(--pink-d);background:var(--pink-d);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;">
-          💳 Card
+          💳 Card / International
         </button>
         <button id="payTabQR" onclick="switchPayTab('qr')" style="flex:1;padding:10px;border-radius:12px;border:2px solid var(--pink-l);background:#fff;color:var(--text-s);font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;">
           📱 QR / PromptPay
         </button>
       </div>
 
-      <!-- Card form -->
+      <!-- Stripe Card form -->
       <div id="payCardForm">
-        <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:16px;padding:1.25rem;margin-bottom:1.25rem;color:#fff;">
-          <div style="font-size:11px;letter-spacing:2px;opacity:.7;margin-bottom:.5rem;">CARD NUMBER</div>
-          <div style="font-size:18px;letter-spacing:4px;font-family:monospace;" id="cardPreview">•••• •••• •••• ••••</div>
-          <div style="display:flex;justify-content:space-between;margin-top:.75rem;font-size:12px;">
-            <div><div style="opacity:.7;font-size:10px;letter-spacing:1px;">CARD HOLDER</div><div id="cardHolderPreview">YOUR NAME</div></div>
-            <div><div style="opacity:.7;font-size:10px;letter-spacing:1px;">EXPIRES</div><div id="cardExpPreview">MM/YY</div></div>
-          </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-s);letter-spacing:.5px;margin-bottom:8px;">💳 CARD DETAILS</div>
+          <!-- Stripe Payment Element จะ inject ที่นี่ -->
+          <div id="stripe-payment-element" style="background:#fff;border:2px solid var(--pink-l);border-radius:14px;padding:14px;min-height:60px;"></div>
+          <div id="stripe-error" style="color:var(--pink-d);font-size:12px;margin-top:8px;display:none;"></div>
         </div>
-        <div style="display:grid;gap:10px;">
-          <div class="profile-field" style="margin:0;">
-            <label>CARD NUMBER</label>
-            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)" />
-          </div>
-          <div class="profile-field" style="margin:0;">
-            <label>CARD HOLDER NAME</label>
-            <input type="text" id="cardHolder" placeholder="Name on card" oninput="document.getElementById('cardHolderPreview').textContent=this.value||'YOUR NAME'" />
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div class="profile-field" style="margin:0;">
-              <label>EXPIRY DATE</label>
-              <input type="text" id="cardExp" placeholder="MM/YY" maxlength="5" oninput="formatExp(this)" />
-            </div>
-            <div class="profile-field" style="margin:0;">
-              <label>CVV</label>
-              <input type="password" id="cardCvv" placeholder="•••" maxlength="4" />
-            </div>
-          </div>
-        </div>
-        <div style="background:var(--lav-l);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:11px;color:var(--lav-d);display:flex;align-items:center;gap:6px;">
-          🔒 <span>This is a demo. No real payment will be charged.</span>
+        <div style="background:var(--lav-l);border-radius:10px;padding:10px 14px;font-size:11px;color:var(--lav-d);display:flex;align-items:center;gap:6px;">
+          🔒 <span>Secured by Stripe · Visa, Mastercard, AmEx accepted</span>
         </div>
       </div>
 
@@ -2567,6 +2545,10 @@ footer strong { color: var(--pink-d); }
     currentPayTab = tab
     document.getElementById('payCardForm').style.display = tab==='card' ? 'block' : 'none'
     document.getElementById('payQRForm').style.display   = tab==='qr'   ? 'block' : 'none'
+    // init Stripe เมื่อเปลี่ยนมา card tab (ถ้ายังไม่ได้ init)
+    if (tab === 'card' && _stripeAmountTHB > 0 && !_stripeClientSecret) {
+      initStripe(_stripeAmountTHB)
+    }
     const cardBtn = document.getElementById('payTabCard')
     const qrBtn   = document.getElementById('payTabQR')
     if (tab==='card') {
@@ -2656,6 +2638,60 @@ footer strong { color: var(--pink-d); }
     return payload + checksum
   }
 
+  // ── Stripe ──
+  let stripeInstance = null
+  let stripeElements = null
+  let stripePaymentElement = null
+  let _stripeClientSecret = null
+  let _stripeAmountTHB = 0
+
+  async function initStripe(amountTHB) {
+    // Init Stripe ครั้งแรก
+    if (!stripeInstance) {
+      const pkRes = await fetch(`${API}/api/stripe-key`).then(r=>r.json()).catch(()=>null)
+      const pk = pkRes?.publishable_key || ''
+      if (!pk) { console.error('No Stripe key'); return }
+      stripeInstance = Stripe(pk)
+    }
+
+    // สร้าง PaymentIntent ใหม่ทุกครั้ง
+    try {
+      const cfg = window._shopSettings || {}
+      const rate = parseFloat(cfg.exchange_rate || 36)
+      const isUSD = lang === 'en'
+      const currency = isUSD ? 'usd' : 'thb'
+      const amountForStripe = isUSD ? Math.ceil((amountTHB / rate) * 100) / 100 : amountTHB
+
+      const res = await fetch(`${API}/api/create-payment-intent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount_thb: amountForStripe,
+          currency,
+          order_description: 'HewKao Shop Order'
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      _stripeClientSecret = data.client_secret
+      _stripeAmountTHB = amountTHB
+
+      // Mount Stripe Elements
+      if (stripeElements) stripeElements.unmount?.()
+      stripeElements = stripeInstance.elements({ clientSecret: _stripeClientSecret })
+      stripePaymentElement = stripeElements.create('payment', {
+        layout: 'tabs',
+        fields: { billingDetails: { address: 'never' } }
+      })
+      document.getElementById('stripe-payment-element').innerHTML = ''
+      stripePaymentElement.mount('#stripe-payment-element')
+    } catch(e) {
+      console.error('Stripe init error:', e)
+      document.getElementById('stripe-error').textContent = '❌ ' + e.message
+      document.getElementById('stripe-error').style.display = 'block'
+    }
+  }
+
   function openPayment(total) {
     const amt = Number(total)
     document.getElementById('qrAmount').textContent = '฿' + amt.toLocaleString()
@@ -2667,14 +2703,10 @@ footer strong { color: var(--pink-d); }
     document.getElementById('slipUploadText').style.display = 'block'
     document.getElementById('slipVerifyStatus').textContent = ''
 
-    // reset card
-    document.getElementById('cardNumber').value  = ''
-    document.getElementById('cardHolder').value  = ''
-    document.getElementById('cardExp').value     = ''
-    document.getElementById('cardCvv').value     = ''
-    document.getElementById('cardPreview').textContent = 'xxxx xxxx xxxx xxxx'
-    document.getElementById('cardHolderPreview').textContent = 'YOUR NAME'
-    document.getElementById('cardExpPreview').textContent = 'MM/YY'
+    // reset stripe error
+    document.getElementById('stripe-error').style.display = 'none'
+    document.getElementById('stripe-error').textContent = ''
+
     document.getElementById('confirmPayBtn').textContent = '✅ Confirm Payment'
     document.getElementById('confirmPayBtn').disabled = false
 
@@ -2705,6 +2737,14 @@ footer strong { color: var(--pink-d); }
       document.getElementById('promptpayQRImg').src = qrUrl
       document.getElementById('promptpayQRImg').style.cssText = 'width:200px;height:200px;display:block;'
     }, 100)
+
+    // reset Stripe client secret เพื่อให้ init ใหม่เมื่อกด card tab
+    _stripeClientSecret = null
+    _stripeAmountTHB = amt
+    // ถ้า card tab เปิดอยู่ให้ init เลย
+    if (currentPayTab === 'card') {
+      setTimeout(() => initStripe(amt), 150)
+    }
   }
 
   function previewSlip(input) {
@@ -2723,11 +2763,54 @@ footer strong { color: var(--pink-d); }
 
   async function confirmPayment() {
     if (currentPayTab === 'card') {
-      const num    = document.getElementById('cardNumber').value.replace(/\s/g,'')
-      const holder = document.getElementById('cardHolder').value.trim()
-      const exp    = document.getElementById('cardExp').value
-      const cvv    = document.getElementById('cardCvv').value
-      if (!num || num.length < 16 || !holder || !exp || !cvv) { showToast('Please fill in all card details'); return }
+      if (!stripeInstance || !stripeElements || !_stripeClientSecret) {
+        showToast('❌ Payment not ready, please try again')
+        return
+      }
+      const btn = document.getElementById('confirmPayBtn')
+      btn.textContent = 'Processing...'
+      btn.disabled = true
+
+      try {
+        const { error, paymentIntent } = await stripeInstance.confirmPayment({
+          elements: stripeElements,
+          confirmParams: {
+            return_url: window.location.href,
+            payment_method_data: {
+              billing_details: {
+                name: userProfile?.full_name || 'Customer',
+                email: userProfile?.email || undefined,
+              }
+            }
+          },
+          redirect: 'if_required'
+        })
+
+        if (error) {
+          document.getElementById('stripe-error').textContent = '❌ ' + (error.message || 'Payment failed')
+          document.getElementById('stripe-error').style.display = 'block'
+          btn.textContent = '✅ Confirm Payment'
+          btn.disabled = false
+          return
+        }
+
+        if (paymentIntent && paymentIntent.status === 'succeeded') {
+          // Payment สำเร็จ → submit order
+          closePayment()
+          submitOrder()
+        } else {
+          document.getElementById('stripe-error').textContent = '❌ Payment not completed'
+          document.getElementById('stripe-error').style.display = 'block'
+          btn.textContent = '✅ Confirm Payment'
+          btn.disabled = false
+        }
+      } catch(e) {
+        document.getElementById('stripe-error').textContent = '❌ ' + e.message
+        document.getElementById('stripe-error').style.display = 'block'
+        btn.textContent = '✅ Confirm Payment'
+        btn.disabled = false
+      }
+      return
     }
 
     if (currentPayTab === 'qr') {
