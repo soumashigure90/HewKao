@@ -2145,7 +2145,7 @@ footer strong { color: var(--pink-d); }
       return
     }
     const origPrice    = Number(p.price)
-    const finalPrice   = discountedPrice || origPrice
+    const finalPrice   = discountedPrice !== null ? discountedPrice : origPrice
     const saved        = origPrice - finalPrice
     const origPriceUSD = p.price_usd ? Number(p.price_usd) : null
     const finalPriceUSD = origPriceUSD // discount ไม่ adjust USD (simplified)
@@ -2283,7 +2283,6 @@ footer strong { color: var(--pink-d); }
     // เก็บ total จริงไว้ให้ submitOrder ใช้
     window._orderTotalTHB = grandTotalTHB
     window._orderTotalUSD = grandTotalUSD
-    console.log('[buildCheckout] total=', total, 'shipping=', shippingTHB, 'grandTotalTHB=', grandTotalTHB, '_orderTotalTHB set to', grandTotalTHB)
 
     // แสดงที่อยู่เฉพาะถ้ามี physical/preorder
     const addrBox = document.getElementById('checkoutAddr')
@@ -2348,9 +2347,7 @@ footer strong { color: var(--pink-d); }
     const needAddr = p.type === 'physical' || p.type === 'preorder'
     if (needAddr && !hasAddress()) { openAddrCollect(() => buyNowFromModal()); return }
     const origPrice    = Number(p.price)
-    console.log('[buyNow] discountedPrice=', discountedPrice, 'origPrice=', origPrice)
-    const finalPrice   = discountedPrice || origPrice
-    console.log('[buyNow] finalPrice=', finalPrice)
+    const finalPrice = discountedPrice !== null ? discountedPrice : origPrice
     const buyItem = [{ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved:origPrice-finalPrice, price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null }]
     window._buyNowItems = buyItem
     _buildCheckoutModal(buyItem, origPrice, finalPrice, origPrice - finalPrice)
@@ -2401,14 +2398,12 @@ footer strong { color: var(--pink-d); }
 
   function goToPayment() {
     const total = window._orderTotalTHB || 0
-    console.log('[goToPayment] _orderTotalTHB =', window._orderTotalTHB, '→ using total =', total)
     const co = document.getElementById('checkoutOverlay')
     co.classList.remove('open','closing')
     co.style.display = 'none'
 
     // ถ้า total = 0 (คูปอง 100%) → ข้ามหน้า payment ไป submit เลย
     if (total === 0) {
-      console.log('[goToPayment] total=0 → skipping payment, submitting order directly')
       setTimeout(() => {
         co.style.display = ''
         submitOrder()
