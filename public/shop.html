@@ -3025,15 +3025,15 @@ footer strong { color: var(--pink-d); }
     })
     const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
     if (heroBg) content['heroBg'] = heroBg
-    // บันทึกสี title
     const titleColor = localStorage.getItem('hewkao_title_color') || ''
     if (titleColor) content['titleColor'] = titleColor
     try {
       const res = await fetch(`${API}/api/admin/page-content`, {
         method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-        body: JSON.stringify({ lang, content })
+        body: JSON.stringify({ lang, content, shop: 'hewkao' })
       })
       if (showMsg && res.ok) showToast(`💾 Saved (${lang.toUpperCase()})`)
+      else if (showMsg && !res.ok) showToast('❌ Save failed')
     } catch(e) { if (showMsg) showToast('❌ Save failed') }
   }
 
@@ -3069,7 +3069,7 @@ footer strong { color: var(--pink-d); }
 
   async function applyPageContent(l) {
     try {
-      const res = await fetch(`${API}/api/page-content?lang=${l}`)
+      const res = await fetch(`${API}/api/page-content?lang=${l}&shop=hewkao`)
       const c = await res.json()
       if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
       if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
