@@ -941,7 +941,7 @@ nav {
 
 /* ── Hero section ── */
 #heroSection {
-  background: linear-gradient(160deg, #1a4a6b 0%, #2A7FAF 40%, #7EC8E3 100%) !important;
+  background: linear-gradient(160deg, #1a4a6b 0%, #2A7FAF 40%, #7EC8E3 100%);
   position: relative;
   overflow: hidden;
 }
@@ -3282,9 +3282,7 @@ input:focus, textarea:focus, select:focus {
       if (c.heroDesc)  document.getElementById('heroDesc').textContent = c.heroDesc
       if (c.heroBg) {
         const hero = document.getElementById('heroSection')
-        hero.style.backgroundImage    = `url('${c.heroBg}')`
-        hero.style.backgroundSize     = 'cover'
-        hero.style.backgroundPosition = 'center'
+        hero.style.cssText = `background: url('${c.heroBg}') center/cover no-repeat !important; position: relative; overflow: hidden;`
         localStorage.setItem('hewkao_hero_bg', c.heroBg)
       }
       if (c.titleColor) {
@@ -3446,9 +3444,7 @@ input:focus, textarea:focus, select:focus {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       const hero = document.getElementById('heroSection')
-      hero.style.backgroundImage = `url('${data.url}')`
-      hero.style.backgroundSize = 'cover'
-      hero.style.backgroundPosition = 'center'
+      hero.style.cssText = `background: url('${data.url}') center/cover no-repeat !important; position: relative; overflow: hidden;`
       localStorage.setItem('hewkao_hero_bg', data.url)
       showToast('✅ Hero image updated!')
     } catch(e) { showToast('❌ ' + e.message) }
