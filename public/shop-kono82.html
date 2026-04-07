@@ -3647,13 +3647,19 @@ async function saveTheme() {
     } else if (type === 'rainbow') {
       tag.textContent = `
         @keyframes kono82Rainbow {
-          0%   { text-shadow: 0 0 20px #ff0080, 0 0 40px #ff0080, 0 0 80px #ff008088; }
-          25%  { text-shadow: 0 0 20px #7b2fff, 0 0 40px #7b2fff, 0 0 80px #7b2fff88; }
-          50%  { text-shadow: 0 0 20px #00cfff, 0 0 40px #00cfff, 0 0 80px #00cfff88; }
-          75%  { text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88, 0 0 80px #00ff8888; }
-          100% { text-shadow: 0 0 20px #ff0080, 0 0 40px #ff0080, 0 0 80px #ff008088; }
+          0%   { color: #ff0080 !important; text-shadow: 0 0 20px #ff0080, 0 0 40px #ff0080; }
+          25%  { color: #a855f7 !important; text-shadow: 0 0 20px #7b2fff, 0 0 40px #7b2fff; }
+          50%  { color: #00cfff !important; text-shadow: 0 0 20px #00cfff, 0 0 40px #00cfff; }
+          75%  { color: #00ff88 !important; text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88; }
+          100% { color: #ff0080 !important; text-shadow: 0 0 20px #ff0080, 0 0 40px #ff0080; }
         }
-        #heroTitle { animation: kono82Rainbow 2s linear infinite !important; }
+        #heroTitle {
+          animation: kono82Rainbow 2s linear infinite !important;
+          color: #ff0080 !important;
+          -webkit-text-fill-color: unset !important;
+          background-clip: unset !important;
+          -webkit-background-clip: unset !important;
+        }
       `
     } else {
       tag.textContent = `#heroTitle { text-shadow: none !important; animation: none !important; }`
