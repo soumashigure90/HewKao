@@ -75,6 +75,10 @@
     footer a{color:rgba(232,130,154,0.6);text-decoration:none;}
 
     /* ── MOBILE ── */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
     @media(max-width:400px){
       .artist-grid{grid-template-columns:1fr 1fr;gap:8px;}
       .artist-card{padding:16px 10px;}
@@ -162,45 +166,12 @@
     <div class="section-line"></div>
   </div>
   <div class="arrivals-wrap">
-    <div class="arrivals-track">
-      <div class="arrival-card">
-        <div class="arrival-img">🦆</div>
+    <div class="arrivals-track" id="arrivalsTrack">
+      <div class="arrival-card skeleton">
+        <div class="arrival-img" style="background:rgba(255,255,255,0.06);animation:pulse 1.5s ease-in-out infinite;"></div>
         <div class="arrival-info">
-          <div class="arrival-name">Duck Dance</div>
-          <div class="arrival-by">Kono82</div>
-          <div class="arrival-price">$8.33</div>
-        </div>
-      </div>
-      <div class="arrival-card">
-        <div class="arrival-img">📮</div>
-        <div class="arrival-info">
-          <div class="arrival-name">Rio Dress</div>
-          <div class="arrival-by">Shigure_S</div>
-          <div class="arrival-price">$1.99</div>
-        </div>
-      </div>
-      <div class="arrival-card">
-        <div class="arrival-img">📚</div>
-        <div class="arrival-info">
-          <div class="arrival-name">Fanbox 2024</div>
-          <div class="arrival-by">Shigure_S</div>
-          <div class="arrival-price">$9.99</div>
-        </div>
-      </div>
-      <div class="arrival-card">
-        <div class="arrival-img">🔑</div>
-        <div class="arrival-info">
-          <div class="arrival-name">Rio Keychain</div>
-          <div class="arrival-by">Shigure_S</div>
-          <div class="arrival-price">฿290</div>
-        </div>
-      </div>
-      <div class="arrival-card">
-        <div class="arrival-img">🍔</div>
-        <div class="arrival-info">
-          <div class="arrival-name">Burger Print</div>
-          <div class="arrival-by">Shigure_S</div>
-          <div class="arrival-price">฿350</div>
+          <div style="height:10px;background:rgba(255,255,255,0.06);border-radius:6px;margin-bottom:5px;animation:pulse 1.5s ease-in-out infinite;"></div>
+          <div style="height:10px;width:60%;background:rgba(255,255,255,0.04);border-radius:6px;animation:pulse 1.5s ease-in-out infinite;"></div>
         </div>
       </div>
     </div>
@@ -210,6 +181,51 @@
 <footer>
   <p>© 2026 HewKao Shop · <a href="/policy.html">Policies</a> · <a href="/Shigure_S">Shigure_S</a> · <a href="/kono82">Kono82</a></p>
 </footer>
+
+<script>
+const API = 'https://hewkao.shop'
+const ARTISTS = {
+  'Shigure_S': { url: '/Shigure_S', color: '#e8829a' },
+  'kono82':    { url: '/kono82',    color: '#7EC8E3' },
+}
+
+async function loadArrivals() {
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(`${API}/api/products?artist=Shigure_S`).then(r => r.json()),
+      fetch(`${API}/api/products?artist=kono82`).then(r => r.json()),
+    ])
+    const all = [...(r1||[]), ...(r2||[])]
+      .filter(p => p.status === 'active')
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 10)
+
+    const track = document.getElementById('arrivalsTrack')
+    if (!all.length) { track.innerHTML = '<div style="padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">No products yet</div>'; return }
+
+    track.innerHTML = all.map(p => {
+      const artistInfo = ARTISTS[p.artist] || { url: '/', color: '#e8829a' }
+      const priceStr = p.price_usd ? `$${Number(p.price_usd).toFixed(2)}` : `฿${Number(p.price).toLocaleString()}`
+      const imgHtml = p.image_url
+        ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />`
+        : `<span style="font-size:28px;">${p.emoji || '📦'}</span>`
+
+      return `<a href="${artistInfo.url}" class="arrival-card" style="text-decoration:none;color:inherit;">
+        <div class="arrival-img" style="${p.image_url ? 'padding:0;overflow:hidden;' : ''}">${imgHtml}</div>
+        <div class="arrival-info">
+          <div class="arrival-name">${p.name}</div>
+          <div class="arrival-by" style="color:${artistInfo.color};">${p.artist}</div>
+          <div class="arrival-price">${priceStr}</div>
+        </div>
+      </a>`
+    }).join('')
+  } catch(e) {
+    console.error('Failed to load arrivals:', e)
+  }
+}
+
+loadArrivals()
+</script>
 
 </body>
 </html>
