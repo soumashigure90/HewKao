@@ -55,15 +55,10 @@ app.get('/api/verify', auth, (req, res) => {
   res.json({ valid: true, role: req.user.role, username: req.user.username })
 })
 
-// Redirect root to shop.html
-app.get('/', (req, res) => {
-  res.redirect('/shop.html')
-})
-
 // Artist shops
-app.get('/kono82', (req, res) => {
-  res.sendFile(__dirname + '/public/shop-kono82.html')
-})
+app.get('/', (req, res) => res.redirect('/Shigure_S'))
+app.get('/Shigure_S', (req, res) => res.sendFile(__dirname + '/public/shop.html'))
+app.get('/kono82',    (req, res) => res.sendFile(__dirname + '/public/shop-kono82.html'))
 
 // ── Supabase ──
 const supabase = createClient(
