@@ -3576,33 +3576,16 @@ async function saveTheme() {
     showToast('Card style preview 🎨')
   }
 
-  function selectCardStyle(style) {
-    _currentCardStyle = style
-    document.querySelectorAll('.card-style-opt').forEach((b,i) => {
-      const styles = ['none','thin','thick','shadow','glow','gradient']
-      b.classList.toggle('active', styles[i] === style)
-    })
-    applyCardStyle(style)
-    showToast('Card style preview 🎨')
-  }
-
   function applyCardStyle(style) {
     const s = CARD_STYLES[style] || CARD_STYLES.none
-    const cards = document.querySelectorAll('.card')
-    cards.forEach(card => {
-      card.style.border           = s.border
-      card.style.boxShadow        = s.boxShadow
-      card.style.borderRadius     = s.borderRadius
-      if (s.backgroundImage) {
-        card.style.backgroundImage  = s.backgroundImage
-        card.style.backgroundOrigin = s.backgroundOrigin
-        card.style.backgroundClip   = s.backgroundClip
-      } else {
-        card.style.backgroundImage  = ''
-        card.style.backgroundOrigin = ''
-        card.style.backgroundClip   = ''
-      }
-    })
+    let tag = document.getElementById('kono82-card-style')
+    if (!tag) { tag = document.createElement('style'); tag.id = 'kono82-card-style'; document.head.appendChild(tag) }
+    tag.textContent = `.card {
+      border: ${s.border} !important;
+      box-shadow: ${s.boxShadow} !important;
+      border-radius: ${s.borderRadius} !important;
+      ${s.backgroundImage ? `background-image: ${s.backgroundImage} !important; background-origin: ${s.backgroundOrigin}; background-clip: ${s.backgroundClip};` : ''}
+    }`
   }
 
   function previewCardBg(val) {
@@ -3645,18 +3628,22 @@ async function saveTheme() {
   function applyGlow(type) {
     const title = document.getElementById('heroTitle')
     if (!title) return
-    // เอา animation class เดิมออก
+    // reset
     title.style.animation = ''
-    title.style.textShadow = ''
 
-    const color = getComputedStyle(document.documentElement).getPropertyValue('--pink-d').trim() || '#e8829a'
+    let tag = document.getElementById('kono82-glow-style')
+    if (!tag) { tag = document.createElement('style'); tag.id = 'kono82-glow-style'; document.head.appendChild(tag) }
+
+    const color = getComputedStyle(document.documentElement).getPropertyValue('--pink-d').trim() || '#2A7FAF'
 
     if (type === 'soft') {
-      title.style.textShadow = `0 0 20px ${color}88, 0 0 40px ${color}44`
+      tag.textContent = `#heroTitle { text-shadow: 0 0 20px ${color}88, 0 0 40px ${color}44 !important; }`
     } else if (type === 'neon') {
-      title.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}, 0 0 40px ${color}, 0 0 80px ${color}88`
+      tag.textContent = `#heroTitle { text-shadow: 0 0 10px ${color}, 0 0 20px ${color}, 0 0 40px ${color}, 0 0 80px ${color}88 !important; }`
     } else if (type === 'rainbow') {
-      title.style.animation = 'rainbowGlow 2s linear infinite'
+      tag.textContent = `#heroTitle { animation: rainbowGlow 2s linear infinite !important; }`
+    } else {
+      tag.textContent = `#heroTitle { text-shadow: none !important; animation: none !important; }`
     }
   }
 
