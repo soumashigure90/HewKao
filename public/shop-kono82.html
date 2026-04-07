@@ -3486,7 +3486,7 @@ input:focus, textarea:focus, select:focus {
     showToast(`${p.label} applied! 🎨`)
   }
 
-function saveTheme() {
+async function saveTheme() {
     const theme = {
       primary:   document.getElementById('themeColorPrimary').value,
       accent:    document.getElementById('themeColorAccent').value,
