@@ -3770,12 +3770,13 @@ async function saveTheme() {
         loadTitleColor(c.titleColor)
         localStorage.setItem('kono82_title_color', c.titleColor)
       }
-      if (c.pageBg) {
+      if (c.pageBg && c.pageBg.trim() !== '') {
         loadPageBg(c.pageBg)
       } else {
-        // ลอง load จาก localStorage ด้วย
-        const cached = localStorage.getItem('kono82_page_bg')
-        if (cached) loadPageBg(cached)
+        // ถ้า DB ว่าง ให้ซ่อน overlay
+        const overlay = document.getElementById('pageBgOverlay')
+        if (overlay) { overlay.style.display = 'none'; overlay.style.backgroundImage = '' }
+        localStorage.removeItem('kono82_page_bg')
       }
     } catch(e) {}
   }
