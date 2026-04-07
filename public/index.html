@@ -59,11 +59,13 @@
     .cs-avatar{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.05);border:2px dashed rgba(255,255,255,0.15);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
 
     /* ── NEW ARRIVALS ── */
-    .arrivals-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -20px;padding:0 20px;}
-    .arrivals-wrap::-webkit-scrollbar{display:none;}
-    .arrivals-track{display:flex;gap:10px;padding-bottom:4px;width:max-content;}
-    .arrival-card{width:120px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;flex-shrink:0;}
-    .arrival-img{width:120px;height:100px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:26px;}
+    .arrivals-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.15) transparent;margin:0 -20px;padding:0 20px 8px;}
+    .arrivals-wrap::-webkit-scrollbar{height:4px;}
+    .arrivals-wrap::-webkit-scrollbar-track{background:transparent;}
+    .arrivals-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:4px;}
+    .arrivals-track{display:flex;gap:10px;padding-bottom:4px;flex-wrap:nowrap;}
+    .arrival-card{width:130px;min-width:130px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;flex-shrink:0;}
+    .arrival-img{width:130px;height:110px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:26px;}
     .arrival-info{padding:8px 10px;}
     .arrival-name{font-size:11px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .arrival-by{font-size:10px;color:rgba(255,255,255,0.35);margin-top:1px;}
