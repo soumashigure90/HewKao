@@ -3641,7 +3641,16 @@ async function saveTheme() {
     } else if (type === 'neon') {
       tag.textContent = `#heroTitle { text-shadow: 0 0 10px ${color}, 0 0 20px ${color}, 0 0 40px ${color}, 0 0 80px ${color}88 !important; }`
     } else if (type === 'rainbow') {
-      tag.textContent = `#heroTitle { animation: rainbowGlow 2s linear infinite !important; }`
+      tag.textContent = `
+        @keyframes kono82Rainbow {
+          0%   { text-shadow: 0 0 20px #ff0080, 0 0 40px #ff0080, 0 0 80px #ff008088; }
+          25%  { text-shadow: 0 0 20px #7b2fff, 0 0 40px #7b2fff, 0 0 80px #7b2fff88; }
+          50%  { text-shadow: 0 0 20px #00cfff, 0 0 40px #00cfff, 0 0 80px #00cfff88; }
+          75%  { text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88, 0 0 80px #00ff8888; }
+          100% { text-shadow: 0 0 20px #ff0080, 0 0 40px #ff0080, 0 0 80px #ff008088; }
+        }
+        #heroTitle { animation: kono82Rainbow 2s linear infinite !important; }
+      `
     } else {
       tag.textContent = `#heroTitle { text-shadow: none !important; animation: none !important; }`
     }
