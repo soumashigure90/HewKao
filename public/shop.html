@@ -3349,37 +3349,33 @@ footer strong { color: var(--pink-d); }
     try {
       const theme = typeof themeStr === 'string' ? JSON.parse(themeStr) : themeStr
       if (!theme) return
-      const root = document.documentElement
-      if (theme.primary) {
-        root.style.setProperty('--pink-d', theme.primary)
-        root.style.setProperty('--pink',   theme.primary + '99')
-        root.style.setProperty('--pink-l', theme.primary + '22')
-      }
-      if (theme.accent) {
-        root.style.setProperty('--lav',   theme.accent)
-        root.style.setProperty('--lav-l', theme.accent + '33')
-      }
-      if (theme.bg) {
-        root.style.setProperty('--cream', theme.bg)
-        document.body.style.background = theme.bg
-      }
-      if (theme.text) root.style.setProperty('--text', theme.text)
+
+      // inject <style> tag — ไม่ถูกทับโดย repaint หรือ applyPageContent
+      let tag = document.getElementById('hewkao-theme-style')
+      if (!tag) { tag = document.createElement('style'); tag.id = 'hewkao-theme-style'; document.head.appendChild(tag) }
+      tag.textContent = `
+        :root {
+          ${theme.primary ? `--pink-d:${theme.primary};--pink:${theme.primary}99;--pink-l:${theme.primary}22;--lav-d:${theme.primary};` : ''}
+          ${theme.accent  ? `--lav:${theme.accent};--lav-l:${theme.accent}33;--mint-d:${theme.accent};` : ''}
+          ${theme.bg      ? `--cream:${theme.bg};` : ''}
+          ${theme.text    ? `--text:${theme.text};` : ''}
+        }
+        ${theme.bg      ? `body{background:${theme.bg}!important;}` : ''}
+        ${theme.cardBg  ? `.card{background-color:${theme.cardBg}!important;}` : ''}
+        ${theme.primary ? `.btn-cart{background:linear-gradient(135deg,${theme.primary},${theme.primary}cc)!important;}` : ''}
+        ${theme.primary ? `.btn-profile-save,.btn-checkout-confirm{background:${theme.primary}!important;}` : ''}
+      `
       if (theme.font) selectFont(theme.font)
       if (theme.cardStyle) {
         _currentCardStyle = theme.cardStyle
         applyCardStyle(theme.cardStyle)
-        // highlight ปุ่มที่ถูกเลือก
-        const styleMap = ['none','thin','thick','shadow','glow','gradient']
-        document.querySelectorAll('.card-style-opt').forEach((b,i) => {
-          b.classList.toggle('active', styleMap[i] === theme.cardStyle)
-        })
       }
       if (theme.cardBg) {
-        document.getElementById('cardBgColor').value = theme.cardBg
-        previewCardBg(theme.cardBg)
+        const el = document.getElementById('cardBgColor')
+        if (el) el.value = theme.cardBg
       }
       localStorage.setItem('hewkao_theme', JSON.stringify(theme))
-    } catch(e) {}
+    } catch(e) { console.error('loadTheme:', e) }
   }
 
   function savePageContent() { saveCurrentLangContent(true) }
