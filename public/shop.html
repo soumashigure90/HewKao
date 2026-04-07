@@ -1623,8 +1623,13 @@ footer strong { color: var(--pink-d); }
         el.textContent = l === 'en' ? (el.dataset.en || el.textContent) : (el.dataset.th || el.textContent)
       }
     })
-    // โหลด content จาก DB
+    // โหลด content จาก DB — เก็บ theme ไว้ก่อนไม่ให้หาย
+    const savedTheme = localStorage.getItem('hewkao_theme')
     await applyPageContent(l)
+    // ถ้า applyPageContent ไม่ได้ load theme (DB ไม่มี) ให้ restore จาก localStorage
+    if (savedTheme && !document.documentElement.style.getPropertyValue('--pink-d')) {
+      loadTheme(savedTheme)
+    }
     loadShopSettings()
     const filtered = currentFilter === 'all' ? allProducts : allProducts.filter(p => p.type === currentFilter)
     renderProducts(filtered)
@@ -3327,21 +3332,23 @@ footer strong { color: var(--pink-d); }
     }
     localStorage.setItem('hewkao_theme', JSON.stringify(theme))
 
-    // save ลง page_content
+    // save ลง page_content ทั้ง EN และ TH พร้อมกัน (theme เป็น global)
     const token = localStorage.getItem('mochi_token')
     if (token) {
-      const ids = ['heroTag','heroTitle','heroDesc']
-      const c = {}
-      ids.forEach(id => { const el = document.getElementById(id); if (el) c[id] = id==='heroTitle'?el.innerHTML:el.textContent })
-      const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
-      if (heroBg) c['heroBg'] = heroBg
-      const titleColor = localStorage.getItem('hewkao_title_color') || ''
-      if (titleColor) c['titleColor'] = titleColor
-      c['theme'] = JSON.stringify(theme)
-      await fetch(`${API}/api/admin/page-content`, {
-        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-        body: JSON.stringify({ lang, content: c, shop: 'Shigure_S' })
-      })
+      for (const l of ['en', 'th']) {
+        const ids = ['heroTag','heroTitle','heroDesc']
+        const c = {}
+        ids.forEach(id => { const el = document.getElementById(id); if (el) c[id] = id==='heroTitle'?el.innerHTML:el.textContent })
+        const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
+        if (heroBg) c['heroBg'] = heroBg
+        const titleColor = localStorage.getItem('hewkao_title_color') || ''
+        if (titleColor) c['titleColor'] = titleColor
+        c['theme'] = JSON.stringify(theme)
+        await fetch(`${API}/api/admin/page-content`, {
+          method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+          body: JSON.stringify({ lang: l, content: c, shop: 'Shigure_S' })
+        })
+      }
     }
     closeThemeEditor()
     showToast('✅ Theme saved!')
@@ -3459,12 +3466,18 @@ footer strong { color: var(--pink-d); }
         loadTitleColor(c.titleColor)
         localStorage.setItem('hewkao_title_color', c.titleColor)
       }
-      if (c.theme) loadTheme(c.theme)
-      else {
+      // theme: ถ้า DB มีให้ใช้ DB, ถ้าไม่มีให้ใช้ localStorage — ไม่ reset
+      if (c.theme) {
+        loadTheme(c.theme)
+      } else {
         const cached = localStorage.getItem('hewkao_theme')
         if (cached) loadTheme(cached)
       }
-    } catch(e) {}
+    } catch(e) {
+      // ถ้า fetch fail ให้ load จาก localStorage แทน
+      const cached = localStorage.getItem('hewkao_theme')
+      if (cached) loadTheme(cached)
+    }
   }
 
   async function loadShopSettings() {
