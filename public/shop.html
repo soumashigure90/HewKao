@@ -1121,26 +1121,112 @@ footer strong { color: var(--pink-d); }
 </div>
 
 <!-- ADMIN PAGE EDITOR TOOLBAR -->
-<div id="editorToolbar" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:600;background:#fff;border-radius:20px;box-shadow:0 8px 32px rgba(180,140,200,0.3);border:1.5px solid var(--pink-l);padding:10px 16px;display:none;align-items:center;gap:10px;white-space:nowrap;">
-  <span style="font-size:12px;font-weight:700;color:var(--text-s);">✏️ EDIT MODE</span>
-  <div style="width:1px;height:20px;background:var(--pink-l);"></div>
-  <button onclick="editHeroTag()"    class="edbtn">🏷️ Tag</button>
-  <button onclick="editHeroTitle()"  class="edbtn">📝 Title</button>
-  <button onclick="editHeroDesc()"   class="edbtn">💬 Description</button>
-  <button onclick="editHeroBg()"     class="edbtn">🖼️ Hero Image</button>
-  <div style="width:1px;height:20px;background:var(--pink-l);"></div>
-  <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--text-s);cursor:pointer;">
-    🎨 Title Color
+<div id="editorToolbar" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:600;background:#fff;border-radius:20px;box-shadow:0 8px 32px rgba(180,140,200,0.3);border:1.5px solid var(--pink-l);padding:10px 16px;display:none;align-items:center;gap:8px;white-space:nowrap;overflow-x:auto;max-width:95vw;">
+
+  <span style="font-size:11px;font-weight:800;color:var(--text-s);letter-spacing:.5px;">✏️ EDIT</span>
+  <div style="width:1px;height:20px;background:var(--pink-l);flex-shrink:0;"></div>
+
+  <!-- Text -->
+  <button onclick="editHeroTag()"   class="edbtn">🏷️ Tag</button>
+  <button onclick="editHeroTitle()" class="edbtn">📝 Title</button>
+  <button onclick="editHeroDesc()"  class="edbtn">💬 Desc</button>
+  <button onclick="editHeroBg()"    class="edbtn">🖼️ Hero BG</button>
+  <div style="width:1px;height:20px;background:var(--pink-l);flex-shrink:0;"></div>
+
+  <!-- Title Color -->
+  <label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--text-s);cursor:pointer;flex-shrink:0;">
+    🔤
     <input type="color" id="titleColorPicker" value="#4a3f5c"
-      style="width:28px;height:28px;border:2px solid var(--pink-l);border-radius:8px;cursor:pointer;padding:2px;background:none;"
-      oninput="applyTitleColor(this.value)"
-      onchange="saveTitleColor(this.value)" />
+      style="width:26px;height:26px;border:2px solid var(--pink-l);border-radius:8px;cursor:pointer;padding:2px;background:none;"
+      oninput="applyTitleColor(this.value)" onchange="saveTitleColor(this.value)" />
   </label>
-  <div style="width:1px;height:20px;background:var(--pink-l);"></div>
+  <div style="width:1px;height:20px;background:var(--pink-l);flex-shrink:0;"></div>
+
+  <!-- Theme Colors -->
+  <button onclick="openThemeEditor()" class="edbtn" style="color:#e8829a;border-color:#FFB7C5;">🎨 Theme</button>
+  <div style="width:1px;height:20px;background:var(--pink-l);flex-shrink:0;"></div>
+
+  <!-- Save / Exit -->
   <button onclick="savePageContent()" class="edbtn" style="color:var(--mint-d);border-color:var(--mint);">💾 Save</button>
   <button onclick="exitEditMode()"    class="edbtn" style="color:var(--red);border-color:#fcc;">✕ Exit</button>
 </div>
 <input type="file" id="heroBgInput" accept="image/*" style="display:none" onchange="uploadHeroBg(this)" />
+
+<!-- THEME EDITOR PANEL -->
+<div id="themeEditorPanel" style="display:none;position:fixed;bottom:150px;left:50%;transform:translateX(-50%);z-index:700;background:#fff;border-radius:20px;box-shadow:0 12px 40px rgba(180,140,200,0.25);border:1.5px solid var(--pink-l);padding:18px 20px;width:340px;max-width:95vw;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <span style="font-size:14px;font-weight:800;color:var(--text);">🎨 Theme Editor</span>
+    <button onclick="closeThemeEditor()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-s);">✕</button>
+  </div>
+
+  <!-- Color pickers -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+    <label style="font-size:11px;font-weight:700;color:var(--text-s);">
+      Primary Color
+      <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+        <input type="color" id="themeColorPrimary" value="#e8829a"
+          style="width:36px;height:36px;border:2px solid var(--pink-l);border-radius:10px;cursor:pointer;padding:2px;"
+          oninput="previewThemeColor('primary', this.value)" />
+        <span id="themeColorPrimaryHex" style="font-size:11px;font-family:monospace;color:var(--text-s);">#e8829a</span>
+      </div>
+    </label>
+    <label style="font-size:11px;font-weight:700;color:var(--text-s);">
+      Accent Color
+      <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+        <input type="color" id="themeColorAccent" value="#C9B8F0"
+          style="width:36px;height:36px;border:2px solid var(--pink-l);border-radius:10px;cursor:pointer;padding:2px;"
+          oninput="previewThemeColor('accent', this.value)" />
+        <span id="themeColorAccentHex" style="font-size:11px;font-family:monospace;color:var(--text-s);">#C9B8F0</span>
+      </div>
+    </label>
+    <label style="font-size:11px;font-weight:700;color:var(--text-s);">
+      Background
+      <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+        <input type="color" id="themeColorBg" value="#FFF9F5"
+          style="width:36px;height:36px;border:2px solid var(--pink-l);border-radius:10px;cursor:pointer;padding:2px;"
+          oninput="previewThemeColor('bg', this.value)" />
+        <span id="themeColorBgHex" style="font-size:11px;font-family:monospace;color:var(--text-s);">#FFF9F5</span>
+      </div>
+    </label>
+    <label style="font-size:11px;font-weight:700;color:var(--text-s);">
+      Text Color
+      <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+        <input type="color" id="themeColorText" value="#4a3f5c"
+          style="width:36px;height:36px;border:2px solid var(--pink-l);border-radius:10px;cursor:pointer;padding:2px;"
+          oninput="previewThemeColor('text', this.value)" />
+        <span id="themeColorTextHex" style="font-size:11px;font-family:monospace;color:var(--text-s);">#4a3f5c</span>
+      </div>
+    </label>
+  </div>
+
+  <!-- Font selector -->
+  <div style="margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">Font</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;" id="fontSelector">
+      <button class="font-opt active" onclick="selectFont('Nunito')"       style="font-family:'Nunito',sans-serif;">Nunito</button>
+      <button class="font-opt"        onclick="selectFont('Quicksand')"    style="font-family:'Quicksand',sans-serif;">Quicksand</button>
+      <button class="font-opt"        onclick="selectFont('Kanit')"        style="font-family:'Kanit',sans-serif;">Kanit</button>
+      <button class="font-opt"        onclick="selectFont('Prompt')"       style="font-family:'Prompt',sans-serif;">Prompt</button>
+      <button class="font-opt"        onclick="selectFont('Sarabun')"      style="font-family:'Sarabun',sans-serif;">Sarabun</button>
+      <button class="font-opt"        onclick="selectFont('IBM Plex Sans Thai')" style="font-family:'IBM Plex Sans Thai',sans-serif;">IBM Plex</button>
+    </div>
+  </div>
+
+  <!-- Preset themes -->
+  <div style="margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">Quick Presets</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="applyPreset('pink')"   style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FFB7C5,#C9B8F0);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Pink"></button>
+      <button onclick="applyPreset('blue')"   style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7EC8E3,#5B9BD5);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Blue"></button>
+      <button onclick="applyPreset('green')"  style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#B2E8D8,#1D9E75);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Green"></button>
+      <button onclick="applyPreset('dark')"   style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#3a3a4a,#1a1a2e);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Dark"></button>
+      <button onclick="applyPreset('orange')" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FFB347,#FF6B35);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Orange"></button>
+      <button onclick="applyPreset('purple')" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#9B59B6,#6C3483);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Purple"></button>
+    </div>
+  </div>
+
+  <button onclick="saveTheme()" style="width:100%;padding:10px;border-radius:14px;border:none;background:var(--pink-d);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;">💾 Save Theme</button>
+</div>
 
 <!-- FLOATING EDIT BUTTON (admin only) -->
 <button id="editPageBtn" style="display:none;position:fixed;bottom:24px;left:24px;z-index:300;background:var(--lav-d);color:#fff;border:none;border-radius:20px;padding:10px 18px;font-size:13px;font-weight:700;font-family:Nunito,sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(155,135,214,0.4);transition:all 0.2s;" onclick="toggleEditMode()">✏️ Edit Page</button>
@@ -1386,6 +1472,8 @@ footer strong { color: var(--pink-d); }
 <div class="toast-wrap" id="toastWrap"></div>
 
 <style>
+.font-opt{padding:6px 4px;border-radius:8px;border:2px solid var(--pink-l);background:#fff;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+.font-opt.active,.font-opt:hover{border-color:var(--pink-d);background:var(--pink-l);color:var(--pink-d);}
 .edbtn{padding:6px 12px;border-radius:10px;border:1.5px solid var(--pink-l);background:#fff;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;transition:all 0.15s;}
 .edbtn:hover{background:var(--pink-l);color:var(--pink-d);}
 .edit-highlight{outline:2px dashed var(--pink-d)!important;outline-offset:4px;cursor:pointer;transition:outline 0.2s;}
@@ -3011,6 +3099,157 @@ footer strong { color: var(--pink-d); }
     document.body.appendChild(el)
   }
 
+  // ── THEME EDITOR ──
+  const PRESETS = {
+    pink:   { primary:'#e8829a', accent:'#C9B8F0', bg:'#FFF9F5', text:'#4a3f5c', font:'Nunito' },
+    blue:   { primary:'#2A7FAF', accent:'#7EC8E3', bg:'#F0F8FF', text:'#1a2a3a', font:'Nunito' },
+    green:  { primary:'#1D9E75', accent:'#B2E8D8', bg:'#F0FBF7', text:'#1a3a2a', font:'Nunito' },
+    dark:   { primary:'#9B8EC4', accent:'#6C5FA6', bg:'#1a1a2e', text:'#e0d8f0', font:'Quicksand' },
+    orange: { primary:'#FF6B35', accent:'#FFB347', bg:'#FFF8F5', text:'#3a1a0a', font:'Prompt' },
+    purple: { primary:'#6C3483', accent:'#9B59B6', bg:'#FAF5FF', text:'#2d1b4e', font:'Quicksand' },
+  }
+  let _currentTheme = {}
+
+  function openThemeEditor() {
+    const panel = document.getElementById('themeEditorPanel')
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none'
+    // โหลดค่าปัจจุบัน
+    const saved = JSON.parse(localStorage.getItem('hewkao_theme') || '{}')
+    if (saved.primary) document.getElementById('themeColorPrimary').value = saved.primary
+    if (saved.accent)  document.getElementById('themeColorAccent').value  = saved.accent
+    if (saved.bg)      document.getElementById('themeColorBg').value      = saved.bg
+    if (saved.text)    document.getElementById('themeColorText').value     = saved.text
+    updateHexLabels()
+    if (saved.font) highlightFont(saved.font)
+  }
+
+  function closeThemeEditor() {
+    document.getElementById('themeEditorPanel').style.display = 'none'
+  }
+
+  function updateHexLabels() {
+    document.getElementById('themeColorPrimaryHex').textContent = document.getElementById('themeColorPrimary').value
+    document.getElementById('themeColorAccentHex').textContent  = document.getElementById('themeColorAccent').value
+    document.getElementById('themeColorBgHex').textContent      = document.getElementById('themeColorBg').value
+    document.getElementById('themeColorTextHex').textContent    = document.getElementById('themeColorText').value
+  }
+
+  function previewThemeColor(type, val) {
+    const root = document.documentElement
+    updateHexLabels()
+    if (type === 'primary') {
+      root.style.setProperty('--pink-d', val)
+      root.style.setProperty('--pink', val + '99')
+      root.style.setProperty('--pink-l', val + '22')
+    } else if (type === 'accent') {
+      root.style.setProperty('--lav', val)
+      root.style.setProperty('--lav-l', val + '33')
+    } else if (type === 'bg') {
+      root.style.setProperty('--cream', val)
+      document.body.style.background = val
+    } else if (type === 'text') {
+      root.style.setProperty('--text', val)
+    }
+  }
+
+  function selectFont(fontName) {
+    // โหลด font จาก Google Fonts ถ้ายังไม่มี
+    const fontMap = {
+      'Nunito':          'Nunito:wght@400;600;700',
+      'Quicksand':       'Quicksand:wght@400;500;600;700',
+      'Kanit':           'Kanit:wght@300;400;500;600',
+      'Prompt':          'Prompt:wght@300;400;500;600',
+      'Sarabun':         'Sarabun:wght@300;400;500;600',
+      'IBM Plex Sans Thai': 'IBM+Plex+Sans+Thai:wght@300;400;500;600',
+    }
+    const linkId = 'dynamic-font-' + fontName.replace(/\s/g,'-')
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement('link')
+      link.id   = linkId
+      link.rel  = 'stylesheet'
+      link.href = `https://fonts.googleapis.com/css2?family=${fontMap[fontName]}&display=swap`
+      document.head.appendChild(link)
+    }
+    document.body.style.fontFamily = `'${fontName}', sans-serif`
+    _currentTheme.font = fontName
+    highlightFont(fontName)
+  }
+
+  function highlightFont(fontName) {
+    document.querySelectorAll('.font-opt').forEach(b => {
+      b.classList.toggle('active', b.textContent.trim() === fontName || b.onclick?.toString().includes(fontName))
+    })
+  }
+
+  function applyPreset(name) {
+    const p = PRESETS[name]
+    if (!p) return
+    document.getElementById('themeColorPrimary').value = p.primary
+    document.getElementById('themeColorAccent').value  = p.accent
+    document.getElementById('themeColorBg').value      = p.bg
+    document.getElementById('themeColorText').value    = p.text
+    updateHexLabels()
+    previewThemeColor('primary', p.primary)
+    previewThemeColor('accent',  p.accent)
+    previewThemeColor('bg',      p.bg)
+    previewThemeColor('text',    p.text)
+    selectFont(p.font)
+  }
+
+  async function saveTheme() {
+    const theme = {
+      primary: document.getElementById('themeColorPrimary').value,
+      accent:  document.getElementById('themeColorAccent').value,
+      bg:      document.getElementById('themeColorBg').value,
+      text:    document.getElementById('themeColorText').value,
+      font:    _currentTheme.font || localStorage.getItem('hewkao_font') || 'Nunito',
+    }
+    localStorage.setItem('hewkao_theme', JSON.stringify(theme))
+
+    // save ลง page_content
+    const token = localStorage.getItem('mochi_token')
+    if (token) {
+      const ids = ['heroTag','heroTitle','heroDesc']
+      const c = {}
+      ids.forEach(id => { const el = document.getElementById(id); if (el) c[id] = id==='heroTitle'?el.innerHTML:el.textContent })
+      const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
+      if (heroBg) c['heroBg'] = heroBg
+      const titleColor = localStorage.getItem('hewkao_title_color') || ''
+      if (titleColor) c['titleColor'] = titleColor
+      c['theme'] = JSON.stringify(theme)
+      await fetch(`${API}/api/admin/page-content`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ lang, content: c, shop: 'Shigure_S' })
+      })
+    }
+    closeThemeEditor()
+    showToast('✅ Theme saved!')
+  }
+
+  function loadTheme(themeStr) {
+    try {
+      const theme = typeof themeStr === 'string' ? JSON.parse(themeStr) : themeStr
+      if (!theme) return
+      const root = document.documentElement
+      if (theme.primary) {
+        root.style.setProperty('--pink-d', theme.primary)
+        root.style.setProperty('--pink',   theme.primary + '99')
+        root.style.setProperty('--pink-l', theme.primary + '22')
+      }
+      if (theme.accent) {
+        root.style.setProperty('--lav',   theme.accent)
+        root.style.setProperty('--lav-l', theme.accent + '33')
+      }
+      if (theme.bg) {
+        root.style.setProperty('--cream', theme.bg)
+        document.body.style.background = theme.bg
+      }
+      if (theme.text) root.style.setProperty('--text', theme.text)
+      if (theme.font) selectFont(theme.font)
+      localStorage.setItem('hewkao_theme', JSON.stringify(theme))
+    } catch(e) {}
+  }
+
   function savePageContent() { saveCurrentLangContent(true) }
 
   async function saveCurrentLangContent(showMsg = false) {
@@ -3085,6 +3324,11 @@ footer strong { color: var(--pink-d); }
       if (c.titleColor) {
         loadTitleColor(c.titleColor)
         localStorage.setItem('hewkao_title_color', c.titleColor)
+      }
+      if (c.theme) loadTheme(c.theme)
+      else {
+        const cached = localStorage.getItem('hewkao_theme')
+        if (cached) loadTheme(cached)
       }
     } catch(e) {}
   }
