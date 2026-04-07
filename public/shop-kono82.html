@@ -3628,41 +3628,24 @@ async function saveTheme() {
   function applyGlow(type) {
     const title = document.getElementById('heroTitle')
     if (!title) return
-    // reset inline styles ที่อาจทับ animation
+
+    // reset ทั้งหมดก่อน
     title.style.animation = ''
-    if (type === 'rainbow') {
-      title.style.color = ''
-      title.style.textShadow = ''
-    }
+    title.style.textShadow = ''
 
     let tag = document.getElementById('kono82-glow-style')
     if (!tag) { tag = document.createElement('style'); tag.id = 'kono82-glow-style'; document.head.appendChild(tag) }
+    tag.textContent = ''
 
     const color = getComputedStyle(document.documentElement).getPropertyValue('--pink-d').trim() || '#2A7FAF'
 
     if (type === 'soft') {
-      tag.textContent = `#heroTitle { text-shadow: 0 0 20px ${color}88, 0 0 40px ${color}44 !important; }`
+      title.style.textShadow = `0 0 20px ${color}88, 0 0 40px ${color}44`
     } else if (type === 'neon') {
-      tag.textContent = `#heroTitle { text-shadow: 0 0 10px ${color}, 0 0 20px ${color}, 0 0 40px ${color}, 0 0 80px ${color}88 !important; }`
+      title.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}, 0 0 40px ${color}, 0 0 80px ${color}88`
     } else if (type === 'rainbow') {
-      tag.textContent = `
-        @keyframes kono82Rainbow {
-          0%   { color: #ff0080 !important; text-shadow: 0 0 20px #ff0080, 0 0 40px #ff0080; }
-          25%  { color: #a855f7 !important; text-shadow: 0 0 20px #7b2fff, 0 0 40px #7b2fff; }
-          50%  { color: #00cfff !important; text-shadow: 0 0 20px #00cfff, 0 0 40px #00cfff; }
-          75%  { color: #00ff88 !important; text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88; }
-          100% { color: #ff0080 !important; text-shadow: 0 0 20px #ff0080, 0 0 40px #ff0080; }
-        }
-        #heroTitle {
-          animation: kono82Rainbow 2s linear infinite !important;
-          color: #ff0080 !important;
-          -webkit-text-fill-color: unset !important;
-          background-clip: unset !important;
-          -webkit-background-clip: unset !important;
-        }
-      `
-    } else {
-      tag.textContent = `#heroTitle { text-shadow: none !important; animation: none !important; }`
+      // set animation ตรงบน element เหมือน shop.html
+      title.style.animation = 'rainbowGlow 2s linear infinite'
     }
   }
 
