@@ -2850,6 +2850,7 @@ footer strong { color: var(--pink-d); }
       stripeElements = stripeInstance.elements({ clientSecret: _stripeClientSecret })
       stripePaymentElement = stripeElements.create('payment', {
         layout: 'tabs',
+        paymentMethodOrder: ['card'],
         fields: { billingDetails: { address: 'never' } }
       })
       document.getElementById('stripe-payment-element').innerHTML = ''
