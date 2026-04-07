@@ -1596,6 +1596,16 @@ footer strong { color: var(--pink-d); }
         </div>
       </div>`
     }).join('')
+
+    // apply card theme หลัง render เสร็จเสมอ
+    const t = localStorage.getItem('hewkao_theme')
+    if (t) {
+      try {
+        const th = JSON.parse(t)
+        if (th.cardStyle) applyCardStyle(th.cardStyle)
+        if (th.cardBg) document.querySelectorAll('.card').forEach(c => c.style.backgroundColor = th.cardBg)
+      } catch(e) {}
+    }
   }
 
   function filterProducts(type, btn) {
