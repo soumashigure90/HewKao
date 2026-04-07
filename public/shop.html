@@ -1624,9 +1624,11 @@ footer strong { color: var(--pink-d); }
       }
     })
     await applyPageContent(l)
-    // force apply theme จาก localStorage เสมอ หลัง applyPageContent
+    // apply theme จาก localStorage เสมอ — ไม่ให้หายตอนสลับภาษา
     const savedTheme = localStorage.getItem('hewkao_theme')
-    if (savedTheme) loadTheme(savedTheme)
+    if (savedTheme) {
+      try { loadTheme(JSON.parse(savedTheme)) } catch(e) {}
+    }
     loadShopSettings()
     const filtered = currentFilter === 'all' ? allProducts : allProducts.filter(p => p.type === currentFilter)
     renderProducts(filtered)
@@ -3329,23 +3331,15 @@ footer strong { color: var(--pink-d); }
     }
     localStorage.setItem('hewkao_theme', JSON.stringify(theme))
 
-    // save ลง page_content ทั้ง EN และ TH พร้อมกัน (theme เป็น global)
+    // save ลง shop_settings โดยตรง — ไม่ยุ่งกับ page_content
     const token = localStorage.getItem('mochi_token')
     if (token) {
-      for (const l of ['en', 'th']) {
-        const ids = ['heroTag','heroTitle','heroDesc']
-        const c = {}
-        ids.forEach(id => { const el = document.getElementById(id); if (el) c[id] = id==='heroTitle'?el.innerHTML:el.textContent })
-        const heroBg = localStorage.getItem('hewkao_hero_bg') || ''
-        if (heroBg) c['heroBg'] = heroBg
-        const titleColor = localStorage.getItem('hewkao_title_color') || ''
-        if (titleColor) c['titleColor'] = titleColor
-        c['theme'] = JSON.stringify(theme)
-        await fetch(`${API}/api/admin/page-content`, {
-          method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-          body: JSON.stringify({ lang: l, content: c, shop: 'Shigure_S' })
-        })
-      }
+      const res2 = await fetch(`${API}/api/admin/theme/Shigure_S`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify(theme)
+      })
+      if (!res2.ok) { showToast('❌ Save failed'); return }
     }
     closeThemeEditor()
     showToast('✅ Theme saved!')
@@ -3443,9 +3437,19 @@ footer strong { color: var(--pink-d); }
       b.classList.toggle('active', (i===0 && lang==='en') || (i===1 && lang==='th'))
     })
     await applyPageContent(lang)
-    // apply theme หลัง load เสร็จ
-    const savedTheme = localStorage.getItem('hewkao_theme')
-    if (savedTheme) loadTheme(savedTheme)
+    // โหลด theme จาก server (แยกจาก page_content)
+    try {
+      const tr = await fetch(`${API}/api/theme/Shigure_S`)
+      const td = await tr.json()
+      if (td) {
+        localStorage.setItem('hewkao_theme', JSON.stringify(td))
+        loadTheme(td)
+        return
+      }
+    } catch(e) {}
+    // fallback: localStorage
+    const cached = localStorage.getItem('hewkao_theme')
+    if (cached) loadTheme(JSON.parse(cached))
   }
 
   async function applyPageContent(l) {
@@ -3465,9 +3469,6 @@ footer strong { color: var(--pink-d); }
       if (c.titleColor) {
         loadTitleColor(c.titleColor)
         localStorage.setItem('hewkao_title_color', c.titleColor)
-      }
-      if (c.theme) {
-        localStorage.setItem('hewkao_theme', c.theme)
       }
     } catch(e) {}
   }
