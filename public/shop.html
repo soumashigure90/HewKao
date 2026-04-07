@@ -3226,21 +3226,27 @@ footer strong { color: var(--pink-d); }
   }
 
   function previewThemeColor(type, val) {
-    const root = document.documentElement
     updateHexLabels()
-    if (type === 'primary') {
-      root.style.setProperty('--pink-d', val)
-      root.style.setProperty('--pink', val + '99')
-      root.style.setProperty('--pink-l', val + '22')
-    } else if (type === 'accent') {
-      root.style.setProperty('--lav', val)
-      root.style.setProperty('--lav-l', val + '33')
-    } else if (type === 'bg') {
-      root.style.setProperty('--cream', val)
-      document.body.style.background = val
-    } else if (type === 'text') {
-      root.style.setProperty('--text', val)
-    }
+    // ดึงค่าปัจจุบันของทุก field
+    const primary = document.getElementById('themeColorPrimary').value
+    const accent  = document.getElementById('themeColorAccent').value
+    const bg      = document.getElementById('themeColorBg').value
+    const text    = document.getElementById('themeColorText').value
+
+    // inject style tag ทันที — override ทุกอย่างได้
+    let tag = document.getElementById('hewkao-theme-style')
+    if (!tag) { tag = document.createElement('style'); tag.id = 'hewkao-theme-style'; document.head.appendChild(tag) }
+    tag.textContent = `
+      :root {
+        --pink-d:${primary}; --pink:${primary}99; --pink-l:${primary}22; --lav-d:${primary};
+        --lav:${accent}; --lav-l:${accent}33; --mint-d:${accent};
+        --cream:${bg};
+        --text:${text};
+      }
+      body { background: ${bg} !important; }
+      .btn-cart { background: linear-gradient(135deg,${primary},${primary}cc) !important; color:#fff !important; }
+      .btn-profile-save,.btn-checkout-confirm { background: ${primary} !important; }
+    `
   }
 
   // ── Title Glow ──
