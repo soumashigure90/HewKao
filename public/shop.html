@@ -1255,6 +1255,17 @@ footer strong { color: var(--pink-d); }
     </div>
   </div>
 
+  <!-- Title Glow -->
+  <div style="margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:8px;">✨ Title Effect</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+      <button class="glow-opt active" onclick="selectGlow('none')"    style="padding:8px 4px;border-radius:10px;border:2px solid #eee;background:#fff;cursor:pointer;font-size:11px;font-weight:700;color:var(--text-s);">None</button>
+      <button class="glow-opt"        onclick="selectGlow('soft')"    style="padding:8px 4px;border-radius:10px;border:2px solid #eee;background:#fff;cursor:pointer;font-size:11px;font-weight:700;color:var(--text-s);">✨ Soft</button>
+      <button class="glow-opt"        onclick="selectGlow('neon')"    style="padding:8px 4px;border-radius:10px;border:2px solid #eee;background:#fff;cursor:pointer;font-size:11px;font-weight:700;color:var(--text-s);">⚡ Neon</button>
+      <button class="glow-opt"        onclick="selectGlow('rainbow')" style="padding:8px 4px;border-radius:10px;border:2px solid #eee;background:#fff;cursor:pointer;font-size:11px;font-weight:700;color:var(--text-s);">🌈 RGB</button>
+    </div>
+  </div>
+
   <button onclick="saveTheme()" style="width:100%;padding:10px;border-radius:14px;border:none;background:var(--pink-d);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;">💾 Save Theme</button>
 </div>
 
@@ -1505,6 +1516,14 @@ footer strong { color: var(--pink-d); }
 .font-opt{padding:6px 4px;border-radius:8px;border:2px solid var(--pink-l);background:#fff;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
 .font-opt.active,.font-opt:hover{border-color:var(--pink-d);background:var(--pink-l);color:var(--pink-d);}
 .card-style-opt.active{border-color:var(--pink-d)!important;background:var(--pink-l)!important;color:var(--pink-d)!important;}
+.glow-opt.active{border-color:var(--pink-d)!important;background:var(--pink-l)!important;color:var(--pink-d)!important;}
+@keyframes rainbowGlow {
+  0%   { text-shadow: 0 0 20px #ff0080, 0 0 40px #ff0080; color: #ff0080; }
+  25%  { text-shadow: 0 0 20px #7b2fff, 0 0 40px #7b2fff; color: #a855f7; }
+  50%  { text-shadow: 0 0 20px #00cfff, 0 0 40px #00cfff; color: #00cfff; }
+  75%  { text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88; color: #00ff88; }
+  100% { text-shadow: 0 0 20px #ff0080, 0 0 40px #ff0080; color: #ff0080; }
+}
 .edbtn{padding:6px 12px;border-radius:10px;border:1.5px solid var(--pink-l);background:#fff;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;transition:all 0.15s;}
 .edbtn:hover{background:var(--pink-l);color:var(--pink-d);}
 .edit-highlight{outline:2px dashed var(--pink-d)!important;outline-offset:4px;cursor:pointer;transition:outline 0.2s;}
@@ -3224,6 +3243,47 @@ footer strong { color: var(--pink-d); }
     }
   }
 
+  // ── Title Glow ──
+  let _currentGlow = 'none'
+
+  function selectGlow(type) {
+    _currentGlow = type
+    document.querySelectorAll('.glow-opt').forEach((b,i) => {
+      const types = ['none','soft','neon','rainbow']
+      b.classList.toggle('active', types[i] === type)
+    })
+    applyGlow(type)
+  }
+
+  function applyGlow(type) {
+    const title = document.getElementById('heroTitle')
+    if (!title) return
+    // เอา animation class เดิมออก
+    title.style.animation = ''
+    title.style.textShadow = ''
+
+    const color = getComputedStyle(document.documentElement).getPropertyValue('--pink-d').trim() || '#e8829a'
+
+    if (type === 'soft') {
+      title.style.textShadow = `0 0 20px ${color}88, 0 0 40px ${color}44`
+    } else if (type === 'neon') {
+      title.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}, 0 0 40px ${color}, 0 0 80px ${color}88`
+    } else if (type === 'rainbow') {
+      title.style.animation = 'rainbowGlow 2s linear infinite'
+    }
+  }
+
+  function loadGlow(type) {
+    if (!type || type === 'none') return
+    _currentGlow = type
+    // highlight button
+    document.querySelectorAll('.glow-opt').forEach((b,i) => {
+      const types = ['none','soft','neon','rainbow']
+      b.classList.toggle('active', types[i] === type)
+    })
+    applyGlow(type)
+  }
+
   function selectFont(fontName) {
     // โหลด font จาก Google Fonts ถ้ายังไม่มี
     const fontMap = {
@@ -3338,6 +3398,7 @@ footer strong { color: var(--pink-d); }
       font:      _currentTheme.font || localStorage.getItem('hewkao_font') || 'Nunito',
       cardStyle: _currentCardStyle || 'none',
       cardBg:    document.getElementById('cardBgColor').value || '#ffffff',
+      glow:      _currentGlow || 'none',
     }
     localStorage.setItem('hewkao_theme', JSON.stringify(theme))
 
@@ -3380,6 +3441,7 @@ footer strong { color: var(--pink-d); }
         _currentCardStyle = theme.cardStyle
         applyCardStyle(theme.cardStyle)
       }
+      if (theme.glow) setTimeout(() => loadGlow(theme.glow), 100)
       if (theme.cardBg) {
         const el = document.getElementById('cardBgColor')
         if (el) el.value = theme.cardBg
