@@ -990,6 +990,32 @@ app.post('/api/admin/settings', auth, adminOnly, async (req, res) => {
   }
 })
 
+// GET /api/theme/:shop — โหลด theme ของร้านนั้น (public)
+app.get('/api/theme/:shop', async (req, res) => {
+  const { shop } = req.params
+  const { data, error } = await supabase
+    .from('shop_settings')
+    .select('value')
+    .eq('key', `theme_${shop}`)
+    .single()
+  if (error || !data) return res.json(null)
+  try { res.json(JSON.parse(data.value)) }
+  catch(e) { res.json(null) }
+})
+
+// POST /api/admin/theme/:shop — save theme ของร้านนั้น
+app.post('/api/admin/theme/:shop', auth, adminOnly, async (req, res) => {
+  const { shop } = req.params
+  const theme = req.body
+  try {
+    const { error } = await supabase
+      .from('shop_settings')
+      .upsert({ key: `theme_${shop}`, value: JSON.stringify(theme) }, { onConflict: 'key' })
+    if (error) throw error
+    res.json({ message: 'Theme saved' })
+  } catch(e) { res.status(500).json({ error: e.message }) }
+})
+
 // POST /api/admin/change-password
 app.post('/api/admin/change-password', auth, adminOnly, async (req, res) => {
   const { currentPassword, newPassword } = req.body
