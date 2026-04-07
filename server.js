@@ -33,7 +33,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount_thb * 100), // THB สตางค์
       currency: (currency || 'thb').toLowerCase(),
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ['card'],
       description: order_description || 'HewKao Shop Order',
       metadata: { shop: 'Shigure_S' }
     })
