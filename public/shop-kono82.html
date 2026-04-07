@@ -1344,6 +1344,7 @@ input:focus, textarea:focus, select:focus {
   <button onclick="editHeroTitle()" class="edbtn">📝 Title</button>
   <button onclick="editHeroDesc()"  class="edbtn">💬 Desc</button>
   <button onclick="editHeroBg()"    class="edbtn">🖼️ Hero BG</button>
+  <button onclick="clearHeroBg()"   class="edbtn" style="color:#e8829a;border-color:#fcc;">🗑️ Clear Hero</button>
   <div style="width:1px;height:20px;background:var(--pink-l);flex-shrink:0;"></div>
 
   <!-- Title Color -->
@@ -3528,9 +3529,8 @@ async function saveTheme() {
       const theme = typeof themeStr === 'string' ? JSON.parse(themeStr) : themeStr
       if (!theme) return
 
-      // inject <style> tag — ไม่ถูกทับโดย repaint หรือ applyPageContent
-      let tag = document.getElementById('hewkao-theme-style')
-      if (!tag) { tag = document.createElement('style'); tag.id = 'hewkao-theme-style'; document.head.appendChild(tag) }
+      let tag = document.getElementById('kono82-theme-style')
+      if (!tag) { tag = document.createElement('style'); tag.id = 'kono82-theme-style'; document.head.appendChild(tag) }
       tag.textContent = `
         :root {
           ${theme.primary ? `--pink-d:${theme.primary};--pink:${theme.primary}99;--pink-l:${theme.primary}22;--lav-d:${theme.primary};` : ''}
@@ -3538,21 +3538,17 @@ async function saveTheme() {
           ${theme.bg      ? `--cream:${theme.bg};` : ''}
           ${theme.text    ? `--text:${theme.text};` : ''}
         }
-        ${theme.bg      ? `body{background:${theme.bg}!important;}` : ''}
-        ${theme.cardBg  ? `.card{background-color:${theme.cardBg}!important;}` : ''}
-        ${theme.primary ? `.btn-cart{background:linear-gradient(135deg,${theme.primary},${theme.primary}cc)!important;}` : ''}
+        ${theme.bg     ? `body{background:${theme.bg}!important;}` : ''}
+        ${theme.cardBg ? `.card{background-color:${theme.cardBg}!important;}` : ''}
+        ${theme.primary ? `.btn-cart{background:linear-gradient(135deg,${theme.primary},${theme.primary}cc)!important;color:#fff!important;}` : ''}
         ${theme.primary ? `.btn-profile-save,.btn-checkout-confirm{background:${theme.primary}!important;}` : ''}
       `
       if (theme.font) selectFont(theme.font)
-      if (theme.cardStyle) {
-        _currentCardStyle = theme.cardStyle
-        applyCardStyle(theme.cardStyle)
-      }
-      if (theme.glow) setTimeout(() => loadGlow(theme.glow), 100)
-      if (theme.cardBg) {
-        const el = document.getElementById('cardBgColor')
-        if (el) el.value = theme.cardBg
-      }
+      if (theme.cardBg) { const el = document.getElementById('cardBgColor'); if (el) el.value = theme.cardBg }
+      setTimeout(() => {
+        if (theme.cardStyle) { _currentCardStyle = theme.cardStyle; applyCardStyle(theme.cardStyle) }
+        if (theme.glow && theme.glow !== 'none') loadGlow(theme.glow)
+      }, 500)
       localStorage.setItem('kono82_theme', JSON.stringify(theme))
     } catch(e) { console.error('loadTheme:', e) }
   }
@@ -3738,6 +3734,24 @@ async function saveTheme() {
     } catch(e) {}
     const cached = localStorage.getItem('kono82_theme')
     if (cached) { try { loadTheme(JSON.parse(cached)) } catch(e) {} }
+  }
+
+  function clearHeroBg() {
+    localStorage.removeItem('kono82_hero_bg')
+    const hero = document.getElementById('heroSection')
+    hero.style.cssText = ''
+    // save ลง DB ด้วย
+    const token = localStorage.getItem('mochi_token')
+    if (!token) return
+    const ids = ['heroTag','heroTitle','heroDesc']
+    const c = {}
+    ids.forEach(id => { const el = document.getElementById(id); if (el) c[id] = id==='heroTitle'?el.innerHTML:el.textContent })
+    c['heroBg'] = ''
+    fetch(`${API}/api/admin/page-content`, {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body: JSON.stringify({ lang, content: c, shop: SHOP_ID })
+    })
+    showToast('🗑️ Hero image removed')
   }
 
   async function applyPageContent(l) {
