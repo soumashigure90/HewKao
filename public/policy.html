@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Policies — HewKao Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --pink:   #FFB7C5;
+      --pink-l: #FFE4EC;
+      --pink-d: #e8829a;
+      --lav:    #C9B8F0;
+      --lav-l:  #EDE8FC;
+      --cream:  #FFF9F5;
+      --text:   #4a3f5c;
+      --text-s: #8a7a9a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      line-height: 1.8;
+    }
+
+    /* Nav */
+    nav {
+      background: #fff;
+      border-bottom: 1.5px solid var(--pink-l);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(232,130,154,0.08);
+    }
+    .nav-logo {
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--pink-d);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--lav); }
+    .nav-back {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-s);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--pink-d); }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, var(--pink-l), var(--lav-l));
+      padding: 3rem 2rem;
+      text-align: center;
+      border-bottom: 1.5px solid var(--pink-l);
+    }
+    .hero h1 {
+      font-family: 'Quicksand', sans-serif;
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 700;
+      color: var(--pink-d);
+      margin-bottom: 8px;
+    }
+    .hero p { font-size: 14px; color: var(--text-s); }
+
+    /* Tab nav */
+    .tab-nav {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 1.5rem 2rem 0;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 8px 20px;
+      border-radius: 20px;
+      border: 2px solid var(--pink-l);
+      background: #fff;
+      color: var(--text-s);
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active, .tab-btn:hover {
+      background: var(--pink-d);
+      border-color: var(--pink-d);
+      color: #fff;
+    }
+
+    /* Content */
+    .content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+    .policy-section { display: none; }
+    .policy-section.active { display: block; }
+
+    .section-title {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--pink-d);
+      margin-bottom: 1.5rem;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--pink-l);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      border: 1.5px solid var(--pink-l);
+      box-shadow: 0 2px 12px rgba(232,130,154,0.06);
+    }
+    .card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card p, .card li {
+      font-size: 13px;
+      color: var(--text-s);
+      line-height: 1.8;
+    }
+    .card ul { padding-left: 1.2rem; margin-top: 6px; }
+    .card li { margin-bottom: 4px; }
+
+    .highlight {
+      background: var(--pink-l);
+      border-left: 3px solid var(--pink-d);
+      border-radius: 0 12px 12px 0;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .highlight.green {
+      background: #E2F8F2;
+      border-color: #1D9E75;
+      color: #0f5a42;
+    }
+    .highlight.yellow {
+      background: #FFF8DC;
+      border-color: #f0b429;
+      color: #7a5c00;
+    }
+
+    .contact-box {
+      background: linear-gradient(135deg, var(--lav-l), var(--pink-l));
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-top: 2rem;
+      border: 1.5px solid var(--lav);
+    }
+    .contact-box p { font-size: 13px; color: var(--text-s); margin-bottom: 8px; }
+    .contact-box a {
+      color: var(--pink-d);
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 15px;
+    }
+
+    .updated {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-s);
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">HewKao<span> Shop</span></a>
+  <a href="/" class="nav-back">← Back to Shop</a>
+</nav>
+
+<div class="hero">
+  <h1>📋 Shop Policies</h1>
+  <p>นโยบายร้านค้า · Please read before purchasing</p>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('refund')">💸 Refund Policy</button>
+  <button class="tab-btn" onclick="showTab('privacy')">🔒 Privacy Policy</button>
+  <button class="tab-btn" onclick="showTab('terms')">📄 Terms of Service</button>
+</div>
+
+<div class="content">
+
+  <!-- REFUND POLICY -->
+  <div id="tab-refund" class="policy-section active">
+    <div class="section-title">💸 Refund & Return Policy</div>
+
+    <div class="card">
+      <h3>🚫 No Refund Policy · ไม่รับคืนเงิน</h3>
+      <p>All sales are final. HewKao Shop does not accept returns or issue refunds under any circumstances, including change of mind or duplicate purchases.</p>
+      <p style="margin-top:8px;">สินค้าทุกชิ้นไม่รับคืนและไม่คืนเงินในทุกกรณี รวมถึงการเปลี่ยนใจหลังการสั่งซื้อ</p>
+    </div>
+
+    <div class="card">
+      <h3>📦 Damaged Item Policy · สินค้าเสียหายระหว่างการจัดส่ง</h3>
+      <p>If your physical item arrives damaged due to shipping, we will send a replacement at no additional cost.</p>
+      <p style="margin-top:8px;">หากสินค้าเสียหายระหว่างการจัดส่ง เราจะส่งสินค้าชิ้นใหม่ให้โดยไม่มีค่าใช้จ่ายเพิ่มเติม</p>
+      <div class="highlight yellow">
+        ⚠️ ต้องแจ้งภายใน 7 วันหลังได้รับสินค้า พร้อมแนบรูปหลักฐานสินค้าที่เสียหาย
+        <br>Must report within 7 days of receiving, with photo evidence of the damage.
+      </div>
+      <ul>
+        <li>Contact us at <strong>soumashigure2@gmail.com</strong></li>
+        <li>Include your order number and photos of the damaged item</li>
+        <li>แนบหมายเลขออเดอร์และรูปถ่ายสินค้าที่เสียหาย</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>💾 Digital Products · สินค้าดิจิทัล</h3>
+      <p>Digital products (downloads, files, PDFs) are non-refundable once delivered. Please review product descriptions carefully before purchasing.</p>
+      <p style="margin-top:8px;">สินค้าดิจิทัลทุกประเภทไม่สามารถขอคืนเงินได้หลังจากได้รับลิงค์ดาวน์โหลดแล้ว กรุณาตรวจสอบรายละเอียดสินค้าก่อนสั่งซื้อ</p>
+      <div class="highlight">
+        🔒 No refunds on digital items — all digital sales are final.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⏳ Pre-orders · พรีออเดอร์</h3>
+      <p>Pre-orders cannot be cancelled or refunded once placed, as production begins based on order volume.</p>
+      <p style="margin-top:8px;">พรีออเดอร์ไม่สามารถยกเลิกหรือขอคืนเงินได้หลังจากสั่งซื้อแล้ว เนื่องจากการผลิตขึ้นอยู่กับยอดสั่งซื้อ</p>
+    </div>
+
+    <div class="contact-box">
+      <p>มีปัญหาเกี่ยวกับออเดอร์? ติดต่อเราได้เลย · Have an issue with your order?</p>
+      <a href="mailto:soumashigure2@gmail.com">soumashigure2@gmail.com</a>
+    </div>
+  </div>
+
+  <!-- PRIVACY POLICY -->
+  <div id="tab-privacy" class="policy-section">
+    <div class="section-title">🔒 Privacy Policy</div>
+
+    <div class="card">
+      <h3>📋 Information We Collect · ข้อมูลที่เราเก็บ</h3>
+      <ul>
+        <li>Name and email address (for order confirmation)</li>
+        <li>Shipping address (for physical orders)</li>
+        <li>Payment information (processed securely by Stripe — we never store card details)</li>
+        <li>Order history</li>
+      </ul>
+      <p style="margin-top:10px;font-size:12px;">เราเก็บชื่อ อีเมล ที่อยู่จัดส่ง และประวัติการสั่งซื้อ ข้อมูลการชำระเงินบัตรเครดิตดำเนินการโดย Stripe เราไม่เก็บข้อมูลบัตรของคุณ</p>
+    </div>
+
+    <div class="card">
+      <h3>🎯 How We Use Your Information · การใช้ข้อมูล</h3>
+      <ul>
+        <li>Processing and fulfilling your orders</li>
+        <li>Sending order confirmation and shipping updates via email</li>
+        <li>Delivering digital products and freebies</li>
+        <li>Resolving issues with your orders</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>🔐 Data Security · ความปลอดภัย</h3>
+      <p>Your data is stored securely using Supabase. Payment processing is handled by Stripe, which is PCI-DSS compliant. We do not sell or share your personal information with third parties.</p>
+      <p style="margin-top:8px;font-size:12px;">ข้อมูลของคุณถูกเก็บอย่างปลอดภัย เราไม่ขายหรือแชร์ข้อมูลส่วนตัวของคุณกับบุคคลภายนอก</p>
+      <div class="highlight green">
+        ✅ We never store credit card numbers or CVV codes.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🍪 Cookies</h3>
+      <p>We use local storage (not tracking cookies) to remember your language preference, cart contents, and login session. No third-party tracking cookies are used.</p>
+      <p style="margin-top:8px;font-size:12px;">เราใช้ local storage เพื่อจำการตั้งค่าภาษา ตะกร้าสินค้า และ session การ login เท่านั้น ไม่มีการใช้ tracking cookies</p>
+    </div>
+
+    <div class="card">
+      <h3>✉️ Contact · ติดต่อ</h3>
+      <p>For any privacy concerns, please contact us at <strong>soumashigure2@gmail.com</strong></p>
+    </div>
+  </div>
+
+  <!-- TERMS OF SERVICE -->
+  <div id="tab-terms" class="policy-section">
+    <div class="section-title">📄 Terms of Service</div>
+
+    <div class="card">
+      <h3>✅ Agreement · การยอมรับ</h3>
+      <p>By placing an order on HewKao Shop, you agree to these Terms of Service. If you do not agree, please do not use our services.</p>
+      <p style="margin-top:8px;font-size:12px;">การสั่งซื้อสินค้าจาก HewKao Shop ถือว่าคุณยอมรับข้อกำหนดการให้บริการเหล่านี้</p>
+    </div>
+
+    <div class="card">
+      <h3>🎨 Intellectual Property · ทรัพย์สินทางปัญญา</h3>
+      <p>All artwork, illustrations, and digital content sold on HewKao Shop are original works created by the respective artists. Purchasing a product grants you a personal, non-commercial license to use the item.</p>
+      <div class="highlight">
+        ⚠️ Redistribution, resale, or commercial use of purchased artwork is strictly prohibited without written permission.
+      </div>
+      <p style="font-size:12px;">ห้ามนำผลงานไปจำหน่ายต่อ แจกจ่าย หรือใช้เพื่อการค้าโดยไม่ได้รับอนุญาตเป็นลายลักษณ์อักษร</p>
+    </div>
+
+    <div class="card">
+      <h3>💳 Payment · การชำระเงิน</h3>
+      <ul>
+        <li>We accept PromptPay (Thailand) and major credit/debit cards via Stripe</li>
+        <li>All prices are shown in THB (฿) and USD ($)</li>
+        <li>Orders are processed after payment is confirmed</li>
+        <li>HewKao Shop reserves the right to cancel orders in case of payment issues</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>🚚 Shipping · การจัดส่ง</h3>
+      <ul>
+        <li>Domestic (Thailand): 3–7 business days</li>
+        <li>International: 10–21 business days depending on destination</li>
+        <li>Shipping times are estimates and may vary due to customs or carrier delays</li>
+        <li>We are not responsible for delays caused by customs or postal services</li>
+      </ul>
+      <p style="font-size:12px;margin-top:8px;">ระยะเวลาจัดส่งเป็นการประมาณการ อาจมีความล่าช้าจากศุลกากรหรือบริษัทขนส่ง</p>
+    </div>
+
+    <div class="card">
+      <h3>⚖️ Limitation of Liability · ข้อจำกัดความรับผิดชอบ</h3>
+      <p>HewKao Shop is not liable for any indirect, incidental, or consequential damages arising from the use of our products or services. Our maximum liability is limited to the amount paid for the specific order in question.</p>
+    </div>
+
+    <div class="card">
+      <h3>🔄 Changes to Terms · การเปลี่ยนแปลง</h3>
+      <p>HewKao Shop reserves the right to update these terms at any time. Continued use of our shop after changes constitutes acceptance of the new terms.</p>
+    </div>
+
+    <div class="contact-box">
+      <p>คำถามเกี่ยวกับข้อกำหนด? · Questions about our terms?</p>
+      <a href="mailto:soumashigure2@gmail.com">soumashigure2@gmail.com</a>
+    </div>
+  </div>
+
+  <p class="updated">Last updated: April 2026 · HewKao Shop</p>
+
+</div>
+
+<script>
+  function showTab(tab) {
+    document.querySelectorAll('.policy-section').forEach(s => s.classList.remove('active'))
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+    document.getElementById('tab-' + tab).classList.add('active')
+    event.target.classList.add('active')
+  }
+</script>
+
+</body>
+</html>
