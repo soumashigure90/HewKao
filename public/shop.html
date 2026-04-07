@@ -1214,15 +1214,8 @@ footer strong { color: var(--pink-d); }
 
   <!-- Preset themes -->
   <div style="margin-bottom:14px;">
-    <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">Quick Presets</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button onclick="applyPreset('pink')"   style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FFB7C5,#C9B8F0);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Pink"></button>
-      <button onclick="applyPreset('blue')"   style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7EC8E3,#5B9BD5);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Blue"></button>
-      <button onclick="applyPreset('green')"  style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#B2E8D8,#1D9E75);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Green"></button>
-      <button onclick="applyPreset('dark')"   style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#3a3a4a,#1a1a2e);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Dark"></button>
-      <button onclick="applyPreset('orange')" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FFB347,#FF6B35);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Orange"></button>
-      <button onclick="applyPreset('purple')" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#9B59B6,#6C3483);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;" title="Purple"></button>
-    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:8px;">Quick Presets</div>
+    <div id="presetGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:200px;overflow-y:auto;padding-right:2px;"></div>
   </div>
 
   <button onclick="saveTheme()" style="width:100%;padding:10px;border-radius:14px;border:none;background:var(--pink-d);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;">💾 Save Theme</button>
@@ -3101,18 +3094,45 @@ footer strong { color: var(--pink-d); }
 
   // ── THEME EDITOR ──
   const PRESETS = {
-    pink:   { primary:'#e8829a', accent:'#C9B8F0', bg:'#FFF9F5', text:'#4a3f5c', font:'Nunito' },
-    blue:   { primary:'#2A7FAF', accent:'#7EC8E3', bg:'#F0F8FF', text:'#1a2a3a', font:'Nunito' },
-    green:  { primary:'#1D9E75', accent:'#B2E8D8', bg:'#F0FBF7', text:'#1a3a2a', font:'Nunito' },
-    dark:   { primary:'#9B8EC4', accent:'#6C5FA6', bg:'#1a1a2e', text:'#e0d8f0', font:'Quicksand' },
-    orange: { primary:'#FF6B35', accent:'#FFB347', bg:'#FFF8F5', text:'#3a1a0a', font:'Prompt' },
-    purple: { primary:'#6C3483', accent:'#9B59B6', bg:'#FAF5FF', text:'#2d1b4e', font:'Quicksand' },
+    pink:      { primary:'#e8829a', accent:'#C9B8F0', bg:'#FFF9F5',  text:'#4a3f5c', font:'Nunito',       label:'🌸 Mochi Pink' },
+    blue:      { primary:'#2A7FAF', accent:'#7EC8E3', bg:'#F0F8FF',  text:'#1a2a3a', font:'Nunito',       label:'🌊 Blue Archive' },
+    green:     { primary:'#1D9E75', accent:'#B2E8D8', bg:'#F0FBF7',  text:'#1a3a2a', font:'Sarabun',      label:'🌿 Matcha' },
+    dark:      { primary:'#9B8EC4', accent:'#6C5FA6', bg:'#1a1a2e',  text:'#e0d8f0', font:'Quicksand',    label:'🌙 Midnight' },
+    orange:    { primary:'#FF6B35', accent:'#FFB347', bg:'#FFF8F5',  text:'#3a1a0a', font:'Prompt',       label:'🍊 Sunset' },
+    purple:    { primary:'#6C3483', accent:'#9B59B6', bg:'#FAF5FF',  text:'#2d1b4e', font:'Quicksand',    label:'💜 Lavender' },
+    cherry:    { primary:'#C0392B', accent:'#E74C3C', bg:'#FFF5F5',  text:'#3a0a0a', font:'Kanit',        label:'🍒 Cherry' },
+    mint:      { primary:'#00897B', accent:'#4DB6AC', bg:'#F0FFFE',  text:'#1a3a38', font:'Nunito',       label:'🍃 Mint' },
+    peach:     { primary:'#E67E22', accent:'#F39C12', bg:'#FFFAF5',  text:'#3a2a0a', font:'Sarabun',      label:'🍑 Peach' },
+    ocean:     { primary:'#1565C0', accent:'#42A5F5', bg:'#F0F4FF',  text:'#0a1a3a', font:'IBM Plex Sans Thai', label:'🌏 Ocean' },
+    rose:      { primary:'#AD1457', accent:'#F48FB1', bg:'#FFF0F5',  text:'#3a0a1a', font:'Quicksand',    label:'🌹 Rose' },
+    coffee:    { primary:'#5D4037', accent:'#A1887F', bg:'#FAF6F3',  text:'#2a1a0a', font:'Prompt',       label:'☕ Coffee' },
+    night:     { primary:'#00BCD4', accent:'#006064', bg:'#0a0f1a',  text:'#b0e0e8', font:'Kanit',        label:'🌃 Neon Night' },
+    sakura:    { primary:'#E91E8C', accent:'#F8BBD9', bg:'#FFF0FA',  text:'#4a0a2a', font:'Nunito',       label:'🌺 Sakura' },
+    forest:    { primary:'#2E7D32', accent:'#81C784', bg:'#F5FBF5',  text:'#1a2a1a', font:'Sarabun',      label:'🌲 Forest' },
+    lemon:     { primary:'#F9A825', accent:'#FFF176', bg:'#FFFDE7',  text:'#3a2a00', font:'Quicksand',    label:'🍋 Lemon' },
+    slate:     { primary:'#455A64', accent:'#90A4AE', bg:'#F5F7F8',  text:'#1a2a30', font:'IBM Plex Sans Thai', label:'🪨 Slate' },
+    candy:     { primary:'#E040FB', accent:'#CE93D8', bg:'#FDF5FF',  text:'#2d0a3a', font:'Nunito',       label:'🍬 Candy' },
   }
   let _currentTheme = {}
 
   function openThemeEditor() {
     const panel = document.getElementById('themeEditorPanel')
-    panel.style.display = panel.style.display === 'none' ? 'block' : 'none'
+    const isOpen = panel.style.display !== 'none'
+    panel.style.display = isOpen ? 'none' : 'block'
+    if (isOpen) return
+
+    // render preset grid
+    const grid = document.getElementById('presetGrid')
+    grid.innerHTML = Object.entries(PRESETS).map(([key, p]) =>
+      `<button onclick="applyPreset('${key}')"
+        style="padding:7px 6px;border-radius:10px;border:2px solid #eee;background:#fff;cursor:pointer;font-size:11px;font-weight:700;transition:all .15s;text-align:left;display:flex;align-items:center;gap:6px;"
+        onmouseover="this.style.borderColor='${p.primary}';this.style.background='${p.primary}18'"
+        onmouseout="this.style.borderColor='#eee';this.style.background='#fff'">
+        <span style="width:16px;height:16px;border-radius:50%;background:${p.primary};flex-shrink:0;display:inline-block;box-shadow:0 1px 4px rgba(0,0,0,.2);"></span>
+        <span style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${p.label}</span>
+      </button>`
+    ).join('')
+
     // โหลดค่าปัจจุบัน
     const saved = JSON.parse(localStorage.getItem('hewkao_theme') || '{}')
     if (saved.primary) document.getElementById('themeColorPrimary').value = saved.primary
@@ -3194,6 +3214,8 @@ footer strong { color: var(--pink-d); }
     previewThemeColor('bg',      p.bg)
     previewThemeColor('text',    p.text)
     selectFont(p.font)
+    _currentTheme = { ...p }
+    showToast(`${p.label} applied! 🎨`)
   }
 
   async function saveTheme() {
