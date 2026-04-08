@@ -251,6 +251,21 @@ textarea{resize:vertical;min-height:80px;}
         <div class="form-grid">
           <div class="form-group"><label>SHOP NAME</label><input type="text" id="settingShopName" placeholder="HewKao" /></div>
           <div class="form-group"><label>CONTACT EMAIL</label><input type="email" id="settingEmail" placeholder="hello@hewkao.com" /></div>
+          <div class="form-group span2" style="margin-top:4px;">
+            <div style="background:var(--cream);border-radius:12px;padding:14px;">
+              <div style="font-size:11px;font-weight:700;color:var(--text-s);letter-spacing:.5px;margin-bottom:10px;">📦 ที่อยู่ผู้ส่ง (สำหรับใบปะหน้าพัสดุ)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div><label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ชื่อผู้ส่ง / Sender Name</label>
+                  <input type="text" id="settingSenderName" placeholder="ชื่อร้านหรือชื่อผู้ส่ง" /></div>
+                <div><label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">เบอร์โทร / Phone</label>
+                  <input type="text" id="settingSenderPhone" placeholder="09x-xxx-xxxx" /></div>
+              </div>
+              <div style="margin-top:10px;">
+                <label style="font-size:11px;color:var(--text-s);display:block;margin-bottom:4px;">ที่อยู่ / Address</label>
+                <textarea id="settingSenderAddress" rows="2" placeholder="เลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์"></textarea>
+              </div>
+            </div>
+          </div>
           <div class="form-group span2"><label>ABOUT / DESCRIPTION (แสดงในหน้า About)</label><textarea id="settingAbout" rows="4" placeholder="Tell customers about your shop..."></textarea></div>
           <div class="form-group span2"><label>ABOUT (ภาษาไทย)</label><textarea id="settingAboutTh" rows="4" placeholder="เล่าเรื่องร้านของคุณให้ลูกค้าฟัง..."></textarea></div>
           <!-- SHIPPING -->
@@ -915,14 +930,21 @@ async function confirmShipping() {
 // ── EXPORT LABELS ──
 async function exportOrders() {
   try {
-    // ดึง orders ทั้งหมด limit 500
-    const res = await fetch(`${API}/api/admin/orders?limit=500`, { headers: authHeader() })
-    const data = await res.json()
+    // ดึง settings (ที่อยู่ผู้ส่ง) และ orders พร้อมกัน
+    const [settingsRes, ordersRes] = await Promise.all([
+      fetch(`${API}/api/settings`, { headers: authHeader() }),
+      fetch(`${API}/api/admin/orders?limit=500`, { headers: authHeader() })
+    ])
+    const settings = await settingsRes.json()
+    const data = await ordersRes.json()
     const orders = data.orders || data || []
 
-    // filter เฉพาะ paid/shipped
-    const eligible = orders.filter(o => ['paid','shipped'].includes(o.status))
-    if (!eligible.length) { toast('ไม่มี order ที่พร้อม export', 'error'); return }
+    // filter เฉพาะ paid/shipped และไม่ใช่ digital ล้วน
+    const eligible = orders.filter(o =>
+      ['paid','shipped'].includes(o.status) &&
+      o.order_items?.some(i => i.products?.type !== 'digital')
+    )
+    if (!eligible.length) { toast('ไม่มี order ที่ต้องจัดส่ง', 'error'); return }
 
     // หา artist list จาก orders จริงๆ — รวม artist จาก order_items ทุกอัน
     const artistSet = new Set()
@@ -952,41 +974,57 @@ async function exportOrders() {
 
     if (!filtered.length) { toast('ไม่มี order ของ ' + chosenArtist, 'error'); return }
     toast('กำลัง export ' + filtered.length + ' orders...', '')
-    printLabels(filtered, chosenArtist)
+    printLabels(filtered, chosenArtist, settings)
   } catch(e) { toast('❌ Export failed: ' + e.message, 'error') }
 }
 
-function printLabels(orders, artistName) {
+function printLabels(orders, artistName, settings = {}) {
+  const senderName    = settings.sender_name    || settings.shop_name || 'HewKao Shop'
+  const senderPhone   = settings.sender_phone   || ''
+  const senderAddress = settings.sender_address || ''
+
   const labels = orders.map(o => {
     const gi = o.guest_info || {}
     const name    = o.members?.full_name || gi.full_name || o.members?.username || 'N/A'
     const phone   = o.members?.phone     || gi.phone     || ''
     const address = o.members?.address   || gi.address   || gi.address_full || ''
-    const email   = o.members?.email     || gi.email     || o.guest_email || ''
-    const items   = o.order_items?.map(i => `${i.products?.name||'?'} ×${i.quantity}`).join(', ') || ''
-    const tracking = o.tracking_number ? `<div style="margin-top:6px;padding:4px 8px;background:#e8f5e9;border-radius:6px;font-size:11px;"><strong>📦 ${o.carrier?.toUpperCase()||'TRACKING'}:</strong> ${o.tracking_number}</div>` : ''
+    // filter เฉพาะ non-digital items
+    const physicalItems = (o.order_items || []).filter(i => i.products?.type !== 'digital')
+    const items = physicalItems.map(i => `${i.products?.name||'?'} ×${i.quantity}`).join(', ') || ''
+    const artistTag = artistName !== 'ทั้งหมด' ? artistName : (physicalItems[0]?.products?.artist || 'HewKao')
+    const tracking = o.tracking_number
+      ? `<div class="tracking-box">📦 ${o.carrier?.toUpperCase()||''} <strong>${o.tracking_number}</strong></div>`
+      : ''
 
     return `<div class="label">
+      <!-- HEADER -->
       <div class="label-header">
         <span class="order-id">#${o.id}</span>
-        <span class="artist-tag">${artistName !== 'ทั้งหมด' ? artistName : (o.order_items?.[0]?.products?.artist || 'HewKao')}</span>
+        <span class="artist-tag">${artistTag}</span>
+        <span class="order-date">${new Date(o.created_at).toLocaleDateString('th-TH')}</span>
       </div>
-      <div class="label-to">
-        <div class="label-section-title">ผู้รับ / TO:</div>
-        <div class="name">${name}</div>
-        ${phone ? `<div class="detail">📞 ${phone}</div>` : ''}
-        ${email ? `<div class="detail">✉️ ${email}</div>` : ''}
-        <div class="address">${address || '<span style="color:#ccc;">ไม่มีที่อยู่</span>'}</div>
+
+      <!-- FROM -->
+      <div class="section from-section">
+        <div class="section-title">▲ ผู้ส่ง / FROM</div>
+        <div class="from-name">${senderName}</div>
+        ${senderPhone ? `<div class="from-detail">📞 ${senderPhone}</div>` : ''}
+        ${senderAddress ? `<div class="from-address">${senderAddress}</div>` : ''}
       </div>
+
+      <div class="divider-arrow">▼ ผู้รับ / TO</div>
+
+      <!-- TO -->
+      <div class="section to-section">
+        <div class="to-name">${name}</div>
+        ${phone ? `<div class="to-detail">📞 ${phone}</div>` : ''}
+        <div class="to-address">${address || '<span style="color:#ccc;">—</span>'}</div>
+      </div>
+
+      <!-- ITEMS -->
       <div class="items-section">
-        <div class="label-section-title">รายการสินค้า:</div>
-        <div class="items">${items}</div>
-        <div class="total">฿${Number(o.total).toLocaleString()}</div>
-      </div>
-      ${tracking}
-      <div class="label-footer">
-        <span>HewKao Shop · hewkao.shop</span>
-        <span>${new Date(o.created_at).toLocaleDateString('th-TH')}</span>
+        <span class="items-label">สินค้า:</span> ${items}
+        ${tracking}
       </div>
     </div>`
   }).join('')
@@ -994,86 +1032,112 @@ function printLabels(orders, artistName) {
   const win = window.open('', '_blank')
   win.document.write(`<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
-    <title>Shipping Labels · HewKao Shop</title>
+    <title>ใบปะหน้าพัสดุ · HewKao Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'Sarabun', 'Noto Sans Thai', sans-serif; background: #f5f5f5; padding: 20px; }
-      h1 { font-size: 16px; color: #555; margin-bottom: 16px; }
-      .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+      body { font-family: 'Sarabun','Noto Sans Thai',sans-serif; background: #eee; padding: 16px; }
+      .no-print { margin-bottom: 16px; display: flex; gap: 10px; align-items: center; }
+      .no-print h1 { font-size: 15px; color: #555; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, 100mm); gap: 12px; justify-content: center; }
+
+      /* LABEL — 100x150mm */
       .label {
+        width: 100mm;
+        height: 150mm;
         background: #fff;
-        border: 2px solid #333;
-        border-radius: 8px;
-        padding: 14px;
+        border: 2px solid #222;
+        border-radius: 6px;
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
         page-break-inside: avoid;
         break-inside: avoid;
+        overflow: hidden;
       }
       .label-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
-        padding-bottom: 8px;
-        border-bottom: 1.5px solid #eee;
-      }
-      .order-id { font-size: 18px; font-weight: 900; color: #333; }
-      .artist-tag {
-        font-size: 11px;
-        font-weight: 700;
-        background: #FFE4EC;
-        color: #e8829a;
-        padding: 3px 10px;
-        border-radius: 10px;
-      }
-      .label-section-title {
-        font-size: 10px;
-        font-weight: 700;
-        color: #999;
-        letter-spacing: .5px;
-        text-transform: uppercase;
-        margin-bottom: 4px;
-      }
-      .label-to { margin-bottom: 10px; }
-      .name { font-size: 16px; font-weight: 800; color: #111; margin-bottom: 3px; }
-      .detail { font-size: 12px; color: #555; margin-bottom: 2px; }
-      .address {
-        font-size: 13px;
-        color: #333;
-        line-height: 1.6;
-        margin-top: 4px;
-        padding: 6px 10px;
-        background: #f9f9f9;
-        border-radius: 6px;
-      }
-      .items-section {
-        border-top: 1px dashed #ddd;
-        padding-top: 8px;
-        margin-top: 8px;
-      }
-      .items { font-size: 12px; color: #555; margin-bottom: 4px; }
-      .total { font-size: 14px; font-weight: 800; color: #e8829a; }
-      .label-footer {
-        display: flex;
         justify-content: space-between;
-        margin-top: 10px;
-        padding-top: 8px;
-        border-top: 1px solid #eee;
-        font-size: 10px;
-        color: #bbb;
+        padding-bottom: 5px;
+        border-bottom: 1.5px solid #222;
+        margin-bottom: 5px;
       }
+      .order-id { font-size: 16px; font-weight: 800; color: #111; }
+      .artist-tag {
+        font-size: 10px; font-weight: 700;
+        background: #FFE4EC; color: #c0607a;
+        padding: 2px 8px; border-radius: 8px;
+      }
+      .order-date { font-size: 10px; color: #999; }
+
+      .section-title {
+        font-size: 9px; font-weight: 700; color: #888;
+        letter-spacing: .5px; margin-bottom: 3px;
+      }
+      .from-section {
+        background: #f7f7f7;
+        border-radius: 5px;
+        padding: 5px 7px;
+        margin-bottom: 3px;
+        flex-shrink: 0;
+      }
+      .from-name { font-size: 12px; font-weight: 700; color: #333; }
+      .from-detail { font-size: 10px; color: #666; margin-top: 1px; }
+      .from-address { font-size: 10px; color: #555; line-height: 1.5; margin-top: 2px; }
+
+      .divider-arrow {
+        font-size: 10px; font-weight: 700; color: #555;
+        text-align: center;
+        border-top: 1px dashed #ccc;
+        border-bottom: 1px dashed #ccc;
+        padding: 3px 0;
+        margin: 3px 0;
+        flex-shrink: 0;
+      }
+
+      .to-section { flex: 1; padding: 3px 0; }
+      .to-name { font-size: 17px; font-weight: 800; color: #000; line-height: 1.3; }
+      .to-detail { font-size: 11px; color: #444; margin-top: 2px; }
+      .to-address {
+        font-size: 12px; color: #222; line-height: 1.7;
+        margin-top: 4px;
+        padding: 5px 7px;
+        background: #f9f9f9;
+        border-radius: 5px;
+        border-left: 3px solid #e8829a;
+      }
+
+      .items-section {
+        border-top: 1px solid #eee;
+        padding-top: 5px;
+        margin-top: auto;
+        font-size: 10px;
+        color: #777;
+        flex-shrink: 0;
+      }
+      .items-label { font-weight: 700; color: #555; }
+      .tracking-box {
+        margin-top: 4px;
+        background: #E3F2FD;
+        border-radius: 4px;
+        padding: 3px 7px;
+        font-size: 11px;
+        color: #1565C0;
+      }
+
       @media print {
         body { background: white; padding: 0; }
-        h1 { display: none; }
-        .grid { gap: 8px; }
-        .label { border: 1.5px solid #333; }
         .no-print { display: none; }
+        .grid { gap: 4px; }
+        @page { size: A4; margin: 8mm; }
       }
-      @page { size: A4; margin: 10mm; }
     </style>
   </head><body>
-    <div class="no-print" style="margin-bottom:16px;display:flex;gap:10px;align-items:center;">
-      <h1>📦 Shipping Labels · ${artistName} · ${orders.length} orders</h1>
-      <button onclick="window.print()" style="padding:8px 20px;background:#e8829a;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">🖨️ Print</button>
+    <div class="no-print">
+      <h1>📦 ใบปะหน้าพัสดุ · ${artistName} · ${orders.length} รายการ</h1>
+      <button onclick="window.print()" style="padding:8px 20px;background:#e8829a;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">🖨️ พิมพ์ทั้งหมด</button>
     </div>
     <div class="grid">${labels}</div>
   </body></html>`)
@@ -1170,6 +1234,9 @@ async function loadSettings() {
     const data = await res.json()
     document.getElementById('settingShopName').value     = data.shop_name     || ''
     document.getElementById('settingEmail').value        = data.email         || ''
+    document.getElementById('settingSenderName').value    = data.sender_name    || ''
+    document.getElementById('settingSenderPhone').value   = data.sender_phone   || ''
+    document.getElementById('settingSenderAddress').value = data.sender_address || ''
     document.getElementById('settingAbout').value        = data.about_en      || ''
     document.getElementById('settingAboutTh').value      = data.about_th      || ''
     document.getElementById('settingShippingTHB').value     = data.shipping_thb       || ''
@@ -1182,8 +1249,11 @@ async function loadSettings() {
 
 async function saveSettings() {
   const settings = {
-    shop_name:    document.getElementById('settingShopName').value.trim(),
-    email:        document.getElementById('settingEmail').value.trim(),
+    shop_name:      document.getElementById('settingShopName').value.trim(),
+    email:          document.getElementById('settingEmail').value.trim(),
+    sender_name:    document.getElementById('settingSenderName').value.trim(),
+    sender_phone:   document.getElementById('settingSenderPhone').value.trim(),
+    sender_address: document.getElementById('settingSenderAddress').value.trim(),
     about_en:     document.getElementById('settingAbout').value.trim(),
     about_th:     document.getElementById('settingAboutTh').value.trim(),
     shipping_thb:      document.getElementById('settingShippingTHB').value || '0',
