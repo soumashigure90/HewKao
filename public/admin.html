@@ -913,9 +913,17 @@ async function exportOrders() {
     const eligible = orders.filter(o => ['paid','shipped'].includes(o.status))
     if (!eligible.length) { toast('ไม่มี order ที่พร้อม export', 'error'); return }
 
-    // หา artist list จาก orders จริงๆ
+    // หา artist list จาก orders จริงๆ — รวม artist จาก order_items ทุกอัน
     const artistSet = new Set()
-    eligible.forEach(o => o.order_items?.forEach(i => { if (i.products?.artist) artistSet.add(i.products.artist) }))
+    eligible.forEach(o => {
+      o.order_items?.forEach(i => {
+        const artist = i.products?.artist
+        if (artist) artistSet.add(artist)
+      })
+    })
+    console.log('[Export] eligible orders:', eligible.length)
+    console.log('[Export] artists found:', [...artistSet])
+    console.log('[Export] sample order_items:', eligible[0]?.order_items)
     const artists = ['ทั้งหมด', ...Array.from(artistSet)]
 
     const choice = prompt('เลือก Artist:\n' + artists.map((a,i) => i + ': ' + a).join('\n') + '\n\nพิมพ์ตัวเลข (0-' + (artists.length-1) + '):')
