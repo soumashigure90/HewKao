@@ -894,6 +894,78 @@ app.put('/api/admin/orders/:id', auth, adminOnly, async (req, res) => {
   res.json(data)
 })
 
+// POST /api/admin/orders/:id/tracking — บันทึก tracking + ส่ง email
+app.post('/api/admin/orders/:id/tracking', auth, adminOnly, async (req, res) => {
+  const { id } = req.params
+  const { tracking_number, carrier, tracking_url } = req.body
+  if (!tracking_number) return res.status(400).json({ error: 'Missing tracking number' })
+
+  try {
+    // update order status → shipped + save tracking info
+    const { data: order, error } = await supabase
+      .from('orders')
+      .update({
+        status: 'shipped',
+        tracking_number,
+        carrier: carrier || 'other',
+        tracking_url: tracking_url || null
+      })
+      .eq('id', id)
+      .select('*, members(email, full_name, username), order_items(quantity, price, products(name))')
+      .single()
+    if (error) throw error
+
+    // ส่ง email แจ้งลูกค้า
+    const toEmail = order.guest_email || order.members?.email
+    if (toEmail) {
+      const name = order.members?.full_name || order.members?.username || 'คุณลูกค้า'
+      const carrierNames = { flash:'Flash Express', kerry:'Kerry Express', ems:'EMS / ไปรษณีย์ไทย', jt:'J&T Express', ninja:'Ninja Van', custom:'ขนส่ง' }
+      const carrierName = carrierNames[carrier] || carrier || 'ขนส่ง'
+      const itemsHtml = (order.order_items||[]).map(i =>
+        `<div class="item-row"><span class="item-name">${i.products?.name||'?'}${i.quantity>1?' ×'+i.quantity:''}</span><span class="item-price">฿${(i.price*i.quantity).toLocaleString()}</span></div>`
+      ).join('')
+
+      const html = `<!DOCTYPE html><html><head>${emailStyle()}</head><body>
+        <div class="wrap">
+          <div class="header" style="background:linear-gradient(135deg,#2196F399,#2196F355);">
+            <h1>🚚 Order is on the Way!</h1>
+            <p>Order #${id} · กำลังจัดส่งแล้ว</p>
+          </div>
+          <div class="body">
+            <p style="color:#4a3f5c;font-size:14px;margin-bottom:20px;">
+              สวัสดีคุณ ${name} 🌸<br>
+              สินค้าของคุณถูกส่งออกแล้วค่ะ รอรับที่บ้านได้เลย!<br>
+              <span style="color:#8a7a9a;font-size:13px;">Your order has been shipped! Please wait for delivery.</span>
+            </p>
+            <div class="order-box">
+              <h3>📦 ORDER #${id}</h3>
+              ${itemsHtml}
+              <div class="total-row"><span>Total</span><span>฿${Number(order.total).toLocaleString()}</span></div>
+            </div>
+            <div style="background:#E3F2FD;border-radius:14px;padding:16px;margin-bottom:20px;text-align:center;">
+              <div style="font-size:12px;color:#1565C0;font-weight:700;margin-bottom:4px;">📦 ${carrierName}</div>
+              <div style="font-size:22px;font-weight:900;font-family:monospace;letter-spacing:3px;color:#0D47A1;margin:8px 0;">${tracking_number}</div>
+              ${tracking_url ? `<a href="${tracking_url}" style="display:inline-block;background:#1565C0;color:#fff;padding:12px 28px;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;margin-top:8px;">🔍 ตรวจสอบสถานะพัสดุ</a>` : ''}
+            </div>
+            <p style="font-size:12px;color:#8a7a9a;text-align:center;">
+              มีคำถาม? ติดต่อเราได้เลยค่ะ ·
+              <a href="mailto:soumashigure2@gmail.com" style="color:#e8829a;">soumashigure2@gmail.com</a>
+            </p>
+          </div>
+          <div class="footer">HewKao Shop 🌸 · hewkao.shop</div>
+        </div>
+      </body></html>`
+
+      await sendOrderEmail(toEmail, `🚚 Order #${id} กำลังจัดส่ง — HewKao Shop`, html)
+    }
+
+    res.json({ success: true, tracking_number, carrier, tracking_url })
+  } catch(e) {
+    console.error('Tracking error:', e)
+    res.status(500).json({ error: e.message })
+  }
+})
+
 // DELETE /api/admin/orders/:id
 app.delete('/api/admin/orders/:id', auth, adminOnly, async (req, res) => {
   const { id } = req.params
