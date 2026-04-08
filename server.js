@@ -723,7 +723,7 @@ app.get('/api/admin/orders', auth, adminOnly, async (req, res) => {
 
   const { data, error, count } = await supabase
     .from('orders')
-    .select(`*, members(username, email, address, phone, full_name, country), order_items(quantity, price, products(name, name_th, emoji, type))`, { count: 'exact' })
+    .select(`*, members(username, email, address, phone, full_name, country), order_items(quantity, price, products(name, name_th, emoji, type, artist))`, { count: 'exact' })
           .neq('admin_deleted', true)
 .order('created_at', { ascending: false })
     .range(from, to)
