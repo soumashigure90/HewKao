@@ -3065,8 +3065,11 @@ footer strong { color: var(--pink-d); }
     const orderItems = window._buyNowItems || cart
     const isPreorder   = orderItems.some(i => i.type === 'preorder')
     const isAllDigital = orderItems.every(i => i.type === 'digital')
-    const total = window._orderTotalTHB || orderItems.reduce((s,i) => s + i.price*i.qty, 0)
+    const total     = window._orderTotalTHB || orderItems.reduce((s,i) => s + i.price*i.qty, 0)
+    const total_usd = window._orderTotalUSD || null
+    const currency  = (lang === 'en' && total_usd) ? 'usd' : 'thb'
     window._orderTotalTHB = null
+    window._orderTotalUSD = null
     const note  = document.getElementById('checkoutNote')?.value?.trim() || ''
     const items = orderItems.map(i => ({ product_id:i.id, quantity:i.qty, price:i.price }))
     const guest_info = userProfile ? {
@@ -3091,7 +3094,7 @@ footer strong { color: var(--pink-d); }
       if (token) headers['Authorization'] = 'Bearer ' + token
       const res = await fetch(`${API}/api/orders`, {
         method:'POST', headers,
-        body: JSON.stringify({ total, note, items, guest_info, guest_email, slip_ref, discount_code })
+        body: JSON.stringify({ total, total_usd, currency, note, items, guest_info, guest_email, slip_ref, discount_code })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -3810,7 +3813,7 @@ footer strong { color: var(--pink-d); }
           </div>` : ''}
           <div class="order-card-footer">
             <div class="order-total-label">Total</div>
-            <div class="order-total-amount">฿${Number(o.total).toLocaleString()}</div>
+            <div class="order-total-amount">${o.currency === 'usd' && o.total_usd ? '$' + Number(o.total_usd).toFixed(2) : '฿' + Number(o.total).toLocaleString()}</div>
           </div>
         </div>`
       }).join('') + `</div>`
