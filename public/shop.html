@@ -2902,10 +2902,10 @@ footer strong { color: var(--pink-d); }
                           : userProfile?.country === 'Germany'    ? 'DE'
                           : userProfile?.country === 'France'     ? 'FR'
                           : 'TH',
-                  line1:       userProfile?.address  || undefined,
-                  city:        userProfile?.city     || undefined,
-                  state:       userProfile?.state    || undefined,
-                  postal_code: userProfile?.postcode || undefined,
+                  line1:       userProfile?.address  || '',
+                  city:        userProfile?.city     || '',
+                  state:       userProfile?.state    || '',
+                  postal_code: userProfile?.postcode || '',
                 }
               }
             }
