@@ -904,27 +904,39 @@ async function confirmShipping() {
 // ── EXPORT LABELS ──
 async function exportOrders() {
   try {
-    // ดึง paid+shipped orders
-    const artistFilter = document.getElementById('orderArtistFilter')?.value || ''
-    let url = `${API}/api/admin/orders?limit=500`
-    const res = await fetch(url, { headers: authHeader() })
-    const { orders } = await res.json()
+    // ดึง orders ทั้งหมด limit 500
+    const res = await fetch(`${API}/api/admin/orders?limit=500`, { headers: authHeader() })
+    const data = await res.json()
+    const orders = data.orders || data || []
 
-    // filter เฉพาะ paid/shipped และมีที่อยู่
-    let filtered = orders.filter(o => ['paid','shipped'].includes(o.status))
+    // filter เฉพาะ paid/shipped
+    const eligible = orders.filter(o => ['paid','shipped'].includes(o.status))
+    if (!eligible.length) { toast('ไม่มี order ที่พร้อม export', 'error'); return }
 
-    // เปิด popup เลือก artist
-    const artists = ['ทั้งหมด', 'Shigure_S', 'kono82', 'Espada GCon', 'MN762']
-    const choice = prompt('เลือก Artist:\n' + artists.map((a,i)=>i+': '+a).join('\n') + '\n\nพิมพ์ตัวเลข (0-'+(artists.length-1)+'):')
+    // หา artist list จาก orders จริงๆ
+    const artistSet = new Set()
+    eligible.forEach(o => o.order_items?.forEach(i => { if (i.products?.artist) artistSet.add(i.products.artist) }))
+    const artists = ['ทั้งหมด', ...Array.from(artistSet)]
+
+    const choice = prompt('เลือก Artist:
+' + artists.map((a,i) => i + ': ' + a).join('
+') + '
+
+พิมพ์ตัวเลข (0-' + (artists.length-1) + '):')
     if (choice === null) return
-    const chosenArtist = artists[parseInt(choice)] || 'ทั้งหมด'
+    const idx = parseInt(choice)
+    if (isNaN(idx) || idx < 0 || idx >= artists.length) { toast('เลือกตัวเลขที่ถูกต้อง', 'error'); return }
+    const chosenArtist = artists[idx]
+
+    let filtered = eligible
     if (chosenArtist !== 'ทั้งหมด') {
-      filtered = filtered.filter(o =>
+      filtered = eligible.filter(o =>
         o.order_items?.some(i => i.products?.artist === chosenArtist)
       )
     }
 
-    if (!filtered.length) { toast('ไม่มี order ที่ตรงเงื่อนไข', 'error'); return }
+    if (!filtered.length) { toast('ไม่มี order ของ ' + chosenArtist, 'error'); return }
+    toast('กำลัง export ' + filtered.length + ' orders...', '')
     printLabels(filtered, chosenArtist)
   } catch(e) { toast('❌ Export failed: ' + e.message, 'error') }
 }
