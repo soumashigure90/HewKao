@@ -918,11 +918,7 @@ async function exportOrders() {
     eligible.forEach(o => o.order_items?.forEach(i => { if (i.products?.artist) artistSet.add(i.products.artist) }))
     const artists = ['ทั้งหมด', ...Array.from(artistSet)]
 
-    const choice = prompt('เลือก Artist:
-' + artists.map((a,i) => i + ': ' + a).join('
-') + '
-
-พิมพ์ตัวเลข (0-' + (artists.length-1) + '):')
+    const choice = prompt('เลือก Artist:\n' + artists.map((a,i) => i + ': ' + a).join('\n') + '\n\nพิมพ์ตัวเลข (0-' + (artists.length-1) + '):')
     if (choice === null) return
     const idx = parseInt(choice)
     if (isNaN(idx) || idx < 0 || idx >= artists.length) { toast('เลือกตัวเลขที่ถูกต้อง', 'error'); return }
