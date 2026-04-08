@@ -447,7 +447,7 @@ app.post('/api/check-discount', auth, async (req, res) => {
 
 // POST /api/orders — create order (ไม่บังคับ login)
 app.post('/api/orders', async (req, res) => {
-  const { total, note, items, guest_info, guest_email, slip_ref, discount_code } = req.body
+  const { total, total_usd, currency, note, items, guest_info, guest_email, slip_ref, discount_code } = req.body
   if (!items || !items.length) return res.status(400).json({ error: 'No items' })
 
   let member_id = null
@@ -480,7 +480,7 @@ app.post('/api/orders', async (req, res) => {
 
     const { data: order, error: orderErr } = await supabase
       .from('orders')
-      .insert({ member_id, total, note: note||null, status: 'pending', guest_info: guest_info||null, guest_email: guest_email||null, slip_ref: slip_ref||null })
+      .insert({ member_id, total, total_usd: total_usd||null, currency: currency||'thb', note: note||null, status: 'pending', guest_info: guest_info||null, guest_email: guest_email||null, slip_ref: slip_ref||null })
       .select().single()
     if (orderErr) throw orderErr
 
@@ -549,7 +549,7 @@ app.post('/api/orders', async (req, res) => {
               <div class="order-box">
                 <h3>📦 ORDER SUMMARY</h3>
                 ${itemsHtml}
-                <div class="total-row"><span>Total</span><span>฿${Number(total).toLocaleString()}</span></div>
+                <div class="total-row"><span>Total</span><span>${currency === 'usd' && total_usd ? '$' + Number(total_usd).toFixed(2) : '฿' + Number(total).toLocaleString()}</span></div>
               </div>
               ${addrInfo ? `<div class="addr-box"><strong>📍 DELIVERY ADDRESS</strong>${addrInfo}</div>` : ''}
               ${note ? `<div class="addr-box" style="background:#FFF8DC;"><strong>📝 NOTE</strong>${note}</div>` : ''}
@@ -668,7 +668,7 @@ app.get('/api/my-orders', auth, async (req, res) => {
   try {
     const { data: orders, error } = await supabase
       .from('orders')
-      .select(`id, total, status, note, created_at, tracking_number, carrier, tracking_url,
+      .select(`id, total, total_usd, currency, status, note, created_at, tracking_number, carrier, tracking_url,
         order_items(quantity, price, products(name, name_th, emoji, image_url, type))`)
       .eq('member_id', req.user.id)
       .order('created_at', { ascending: false })
