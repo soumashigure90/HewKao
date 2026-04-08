@@ -3499,7 +3499,7 @@ input,textarea,select { background:#0d1117 !important; border-color:#2A3F5F !imp
       const c = await res.json()
       if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
       if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
-      if (c.heroDesc && c.heroDesc.trim())  document.getElementById('heroDesc').textContent = c.heroDesc.trim()
+      document.getElementById('heroDesc').textContent = (c.heroDesc && c.heroDesc.trim()) ? c.heroDesc.trim() : ''
       if (c.heroBg && c.heroBg.trim() !== '') {
         const hero = document.getElementById('heroSection')
         hero.style.cssText = `background: url('${c.heroBg}') center/cover no-repeat !important; position: relative; overflow: hidden;`
