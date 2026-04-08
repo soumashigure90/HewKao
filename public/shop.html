@@ -925,7 +925,7 @@ footer strong { color: var(--pink-d); }
 <div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(74,63,92,0.6);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
   <div style="text-align:center;">
     <div style="width:56px;height:56px;border:4px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;"></div>
-    <div id="loadingText" style="color:#fff;font-size:14px;font-weight:700;font-family:'Nunito',sans-serif;">Processing...</div>
+    <div id="loadingText" style="color:#fff;font-size:14px;font-weight:700;font-family:'Nunito',sans-serif;white-space:pre-line;line-height:1.7;text-align:center;">Processing...</div>
   </div>
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
@@ -2696,7 +2696,7 @@ footer strong { color: var(--pink-d); }
 
     // ถ้า total = 0 (คูปอง 100%) → ข้ามหน้า payment ไป submit เลย
     if (total === 0) {
-      showLoading('กำลังบันทึกคำสั่งซื้อ... 🛒')
+      showLoading('กำลังบันทึกคำสั่งซื้อ... 🛒\nPlacing your order...')
       setTimeout(() => {
         co.style.display = ''
         submitOrder()
@@ -2902,7 +2902,7 @@ footer strong { color: var(--pink-d); }
       btn.textContent = 'Processing...'
       btn.disabled = true
 
-      showLoading('กำลังชำระเงิน... 💳')
+      showLoading('กำลังชำระเงิน... 💳\nProcessing payment...')
       try {
         const { error, paymentIntent } = await stripeInstance.confirmPayment({
           elements: stripeElements,
