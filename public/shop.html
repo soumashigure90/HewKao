@@ -3477,7 +3477,7 @@ footer strong { color: var(--pink-d); }
       const c = await res.json()
       if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
       if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
-      if (c.heroDesc && c.heroDesc.trim())  document.getElementById('heroDesc').textContent = c.heroDesc.trim()
+      document.getElementById('heroDesc').textContent = (c.heroDesc && c.heroDesc.trim()) ? c.heroDesc.trim() : ''
       if (c.heroBg) {
         const hero = document.getElementById('heroSection')
         hero.style.backgroundImage    = `url('${c.heroBg}')`
