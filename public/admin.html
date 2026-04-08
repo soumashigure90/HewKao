@@ -915,11 +915,7 @@ async function exportOrders() {
 
     // เปิด popup เลือก artist
     const artists = ['ทั้งหมด', 'Shigure_S', 'kono82', 'Espada GCon', 'MN762']
-    const choice = prompt(`เลือก Artist:
-${artists.map((a,i)=>`${i}: ${a}`).join('
-')}
-
-พิมพ์ตัวเลข (0-${artists.length-1}):`)
+    const choice = prompt('เลือก Artist:\n' + artists.map((a,i)=>i+': '+a).join('\n') + '\n\nพิมพ์ตัวเลข (0-'+(artists.length-1)+'):')
     if (choice === null) return
     const chosenArtist = artists[parseInt(choice)] || 'ทั้งหมด'
     if (chosenArtist !== 'ทั้งหมด') {
