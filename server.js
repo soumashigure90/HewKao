@@ -668,7 +668,7 @@ app.get('/api/my-orders', auth, async (req, res) => {
   try {
     const { data: orders, error } = await supabase
       .from('orders')
-      .select(`id, total, status, note, created_at,
+      .select(`id, total, status, note, created_at, tracking_number, carrier, tracking_url,
         order_items(quantity, price, products(name, name_th, emoji, image_url, type))`)
       .eq('member_id', req.user.id)
       .order('created_at', { ascending: false })
@@ -724,7 +724,8 @@ app.get('/api/admin/orders', auth, adminOnly, async (req, res) => {
   const { data, error, count } = await supabase
     .from('orders')
     .select(`*, members(username, email, address, phone, full_name, country), order_items(quantity, price, products(name, name_th, emoji, type))`, { count: 'exact' })
-    .order('created_at', { ascending: false })
+          .neq('admin_deleted', true)
+.order('created_at', { ascending: false })
     .range(from, to)
   if (error) return res.status(500).json({ error: error.message })
   res.json({ orders: data, total: count, page, limit })
@@ -966,14 +967,15 @@ app.post('/api/admin/orders/:id/tracking', auth, adminOnly, async (req, res) => 
   }
 })
 
-// DELETE /api/admin/orders/:id
+// DELETE /api/admin/orders/:id — soft delete (ซ่อนจาก admin แต่ยังอยู่ใน order history ลูกค้า)
 app.delete('/api/admin/orders/:id', auth, adminOnly, async (req, res) => {
   const { id } = req.params
-  // ลบ order_items ก่อน
-  await supabase.from('order_items').delete().eq('order_id', id)
-  const { error } = await supabase.from('orders').delete().eq('id', id)
+  const { error } = await supabase
+    .from('orders')
+    .update({ admin_deleted: true })
+    .eq('id', id)
   if (error) return res.status(500).json({ error: error.message })
-  res.json({ message: 'Deleted' })
+  res.json({ message: 'Hidden from admin' })
 })
 
 // ═══════════════════════════════════════
