@@ -3501,7 +3501,7 @@ nav { background:rgba(255,255,255,0.92) !important; border-bottom:2px solid #A8D
       const c = await res.json()
       if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
       if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
-      if (c.heroDesc)  document.getElementById('heroDesc').textContent = c.heroDesc
+      if (c.heroDesc && c.heroDesc.trim())  document.getElementById('heroDesc').textContent = c.heroDesc.trim()
       if (c.heroBg) {
         const hero = document.getElementById('heroSection')
         hero.style.backgroundImage    = `url('${c.heroBg}')`
