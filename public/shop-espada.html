@@ -3559,11 +3559,9 @@ input,textarea,select { background:#0d1117 !important; border-color:#2A3F5F !imp
       if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
       if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
       if (c.heroDesc)  document.getElementById('heroDesc').textContent = c.heroDesc
-      if (c.heroBg) {
+      if (c.heroBg && c.heroBg.trim() !== '') {
         const hero = document.getElementById('heroSection')
-        hero.style.backgroundImage    = `url('${c.heroBg}')`
-        hero.style.backgroundSize     = 'cover'
-        hero.style.backgroundPosition = 'center'
+        hero.style.cssText = `background: url('${c.heroBg}') center/cover no-repeat !important; position: relative; overflow: hidden;`
         localStorage.setItem('espada_hero_bg', c.heroBg)
       }
       if (c.titleColor) {
@@ -3656,9 +3654,7 @@ input,textarea,select { background:#0d1117 !important; border-color:#2A3F5F !imp
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       const hero = document.getElementById('heroSection')
-      hero.style.backgroundImage = `url('${data.url}')`
-      hero.style.backgroundSize = 'cover'
-      hero.style.backgroundPosition = 'center'
+      hero.style.cssText = `background: url('${data.url}') center/cover no-repeat !important; position: relative; overflow: hidden;`
       localStorage.setItem('espada_hero_bg', data.url)
       showToast('✅ Hero image updated!')
     } catch(e) { showToast('❌ ' + e.message) }
