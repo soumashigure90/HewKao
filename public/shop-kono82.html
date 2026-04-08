@@ -3497,7 +3497,7 @@ nav { background:rgba(255,255,255,0.92) !important; border-bottom:2px solid #A8D
 
   async function applyPageContent(l) {
     try {
-      const res = await fetch(`${API}/api/page-content?lang=${l}&shop=Shigure_S`)
+      const res = await fetch(`${API}/api/page-content?lang=${l}&shop=kono82`)
       const c = await res.json()
       if (c.heroTag)   document.getElementById('heroTag').textContent  = c.heroTag
       if (c.heroTitle) document.getElementById('heroTitle').innerHTML  = c.heroTitle
