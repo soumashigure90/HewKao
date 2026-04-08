@@ -324,6 +324,14 @@ textarea{resize:vertical;min-height:80px;}
       <div class="form-group"><label>STATUS</label>
         <select id="pStatus"><option value="active">✅ Active</option><option value="hidden">🙈 Hidden</option></select>
       </div>
+      <div class="form-group"><label>🎨 ARTIST</label>
+        <select id="pArtist">
+          <option value="Shigure_S">🌸 Shigure_S</option>
+          <option value="kono82">🎮 Kono82</option>
+          <option value="EspadaGcon">⚔️ EspadaGcon</option>
+          <option value="MN762">🎨 MN762</option>
+        </select>
+      </div>
       <div class="form-group"><label>BADGE</label><input type="text" id="pBadge" placeholder="NEW, SALE, LIMITED..." /></div>
       <div class="form-group span2">
         <label>PRODUCT IMAGE</label>
@@ -615,6 +623,7 @@ async function openProductModal(id) {
         document.getElementById('pStock').value    = p.stock??''
         document.getElementById('pDesc').value     = p.description||''
         document.getElementById('pStatus').value   = p.status||'active'
+        document.getElementById('pArtist').value   = p.artist||'Shigure_S'
         document.getElementById('pBadge').value    = p.badge||''
         document.getElementById('pFileUrl').value         = p.file_url||''
         document.getElementById('pShippingDomTHB').value  = p.shipping_dom_thb != null ? p.shipping_dom_thb : ''
@@ -630,7 +639,8 @@ async function openProductModal(id) {
   } else {
     ['pName','pNameTh','pEmoji','pPrice','pPriceUsd','pStock','pDesc','pBadge','pFileUrl','pShippingDomTHB','pShippingIntlTHB','pShippingIntlUSD'].forEach(i => document.getElementById(i).value='')
     document.getElementById('pType').value   = 'physical'
-    document.getElementById('pStatus').value = 'active'
+    document.getElementById('pStatus').value  = 'active'
+    document.getElementById('pArtist').value  = 'Shigure_S'
     toggleFileUrlField('physical')
   }
   document.getElementById('productModal').classList.add('open')
@@ -673,6 +683,7 @@ async function saveProduct() {
       stock:       document.getElementById('pStock').value!==''?parseInt(document.getElementById('pStock').value):null,
       description: document.getElementById('pDesc').value.trim(),
       status:      document.getElementById('pStatus').value,
+      artist:      document.getElementById('pArtist').value || 'Shigure_S',
       badge:       document.getElementById('pBadge').value.trim().toUpperCase(),
       file_url:           document.getElementById('pFileUrl').value.trim() || null,
       shipping_dom_thb:   document.getElementById('pShippingDomTHB').value  !== '' ? parseFloat(document.getElementById('pShippingDomTHB').value)  : null,
