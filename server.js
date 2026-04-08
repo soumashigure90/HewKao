@@ -58,7 +58,8 @@ app.get('/api/verify', auth, (req, res) => {
 // Artist shops
 app.get('/', (req, res) => res.sendFile(__dirname + '/public/index.html'))
 app.get('/Shigure_S', (req, res) => res.sendFile(__dirname + '/public/shop.html'))
-app.get('/kono82',    (req, res) => res.sendFile(__dirname + '/public/shop-kono82.html'))
+app.get('/kono82',      (req, res) => res.sendFile(__dirname + '/public/shop-kono82.html'))
+app.get('/EspadaGcon',  (req, res) => res.sendFile(__dirname + '/public/shop-espada.html'))
 
 // ── Supabase ──
 const supabase = createClient(
