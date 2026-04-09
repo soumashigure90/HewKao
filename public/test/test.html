@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Shigure Mascot - Anti-Ghosting Final Version</title>
+<title>Shigure Mascot - Perfect State Fix</title>
 <style>
   body { margin: 0; overflow: hidden; background: transparent; }
 
+  /* --- ปุ่ม Toggle ^/v --- */
   #toggle-btn {
     position: fixed;
     bottom: 20px;
@@ -30,6 +31,7 @@
   }
   #toggle-btn:hover { background: rgba(0, 0, 0, 0.9); transform: scale(1.1); }
 
+  /* --- กล่องควบคุมตัวละคร --- */
   .shigure-container {
     position: fixed;
     width: 500px;  
@@ -147,9 +149,19 @@
 
   let isDragging = false, isShocked = false, isFalling = false, isPeeking = false, isHidden = false, hasMoved = false;
   let offsetX = 0, offsetY = 0;
-  let idleTimer, peekWaitTimer, edgeBlinkInterval;
+  let idleTimer, peekWaitTimer, edgeBlinkInterval, randomPeekGlobalTimer;
 
-  // --- ระบบดวงตากันตาซ้อน ---
+  // --- ฟังก์ชันล้างเลเยอร์ทั้งหมด ---
+  function resetAllLayers() {
+    mascotDragFull.style.opacity = '0';
+    mascotFallFull.style.opacity = '0';
+    mascotEdgeFull.style.opacity = '0';
+    mascotEdgeBlink.style.opacity = '0';
+    mascotParts.style.opacity = '1';
+    stopEdgeBlinking();
+    resetEyesToNormal();
+  }
+
   function hideAllEyes() {
     Object.values(eyes).forEach(eye => eye.style.opacity = '0');
   }
@@ -160,28 +172,29 @@
     eyes.openR.style.opacity = '1';
   }
 
-  // --- ล้างสถานะภาพ Full ทั้งหมด ---
-  function resetAllFullLayers() {
-    mascotDragFull.style.opacity = '0';
-    mascotFallFull.style.opacity = '0';
-    mascotEdgeFull.style.opacity = '0';
-    mascotEdgeBlink.style.opacity = '0';
-    stopEdgeBlinking();
-  }
-
-  // --- Toggle Hide/Show ---
+  // --- Toggle Logic (แบบล้างค้างคา) ---
   toggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    
+    // 1. ล้างคิวการทำงานเดิมทั้งหมดก่อน
+    clearTimeout(idleTimer);
+    clearTimeout(peekWaitTimer);
+    clearTimeout(randomPeekGlobalTimer);
+    resetAllLayers();
+    
     isHidden = !isHidden;
+    
     if (isHidden) {
+      // มุดซ่อน
       mascot.style.top = window.innerHeight + 'px';
       toggleBtn.innerText = '^';
-      clearTimeout(idleTimer);
-      stopEdgeBlinking();
+      isPeeking = false; // ปลดล็อกสถานะ Peek ทันที
     } else {
+      // แสดงตัว
       mascot.style.top = (window.innerHeight - 380) + 'px';
       toggleBtn.innerText = 'v';
-      resetIdleTimer();
+      isPeeking = false;
+      resetIdleTimer(); // เริ่มนับ 1 ใหม่
     }
   });
 
@@ -190,7 +203,8 @@
     if (isFalling || isHidden) return;
     clearTimeout(idleTimer);
     clearTimeout(peekWaitTimer);
-    resetAllFullLayers();
+    clearTimeout(randomPeekGlobalTimer);
+    stopEdgeBlinking();
     
     isDragging = true;
     hasMoved = false;
@@ -203,14 +217,9 @@
     
     mascotParts.style.opacity = '0';
     mascotDragFull.style.opacity = '1';
+    mascotFallFull.style.opacity = '0';
+    mascotEdgeFull.style.opacity = '0';
     mascot.style.transition = 'none';
-  }
-
-  function moveMascot(clientX, clientY) {
-    if (!isDragging) return;
-    hasMoved = true;
-    mascot.style.left = (clientX - offsetX) + 'px';
-    mascot.style.top = (clientY - offsetY) + 'px';
   }
 
   function endDrag() {
@@ -218,20 +227,20 @@
     isDragging = false;
     isFalling = true;
     
-    resetAllFullLayers();
+    mascotDragFull.style.opacity = '0';
     mascotFallFull.style.opacity = '1';
-    
     mascot.style.transition = 'top 0.6s cubic-bezier(0.47, 0, 0.745, 0.715)';
     mascot.style.top = (window.innerHeight - 380) + 'px';
     
     setTimeout(() => {
-      if (!isDragging) {
-        resetAllFullLayers();
+      if (!isDragging && !isHidden) {
+        mascotFallFull.style.opacity = '0';
         mascotEdgeFull.style.opacity = '1';
         startEdgeBlinking();
         setTimeout(() => {
-          if (!isDragging && !isPeeking) {
-            resetAllFullLayers();
+          if (!isDragging && !isHidden && !isPeeking) {
+            stopEdgeBlinking();
+            mascotEdgeFull.style.opacity = '0';
             mascotParts.style.opacity = '1';
             isFalling = false;
             resetEyesToNormal();
@@ -242,36 +251,38 @@
     }, 600);
   }
 
-  // --- Peek & Random (แก้ไขการสลับเลเยอร์) ---
+  // --- Random Peek (ปรับปรุงให้ไม่ซ้อน) ---
   function randomPeek() {
     if (isDragging || isShocked || isFalling || isPeeking || isHidden) return;
     isPeeking = true;
-    
+
     mascot.style.transition = 'top 0.8s ease-in';
     mascot.style.top = window.innerHeight + 'px';
-    
-    setTimeout(() => {
+
+    randomPeekGlobalTimer = setTimeout(() => {
+      // เช็คอีกครั้งเผื่อโดนกดซ่อนหรือลากไปแล้ว
       if (isHidden || isDragging) { isPeeking = false; return; }
-      
+
       mascot.style.left = Math.random() * (window.innerWidth - 500) + 'px';
-      resetAllFullLayers(); // ล้างชิ้นเต็มก่อน
-      mascotParts.style.opacity = '1'; // โชว์ร่างแยกเพื่อเด้ง
-      resetEyesToNormal();
       
+      // ล้างสถานะภาพก่อนโชว์
+      mascotParts.style.opacity = '1';
+      mascotEdgeFull.style.opacity = '0';
+      resetEyesToNormal();
+
       mascot.style.transition = 'top 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
       mascot.style.top = (window.innerHeight - 380) + 'px';
-      
+
       setTimeout(() => {
         if (isPeeking && !isDragging && !isHidden) {
-          // สลับจากร่างแยกเป็นร่างเกาะ (Edge)
           mascotParts.style.opacity = '0';
-          resetAllFullLayers(); // ล้างเผื่อ
           mascotEdgeFull.style.opacity = '1';
           startEdgeBlinking();
           
           peekWaitTimer = setTimeout(() => {
-            if (isPeeking && !isDragging) {
-              resetAllFullLayers();
+            if (isPeeking && !isDragging && !isHidden) {
+              stopEdgeBlinking();
+              mascotEdgeFull.style.opacity = '0';
               mascotParts.style.opacity = '1';
               isPeeking = false;
               resetIdleTimer();
@@ -282,14 +293,7 @@
     }, 1000);
   }
 
-  // --- Event Listeners ---
-  mascot.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
-  document.addEventListener('mousemove', (e) => moveMascot(e.clientX, e.clientY));
-  document.addEventListener('mouseup', endDrag);
-  mascot.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
-  document.addEventListener('touchmove', (e) => { if(isDragging){ moveMascot(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, {passive:false});
-  document.addEventListener('touchend', endDrag);
-
+  // --- Utility ---
   function resetIdleTimer() {
     clearTimeout(idleTimer);
     if (!isDragging && !isShocked && !isFalling && !isPeeking && !isHidden) {
@@ -297,7 +301,43 @@
     }
   }
 
-  // --- Click Shock ---
+  function startEdgeBlinking() {
+    stopEdgeBlinking();
+    edgeBlinkInterval = setInterval(() => {
+      if (mascotEdgeFull.style.opacity === '1') {
+        mascotEdgeBlink.style.opacity = '1';
+        setTimeout(() => { if(mascotEdgeFull.style.opacity === '1') mascotEdgeBlink.style.opacity = '0'; }, 150);
+      }
+    }, 3000 + Math.random() * 2000);
+  }
+
+  function stopEdgeBlinking() {
+    clearInterval(edgeBlinkInterval);
+    mascotEdgeBlink.style.opacity = '0';
+  }
+
+  // --- Listeners ---
+  mascot.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      hasMoved = true;
+      mascot.style.left = (e.clientX - offsetX) + 'px';
+      mascot.style.top = (e.clientY - offsetY) + 'px';
+    }
+  });
+  document.addEventListener('mouseup', endDrag);
+
+  mascot.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
+  document.addEventListener('touchmove', (e) => {
+    if (isDragging) {
+      mascot.style.left = (e.touches[0].clientX - offsetX) + 'px';
+      mascot.style.top = (e.touches[0].clientY - offsetY) + 'px';
+      e.preventDefault();
+    }
+  }, {passive:false});
+  document.addEventListener('touchend', endDrag);
+
+  // Click Shock
   mascot.addEventListener('click', () => {
     if (hasMoved || isShocked || isDragging || isFalling || isPeeking || isHidden) return;
     isShocked = true;
@@ -316,7 +356,7 @@
     }, 1000);
   });
 
-  // --- ระบบกระพริบตา Idle ---
+  // Blink
   setInterval(() => {
     if (!isShocked && !isDragging && !isFalling && !isPeeking && !isHidden) {
       eyes.openL.style.opacity = '0';
@@ -330,21 +370,6 @@
       }, 150);
     }
   }, 4000);
-
-  function startEdgeBlinking() {
-    stopEdgeBlinking();
-    edgeBlinkInterval = setInterval(() => {
-      if (mascotEdgeFull.style.opacity === '1') {
-        mascotEdgeBlink.style.opacity = '1';
-        setTimeout(() => { if(mascotEdgeFull.style.opacity === '1') mascotEdgeBlink.style.opacity = '0'; }, 150);
-      }
-    }, 3000 + Math.random() * 2000);
-  }
-
-  function stopEdgeBlinking() {
-    clearInterval(edgeBlinkInterval);
-    mascotEdgeBlink.style.opacity = '0';
-  }
 
   resetIdleTimer();
 </script>
