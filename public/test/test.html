@@ -3,116 +3,98 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Shigure Mascot - With Hide Button</title>
+<title>Shigure Mascot - Default Show Version</title>
 <style>
-  /* --- [เพิ่มเติม] สไตล์ของปุ่มซ่อน/แสดง --- */
+  /* 1. ปุ่ม Toggle ^ */
   .toggle-btn {
     position: absolute;
-    top: 250px; /* ปรับระดับความสูงของปุ่มตามชอบ */
+    top: 250px; /* อยู่ประมาณกลางกล่องน้อง */
     right: 20px;
     width: 40px;
     height: 40px;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-family: sans-serif;
-    font-weight: bold;
-    z-index: 10000; /* อยู่เหนือเลเยอร์น้อง */
-    transition: transform 0.3s ease;
-    pointer-events: auto; /* ให้ปุ่มกดได้เสมอ */
+    font-size: 20px;
+    z-index: 10000;
+    transition: transform 0.3s ease, background 0.3s;
+    pointer-events: auto;
   }
-  .toggle-btn.hidden-state {
-    transform: rotate(180deg); /* หมุนปุ่มเป็น v เมื่อซ่อนอยู่ */
-  }
+  .toggle-btn:hover { background: rgba(0, 0, 0, 0.8); }
+  .toggle-btn.hidden-state { transform: rotate(180deg); }
 
-  /* กล่องหลัก */
+  /* 2. กล่องควบคุมตัวละคร */
   .shigure-container {
     position: fixed;
     width: 500px;  
     height: 500px; 
+    /* --- ตั้งค่าเริ่มต้นให้โผล่มาเลย --- */
     top: calc(100vh - 380px); 
     left: calc(100vw - 550px);
+    
     cursor: grab;
     z-index: 9999;
     user-select: none;
     touch-action: none;
     transform-origin: center bottom;
-    transition: top 0.5s cubic-bezier(0.47, 0, 0.745, 0.715); /* เพิ่ม Transition ตอนมุดซ่อน */
+    transition: top 0.6s cubic-bezier(0.23, 1, 0.32, 1);
   }
-
-  /* เลเยอร์ภาพน้องๆ (เหมือนเดิม) */
-  .shigure-layer {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center bottom;
-    pointer-events: none;
-    transition: opacity 0.1s ease-out;
-  }
-
-  /* เลเยอร์สถานะพิเศษ */
-  .layer-edge-full  { z-index: 160; background-image: url('shigure_edge.png'); opacity: 0; }
-  .layer-edge-blink { z-index: 161; background-image: url('shigure_edge2.png'); opacity: 0; }
-  .layer-fall-full  { z-index: 150; background-image: url('shigure_fall.png'); opacity: 0; }
-  .layer-drag-full  { z-index: 100; background-image: url('shigure_drag.png'); opacity: 0; }
-
-  /* Z-index โมเดลแยกชิ้น (ก๊อปจากอันเดิมของคุณมาใส่ได้เลย) */
-  /* .layer-hair-back, .layer-head, etc... */
+  
+  /* ... (Style ส่วนอื่นๆ เหมือนเดิม) ... */
 </style>
 </head>
 <body>
 
 <div class="shigure-container" id="shigure-mascot">
   <div class="toggle-btn" id="toggle-btn">^</div>
-
+  
   <div class="shigure-layer layer-edge-full" id="mascot-edge-full"></div>
   <div class="shigure-layer layer-edge-blink" id="mascot-edge-blink"></div>
   <div class="shigure-layer layer-fall-full" id="mascot-fall-full"></div>
   <div class="shigure-layer layer-drag-full" id="mascot-drag-full"></div>
-  
-  <div id="mascot-parts">
-    </div>
+  <div id="mascot-parts"> </div>
 </div>
 
 <script>
-  const mascot = document.getElementById('shigure-mascot');
-  const toggleBtn = document.getElementById('toggle-btn');
-  // ... (ตัวแปรอื่นๆ เหมือนเดิม) ...
+  // ... (ประกาศตัวแปรเหมือนเดิม) ...
+  let isHidden = false; 
 
-  let isHidden = false; // สถานะซ่อนตัว
-
-  // --- ระบบซ่อน/แสดง ---
+  // --- ระบบปุ่ม Toggle (ซ่อน/แสดง) ---
   toggleBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // กันไม่ให้ไปติด event click ของตัว mascot
+    e.stopPropagation(); // กันไม่ให้ไปติด event ลากน้อง
     isHidden = !isHidden;
 
     if (isHidden) {
-      // มุดซ่อนลงใต้จอ
-      mascot.style.top = (window.innerHeight - 50) + 'px'; // เหลือไว้แค่ขอบบนกับปุ่ม
+      // มุดซ่อนลงไป (เหลือไว้แค่ขอบบนและปุ่ม)
+      mascot.style.top = (window.innerHeight - 50) + 'px';
       toggleBtn.classList.add('hidden-state');
-      clearTimeout(idleTimer); // หยุดสุ่มโผล่ตอนซ่อน
+      clearTimeout(idleTimer); // หยุดสุ่มโผล่
+      stopEdgeBlinking();
     } else {
-      // โผล่กลับมาท่าปกติ
+      // โผล่กลับมาตำแหน่ง Idle ปกติ
       const groundPos = window.innerHeight - 380;
       mascot.style.top = groundPos + 'px';
       toggleBtn.classList.remove('hidden-state');
-      resetIdleTimer(); // กลับมาเริ่มระบบสุ่มโผล่ใหม่
+      resetIdleTimer(); // กลับมาสุ่มโผล่ใหม่
     }
   });
 
-  // --- [สำคัญ] ปรับแก้ในฟังก์ชัน randomPeek ---
+  // --- ปรับแก้ในฟังก์ชัน randomPeek ---
   function randomPeek() {
-    if (isDragging || isShocked || isFalling || isPeeking || isHidden) return; // เพิ่มเงื่อนไข isHidden
-    // ... (โค้ดที่เหลือเหมือนเดิม) ...
+    // ถ้าน้อง "ถูกซ่อนอยู่" ห้ามแอบวาร์ปไปโผล่ที่อื่น
+    if (isDragging || isShocked || isFalling || isPeeking || isHidden) return;
+    
+    // ... (โค้ดมุดหายและสุ่มโผล่เหมือนเดิม) ...
   }
 
-  // ... (โค้ดส่วนการลาก, การร่วง, การกระพริบตา เหมือนเดิมเป๊ะ) ...
+  // ... (โค้ดส่วนอื่นๆ คงเดิม) ...
+  
+  // เริ่มนับเวลา Idle ทันทีเมื่อโหลดหน้าเว็บ
+  resetIdleTimer(); 
 </script>
 </body>
 </html>
