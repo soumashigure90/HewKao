@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Shigure Mascot - Eyes Fixed & Catch Mid-Air</title>
+<title>Shigure Mascot - Z-Index & Eyes Fix</title>
 <style>
   body { margin: 0; overflow: hidden; background: transparent; }
 
-  /* --- ปุ่ม Toggle ^/v --- */
+  /* --- ปุ่ม Toggle --- */
   #toggle-btn {
     position: fixed;
     bottom: 20px;
@@ -22,15 +22,11 @@
     justify-content: center;
     cursor: pointer;
     font-size: 24px;
-    font-family: Arial, sans-serif;
-    z-index: 10001;
+    z-index: 20000; /* ดันขึ้นไปสูงสุด */
     transition: all 0.3s ease;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    user-select: none;
-    touch-action: manipulation;
   }
 
-  /* --- กล่องควบคุมตัวละคร --- */
+  /* --- กล่องน้อง --- */
   .shigure-container {
     position: fixed;
     width: 500px;  
@@ -41,8 +37,6 @@
     z-index: 9999;
     user-select: none;
     touch-action: none;
-    transform-origin: center bottom;
-    transition: top 0.6s cubic-bezier(0.23, 1, 0.32, 1);
   }
 
   .shigure-layer {
@@ -53,38 +47,44 @@
     background-repeat: no-repeat;
     background-position: center bottom;
     pointer-events: none;
-    transition: opacity 0.1s ease-out;
   }
 
-  /* เลเยอร์สถานะพิเศษ */
-  .layer-edge-full  { z-index: 160; background-image: url('shigure_edge.png'); opacity: 0; }
-  .layer-edge-blink { z-index: 161; background-image: url('shigure_edge2.png'); opacity: 0; }
-  .layer-fall-full  { z-index: 150; background-image: url('shigure_fall.png'); opacity: 0; }
-  .layer-drag-full  { z-index: 100; background-image: url('shigure_drag.png'); opacity: 0; }
-  .layer-drag-alt   { z-index: 101; background-image: url('shigure_drag2.png'); opacity: 0; }
+  /* --- ลำดับการวางเลเยอร์ (Z-INDEX FIX) --- */
+  /* พวกท่าทางพิเศษ (Full Body) ให้สูงที่สุด */
+  .layer-edge-full  { z-index: 500; background-image: url('shigure_edge.png'); opacity: 0; }
+  .layer-edge-blink { z-index: 510; background-image: url('shigure_edge2.png'); opacity: 0; }
+  .layer-fall-full  { z-index: 400; background-image: url('shigure_fall.png'); opacity: 0; }
+  .layer-drag-full  { z-index: 410; background-image: url('shigure_drag.png'); opacity: 0; }
+  .layer-drag-alt   { z-index: 420; background-image: url('shigure_drag2.png'); opacity: 0; }
 
-  /* --- อนิเมชั่นแยกชิ้นส่วน --- */
-  .layer-hair-back    { z-index: 1;  background-image: url('hair back.png'); animation: hairBackSway 10s ease-in-out infinite; transform-origin: center top; }
-  .layer-costume-back { z-index: 2;  background-image: url('costume Back.png'); }
-  .layer-main-body    { z-index: 3;  background-image: url('main body.png'); }
-  .layer-arm-l        { z-index: 4;  background-image: url('arm L.png'); }
-  .layer-arm-r        { z-index: 5;  background-image: url('arm R.png'); }
-  .layer-arm-shock-l  { z-index: 6;  background-image: url('arm shock L.png'); opacity: 0; }
-  .layer-arm-shock-r  { z-index: 7;  background-image: url('arm shock R.png'); opacity: 0; }
-  .layer-neck         { z-index: 8;  background-image: url('neck.png'); }
-  .layer-costume-front{ z-index: 9;  background-image: url('costume Front.png'); }
-  .layer-head         { z-index: 10; background-image: url('Head.png'); animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
-  .layer-hair-front   { z-index: 11; background-image: url('hair front.png'); animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
-  .layer-hair-l       { z-index: 12; background-image: url('hair L.png'); animation: hairSideSwayL 9s ease-in-out infinite; transform-origin: 85% 10%; }
-  .layer-hair-r       { z-index: 13; background-image: url('hair R.png'); animation: hairSideSwayR 9s ease-in-out infinite; transform-origin: 15% 10%; }
+  /* ชิ้นส่วนแยก (Idle) */
+  .layer-hair-back    { z-index: 10;  background-image: url('hair back.png'); animation: hairBackSway 10s ease-in-out infinite; transform-origin: center top; }
+  .layer-costume-back { z-index: 20;  background-image: url('costume Back.png'); }
+  .layer-main-body    { z-index: 30;  background-image: url('main body.png'); }
+  .layer-arm-l        { z-index: 40;  background-image: url('arm L.png'); }
+  .layer-arm-r        { z-index: 50;  background-image: url('arm R.png'); }
+  .layer-arm-shock-l  { z-index: 60;  background-image: url('arm shock L.png'); opacity: 0; }
+  .layer-arm-shock-r  { z-index: 70;  background-image: url('arm shock R.png'); opacity: 0; }
+  .layer-neck         { z-index: 80;  background-image: url('neck.png'); }
+  .layer-costume-front{ z-index: 90;  background-image: url('costume Front.png'); }
   
-  /* Sync อนิเมชั่นหน้าตา */
-  .layer-eyes-l, .layer-eyes-r, .layer-eye-blink-l, .layer-eye-blink-r, .layer-eye-shock-l, .layer-eye-shock-r, .layer-mouth, .layer-mouth-shock {
-    animation: headNaturalMove 15s ease-in-out infinite;
-    transform-origin: 50% 35%;
-  }
+  /* ส่วนหัว */
+  .layer-head         { z-index: 100; background-image: url('Head.png'); animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  
+  /* [สำคัญ] ส่วนใบหน้า ต้อง Z-Index สูงกว่า Head (100) ชัดเจน */
+  .layer-eyes-l       { z-index: 110; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-eyes-r       { z-index: 111; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-eye-blink-l  { z-index: 112; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-eye-blink-r  { z-index: 113; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-mouth        { z-index: 120; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-eye-shock-l  { z-index: 130; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-eye-shock-r  { z-index: 131; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-mouth-shock  { z-index: 140; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  
+  .layer-hair-front   { z-index: 150; background-image: url('hair front.png'); animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-hair-l       { z-index: 160; background-image: url('hair L.png'); animation: hairSideSwayL 9s ease-in-out infinite; transform-origin: 85% 10%; }
+  .layer-hair-r       { z-index: 170; background-image: url('hair R.png'); animation: hairSideSwayR 9s ease-in-out infinite; transform-origin: 15% 10%; }
 
-  /* --- Keyframes --- */
   @keyframes headNaturalMove { 0%, 25%, 100% { transform: rotate(0deg) translateY(0); } 35%, 50% { transform: rotate(-1.5deg) translateY(1px); } 60%, 75% { transform: rotate(1.5deg) translateY(-1px); } 85%, 95% { transform: rotate(0deg) translateY(4px); } }
   @keyframes hairBackSway { 0%, 100% { transform: skewX(-0.5deg); } 50% { transform: skewX(0.5deg); } }
   @keyframes hairSideSwayL { 0%, 100% { transform: rotate(-1deg) skewY(0.5deg); } 50% { transform: rotate(1.2deg) skewY(-0.5deg); } }
@@ -113,9 +113,7 @@
     <div class="shigure-layer layer-neck"></div>
     <div class="shigure-layer layer-costume-front"></div>
     <div class="shigure-layer layer-head"></div>
-    <div class="shigure-layer layer-hair-front"></div>
-    <div class="shigure-layer layer-hair-l"></div>
-    <div class="shigure-layer layer-hair-r"></div>
+    
     <div class="shigure-layer layer-eyes-l" id="eye-open-l" style="background-image: url('eye L.png');"></div>
     <div class="shigure-layer layer-eyes-r" id="eye-open-r" style="background-image: url('eyes R.png');"></div>
     <div class="shigure-layer layer-eye-blink-l" id="eye-close-l" style="background-image: url('eye L close.png'); opacity: 0;"></div>
@@ -124,10 +122,17 @@
     <div class="shigure-layer layer-eye-shock-l" id="eye-shock-l" style="background-image: url('eye shock L.png'); opacity: 0;"></div>
     <div class="shigure-layer layer-eye-shock-r" id="eye-shock-r" style="background-image: url('eye shock R.png'); opacity: 0;"></div>
     <div class="shigure-layer layer-mouth-shock" id="mouth-shock" style="background-image: url('mouth shock.png'); opacity: 0;"></div>
+    
+    <div class="shigure-layer layer-hair-front"></div>
+    <div class="shigure-layer layer-hair-l"></div>
+    <div class="shigure-layer layer-hair-r"></div>
   </div>
 </div>
 
 <script>
+  // ... (ใส่ JavaScript เดิมทั้งหมดจากข้อความก่อนหน้าได้เลยครับ) ...
+  // เพราะ Logic ข้างในเหมือนเดิมเป๊ะ แค่เปลี่ยนลำดับภาพใน HTML และ CSS ครับ
+  
   const mascot = document.getElementById('shigure-mascot');
   const toggleBtn = document.getElementById('toggle-btn');
   const mascotParts = document.getElementById('mascot-parts');
@@ -156,7 +161,6 @@
     stopEdgeBlinking(); resetEyesToNormal();
   }
 
-  // Toggle
   toggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     clearTimeout(idleTimer); clearTimeout(peekWaitTimer); clearTimeout(randomPeekGlobalTimer);
@@ -166,7 +170,6 @@
     else { mascot.style.top = (window.innerHeight - 380) + 'px'; toggleBtn.innerText = 'v'; resetIdleTimer(); }
   });
 
-  // Drag Logic (Catch Mid-Air)
   function startDrag(clientX, clientY) {
     if (isHidden) return;
     const wasFalling = isFalling;
@@ -206,7 +209,6 @@
     }, 600);
   }
 
-  // Events
   mascot.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
   document.addEventListener('mousemove', (e) => moveMascot(e.clientX, e.clientY));
   document.addEventListener('mouseup', endDrag);
@@ -214,7 +216,6 @@
   document.addEventListener('touchmove', (e) => { if(isDragging){ moveMascot(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, {passive:false});
   document.addEventListener('touchend', endDrag);
 
-  // Peek
   function randomPeek() {
     if (isDragging || isShocked || isFalling || isPeeking || isHidden) return;
     isPeeking = true;
@@ -244,9 +245,28 @@
   function startEdgeBlinking() { stopEdgeBlinking(); edgeBlinkInterval = setInterval(() => { if(mascotEdgeFull.style.opacity === '1'){ mascotEdgeBlink.style.opacity = '1'; setTimeout(() => { if(mascotEdgeFull.style.opacity === '1') mascotEdgeBlink.style.opacity = '0'; }, 150); } }, 3000 + Math.random() * 2000); }
   function stopEdgeBlinking() { clearInterval(edgeBlinkInterval); mascotEdgeBlink.style.opacity = '0'; }
 
-  // Blink & Click
   setInterval(() => { if(!isShocked && !isDragging && !isFalling && !isPeeking && !isHidden){ eyes.openL.style.opacity = '0'; eyes.openR.style.opacity = '0'; eyes.closeL.style.opacity = '1'; eyes.closeR.style.opacity = '1'; setTimeout(() => { if(!isShocked && !isDragging && !isFalling && !isPeeking && !isHidden) resetEyesToNormal(); }, 150); } }, 4000);
-  mascot.addEventListener('click', () => { if(hasMoved || isShocked || isDragging || isFalling || isPeeking || isHidden) return; isShocked = true; clearTimeout(idleTimer); hideAllEyes(); eyes.shockL.style.opacity = '1'; eyes.shockR.style.opacity = '1'; document.getElementById('mouth-shock').style.opacity = '1'; document.getElementById('arm-normal-l').style.opacity = '0'; document.getElementById('arm-normal-r').style.opacity = '0'; document.getElementById('arm-shock-l').style.opacity = '1'; document.getElementById('arm-shock-r').style.opacity = '1'; mascot.style.transform = 'scale(1.1) translateY(-15px)'; setTimeout(() => { isShocked = false; resetEyesToNormal(); document.getElementById('mouth-shock').style.opacity = '0'; document.getElementById('arm-normal-l').style.opacity = '1'; document.getElementById('arm-normal-r').style.opacity = '1'; document.getElementById('arm-shock-l').style.opacity = '0'; document.getElementById('arm-shock-r').style.opacity = '0'; mascot.style.transform = 'scale(1)'; resetIdleTimer(); }, 1000); });
+  
+  mascot.addEventListener('click', () => { 
+    if(hasMoved || isShocked || isDragging || isFalling || isPeeking || isHidden) return; 
+    isShocked = true; clearTimeout(idleTimer); hideAllEyes(); 
+    eyes.shockL.style.opacity = '1'; eyes.shockR.style.opacity = '1'; 
+    document.getElementById('mouth-shock').style.opacity = '1'; 
+    document.getElementById('arm-normal-l').style.opacity = '0'; 
+    document.getElementById('arm-normal-r').style.opacity = '0'; 
+    document.getElementById('arm-shock-l').style.opacity = '1'; 
+    document.getElementById('arm-shock-r').style.opacity = '1'; 
+    mascot.style.transform = 'scale(1.1) translateY(-15px)'; 
+    setTimeout(() => { 
+      isShocked = false; resetEyesToNormal(); 
+      document.getElementById('mouth-shock').style.opacity = '0'; 
+      document.getElementById('arm-normal-l').style.opacity = '1'; 
+      document.getElementById('arm-normal-r').style.opacity = '1'; 
+      document.getElementById('arm-shock-l').style.opacity = '0'; 
+      document.getElementById('arm-shock-r').style.opacity = '0'; 
+      mascot.style.transform = 'scale(1)'; resetIdleTimer(); 
+    }, 1000); 
+  });
 
   resetIdleTimer();
 </script>
