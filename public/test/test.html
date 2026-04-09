@@ -3,41 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Shigure Mascot - Complete Edition</title>
+<title>Shigure Mascot - Stable Peek & Edge Fix</title>
 <style>
-  body { margin: 0; overflow: hidden; background: transparent; }
-
-  /* --- ปุ่ม Toggle ^/v แยกอิสระ --- */
-  #toggle-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 45px;
-    height: 45px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 24px;
-    font-family: Arial, sans-serif;
-    z-index: 10001;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    user-select: none;
-    touch-action: manipulation;
-  }
-  #toggle-btn:hover { background: rgba(0, 0, 0, 0.9); transform: scale(1.1); }
-
-  /* --- กล่องควบคุมตัวละคร --- */
+  /* 1. กล่องควบคุมตัวละคร */
   .shigure-container {
     position: fixed;
     width: 500px;  
     height: 500px; 
-    top: calc(100vh - 380px); /* ค่าเริ่มต้น: ยืนปกติ */
+    /* เริ่มต้นที่พื้น */
+    top: calc(100vh - 380px); 
     left: calc(100vw - 550px);
+    
     cursor: grab;
     z-index: 9999;
     user-select: none;
@@ -45,12 +21,15 @@
     transform-origin: center bottom;
     transition: top 0.6s cubic-bezier(0.23, 1, 0.32, 1);
   }
+  
   .shigure-container:active { cursor: grabbing; }
 
   .shigure-layer {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center bottom;
@@ -64,7 +43,7 @@
   .layer-fall-full  { z-index: 150; background-image: url('shigure_fall.png'); opacity: 0; }
   .layer-drag-full  { z-index: 100; background-image: url('shigure_drag.png'); opacity: 0; }
 
-  /* --- อนิเมชั่น Idle ชิ้นส่วนแยก --- */
+  /* --- ลำดับ Z-index โมเดลแยกชิ้น (เหมือนเดิม) --- */
   .layer-hair-back    { z-index: 1;  background-image: url('hair back.png'); animation: hairBackSway 10s ease-in-out infinite; transform-origin: center top; }
   .layer-costume-back { z-index: 2;  background-image: url('costume Back.png'); }
   .layer-main-body    { z-index: 3;  background-image: url('main body.png'); }
@@ -79,19 +58,22 @@
   .layer-hair-l       { z-index: 12; background-image: url('hair L.png'); animation: hairSideSwayL 9s ease-in-out infinite; transform-origin: 85% 10%; }
   .layer-hair-r       { z-index: 13; background-image: url('hair R.png'); animation: hairSideSwayR 9s ease-in-out infinite; transform-origin: 15% 10%; }
   
+  .layer-eyes-l       { z-index: 14; background-image: url('eye L.png'); }
+  .layer-eyes-r       { z-index: 15; background-image: url('eyes R.png'); }
+  .layer-eye-blink-l  { z-index: 16; background-image: url('eye L close.png'); opacity: 0; }
+  .layer-eye-blink-r  { z-index: 16; background-image: url('eye R close.png'); opacity: 0; }
+  .layer-mouth        { z-index: 17; background-image: url('mouth.png'); }
+  .layer-eye-shock-l  { z-index: 18; background-image: url('eye shock L.png'); opacity: 0; }
+  .layer-eye-shock-r  { z-index: 18; background-image: url('eye shock R.png'); opacity: 0; }
+  .layer-mouth-shock  { z-index: 19; background-image: url('mouth shock.png'); opacity: 0; }
+
+  /* Animation หน้าตา Sync ตามหัว */
   .layer-eyes-l, .layer-eyes-r, .layer-eye-shock-l, .layer-eye-shock-r, .layer-eye-blink-l, .layer-eye-blink-r, .layer-mouth, .layer-mouth-shock {
     animation: headNaturalMove 15s ease-in-out infinite;
     transform-origin: 50% 35%;
   }
-  .layer-eyes-l { z-index: 14; background-image: url('eye L.png'); }
-  .layer-eyes-r { z-index: 15; background-image: url('eyes R.png'); }
-  .layer-eye-blink-l { z-index: 16; background-image: url('eye L close.png'); opacity: 0; }
-  .layer-eye-blink-r { z-index: 16; background-image: url('eye R close.png'); opacity: 0; }
-  .layer-mouth { z-index: 17; background-image: url('mouth.png'); }
-  .layer-eye-shock-l { z-index: 18; background-image: url('eye shock L.png'); opacity: 0; }
-  .layer-eye-shock-r { z-index: 18; background-image: url('eye shock R.png'); opacity: 0; }
-  .layer-mouth-shock { z-index: 19; background-image: url('mouth shock.png'); opacity: 0; }
 
+  /* --- Keyframes --- */
   @keyframes headNaturalMove { 0%, 25%, 100% { transform: rotate(0deg) translateY(0); } 35%, 50% { transform: rotate(-1.5deg) translateY(1px); } 60%, 75% { transform: rotate(1.5deg) translateY(-1px); } 85%, 95% { transform: rotate(0deg) translateY(4px); } }
   @keyframes hairBackSway { 0%, 100% { transform: skewX(-0.5deg); } 50% { transform: skewX(0.5deg); } }
   @keyframes hairSideSwayL { 0%, 100% { transform: rotate(-1deg) skewY(0.5deg); } 50% { transform: rotate(1.2deg) skewY(-0.5deg); } }
@@ -100,14 +82,12 @@
 </head>
 <body>
 
-<div id="toggle-btn">v</div>
-
 <div class="shigure-container" id="shigure-mascot">
   <div class="shigure-layer layer-edge-full" id="mascot-edge-full"></div>
   <div class="shigure-layer layer-edge-blink" id="mascot-edge-blink"></div>
+  
   <div class="shigure-layer layer-fall-full" id="mascot-fall-full"></div>
   <div class="shigure-layer layer-drag-full" id="mascot-drag-full"></div>
-  
   <div id="mascot-parts">
     <div class="shigure-layer layer-hair-back"></div>
     <div class="shigure-layer layer-costume-back"></div>
@@ -135,7 +115,6 @@
 
 <script>
   const mascot = document.getElementById('shigure-mascot');
-  const toggleBtn = document.getElementById('toggle-btn');
   const mascotParts = document.getElementById('mascot-parts');
   const mascotDragFull = document.getElementById('mascot-drag-full');
   const mascotFallFull = document.getElementById('mascot-fall-full');
@@ -147,178 +126,36 @@
     closeL: document.getElementById('eye-close-l'), closeR: document.getElementById('eye-close-r'),
     shockL: document.getElementById('eye-shock-l'), shockR: document.getElementById('eye-shock-r')
   };
+  const mouth = { normal: document.getElementById('mouth-normal'), shock: document.getElementById('mouth-shock') };
+  const arms = { normalL: document.getElementById('arm-normal-l'), normalR: document.getElementById('arm-normal-r'), shockL: document.getElementById('arm-shock-l'), shockR: document.getElementById('arm-shock-r') };
 
-  let isDragging = false, isShocked = false, isFalling = false, isPeeking = false, isHidden = false, hasMoved = false;
+  // ตัวแปรควบคุมสถานะ
+  let isDragging = false, isShocked = false, isFalling = false, isPeeking = false, hasMoved = false;
   let offsetX = 0, offsetY = 0;
   let idleTimer, peekWaitTimer, edgeBlinkInterval;
 
-  // --- ฟังก์ชันจัดการดวงตา (กันตาซ้อน) ---
-  function hideAllEyes() {
-    Object.values(eyes).forEach(eye => eye.style.opacity = '0');
-  }
-
+  // ฟังก์ชันล้างสถานะดวงตาทั้งหมดอย่างเด็ดขาด
   function resetEyesToNormal() {
-    hideAllEyes();
-    eyes.openL.style.opacity = '1';
-    eyes.openR.style.opacity = '1';
+    eyes.openL.style.opacity = '1'; eyes.openR.style.opacity = '1';
+    eyes.closeL.style.opacity = '0'; eyes.closeR.style.opacity = '0';
+    eyes.shockL.style.opacity = '0'; eyes.shockR.style.opacity = '0';
   }
 
-  // --- Toggle Hide/Show ---
-  toggleBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    isHidden = !isHidden;
-    if (isHidden) {
-      mascot.style.top = window.innerHeight + 'px';
-      toggleBtn.innerText = '^';
-      clearTimeout(idleTimer);
-      stopEdgeBlinking();
-    } else {
-      mascot.style.top = (window.innerHeight - 380) + 'px';
-      toggleBtn.innerText = 'v';
-      resetIdleTimer();
-    }
-  });
-
-  // --- Drag & Touch Logic ---
-  function startDrag(clientX, clientY) {
-    if (isFalling || isHidden) return;
-    clearTimeout(idleTimer);
-    clearTimeout(peekWaitTimer);
-    stopEdgeBlinking();
-    isDragging = true;
-    hasMoved = false;
-    isPeeking = false;
-    isShocked = false;
-    const rect = mascot.getBoundingClientRect();
-    offsetX = clientX - rect.left;
-    offsetY = clientY - rect.top;
-    mascotParts.style.opacity = '0';
-    mascotDragFull.style.opacity = '1';
-    mascotFallFull.style.opacity = '0';
-    mascotEdgeFull.style.opacity = '0';
-    mascot.style.transition = 'none';
-  }
-
-  function moveMascot(clientX, clientY) {
-    if (!isDragging) return;
-    hasMoved = true;
-    mascot.style.left = (clientX - offsetX) + 'px';
-    mascot.style.top = (clientY - offsetY) + 'px';
-  }
-
-  function endDrag() {
-    if (!isDragging) return;
-    isDragging = false;
-    isFalling = true;
-    mascotDragFull.style.opacity = '0';
-    mascotFallFull.style.opacity = '1';
-    mascot.style.transition = 'top 0.6s cubic-bezier(0.47, 0, 0.745, 0.715)';
-    mascot.style.top = (window.innerHeight - 380) + 'px';
-    setTimeout(() => {
-      if (!isDragging) {
-        mascotFallFull.style.opacity = '0';
-        mascotEdgeFull.style.opacity = '1';
-        startEdgeBlinking();
-        setTimeout(() => {
-          if (!isDragging) {
-            stopEdgeBlinking();
-            mascotEdgeFull.style.opacity = '0';
-            mascotParts.style.opacity = '1';
-            isFalling = false;
-            resetEyesToNormal();
-            resetIdleTimer();
-          }
-        }, 1200);
-      }
-    }, 600);
-  }
-
-  mascot.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
-  document.addEventListener('mousemove', (e) => moveMascot(e.clientX, e.clientY));
-  document.addEventListener('mouseup', endDrag);
-  mascot.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
-  document.addEventListener('touchmove', (e) => { if(isDragging){ moveMascot(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, {passive:false});
-  document.addEventListener('touchend', endDrag);
-
-  // --- Peek & Random ---
-  function randomPeek() {
-    if (isDragging || isShocked || isFalling || isPeeking || isHidden) return;
-    isPeeking = true;
-    mascot.style.transition = 'top 0.8s ease-in';
-    mascot.style.top = window.innerHeight + 'px';
-    setTimeout(() => {
-      if (isHidden) return;
-      mascot.style.left = Math.random() * (window.innerWidth - 500) + 'px';
-      mascotParts.style.opacity = '1';
-      resetEyesToNormal();
-      mascot.style.transition = 'top 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-      mascot.style.top = (window.innerHeight - 380) + 'px';
-      setTimeout(() => {
-        if (isPeeking && !isDragging && !isHidden) {
-          mascotParts.style.opacity = '0';
-          mascotEdgeFull.style.opacity = '1';
-          startEdgeBlinking();
-          peekWaitTimer = setTimeout(() => {
-            if (isPeeking && !isDragging) {
-              stopEdgeBlinking();
-              isPeeking = false;
-              resetIdleTimer();
-            }
-          }, 10000);
-        }
-      }, 1200);
-    }, 1000);
-  }
-
-  function resetIdleTimer() {
-    clearTimeout(idleTimer);
-    if (!isDragging && !isShocked && !isFalling && !isPeeking && !isHidden) {
-      idleTimer = setTimeout(randomPeek, 3000);
-    }
-  }
-
-  // --- Click Shock ---
-  mascot.addEventListener('click', () => {
-    if (hasMoved || isShocked || isDragging || isFalling || isPeeking || isHidden) return;
-    isShocked = true;
-    clearTimeout(idleTimer);
-    hideAllEyes();
-    eyes.shockL.style.opacity = '1';
-    eyes.shockR.style.opacity = '1';
-    document.getElementById('mouth-shock').style.opacity = '1';
-    mascot.style.transform = 'scale(1.1) translateY(-15px)';
-    setTimeout(() => {
-      isShocked = false;
-      resetEyesToNormal();
-      document.getElementById('mouth-shock').style.opacity = '0';
-      mascot.style.transform = 'scale(1)';
-      resetIdleTimer();
-    }, 1000);
-  });
-
-  // --- ระบบกระพริบตา Idle (แก้ไขไม่ให้ซ้อน) ---
-  setInterval(() => {
-    if (!isShocked && !isDragging && !isFalling && !isPeeking && !isHidden) {
-      eyes.openL.style.opacity = '0';
-      eyes.openR.style.opacity = '0';
-      eyes.closeL.style.opacity = '1';
-      eyes.closeR.style.opacity = '1';
-      setTimeout(() => {
-        if (!isShocked && !isDragging && !isFalling && !isPeeking && !isHidden) {
-          resetEyesToNormal();
-        }
-      }, 150);
-    }
-  }, 4000);
-
+  // --- [แก้ไข] ระบบ Edge Blink เฉพาะตอนเกาะขอบ ---
   function startEdgeBlinking() {
-    stopEdgeBlinking();
+    stopEdgeBlinking(); // ล้างของเก่า
     edgeBlinkInterval = setInterval(() => {
+      // ตรวจสอบว่าโชว์ท่าเกาะขอบปกติอยู่ถึงจะกระพริบ
       if (mascotEdgeFull.style.opacity === '1') {
-        mascotEdgeBlink.style.opacity = '1';
-        setTimeout(() => { if(mascotEdgeFull.style.opacity === '1') mascotEdgeBlink.style.opacity = '0'; }, 150);
+        mascotEdgeBlink.style.opacity = '1'; // โชว์ตาปิด
+        setTimeout(() => {
+          // เช็คอีกรอบเผื่อเปลี่ยนสถานะกลางคัน
+          if (mascotEdgeFull.style.opacity === '1') {
+            mascotEdgeBlink.style.opacity = '0'; // โชว์ตาเปิด
+          }
+        }, 150);
       }
-    }, 3000 + Math.random() * 2000);
+    }, 3000 + Math.random() * 2000); // สุ่มเวลา
   }
 
   function stopEdgeBlinking() {
@@ -326,7 +163,183 @@
     mascotEdgeBlink.style.opacity = '0';
   }
 
-  resetIdleTimer();
+  // --- ระบบ Random Peek (เด้งขึ้นมาเต็มตัว) ---
+  function randomPeek() {
+    // ต้องไม่อยู่ในสถานะอื่นๆ ถึงจะสุ่มโผล่ได้
+    if (isDragging || isShocked || isFalling || isPeeking) return;
+    isPeeking = true;
+
+    // 1. น้องมุดลงหายไป
+    mascot.style.transition = 'top 0.8s ease-in';
+    mascot.style.top = window.innerHeight + 'px';
+
+    setTimeout(() => {
+      // 2. สุ่มตำแหน่งและตั้งค่าให้เป็นร่าง Idle เตรียมเด้ง
+      const randomX = Math.random() * (window.innerWidth - 500);
+      mascot.style.left = randomX + 'px';
+      
+      // ล้างสถานะภาพซ้อนทุกชนิดก่อนเด้ง
+      mascotParts.style.opacity = '1';
+      mascotEdgeFull.style.opacity = '0';
+      stopEdgeBlinking(); // หยุดกระพริบตาตอนเกาะขอบ
+      resetEyesToNormal(); // ลบตาซ้อนในโหมดแยกชิ้น
+
+      // 3. โผล่ขึ้นมา (พิกัดเดียวกับยืนปกติ) แบบมีแรงดีด
+      const groundPos = window.innerHeight - 380; 
+      mascot.style.transition = 'top 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      mascot.style.top = groundPos + 'px';
+
+      setTimeout(() => {
+        // 4. [สำคัญ] เปลี่ยนเป็นท่าเกาะ (Edge) ทันทีหลังเด้งสุด
+        // ตรวจสอบว่าระหว่างเด้งไม่ได้โดนลากซ้ำ
+        if (isPeeking && !isDragging) {
+            mascotParts.style.opacity = '0';
+            mascotEdgeFull.style.opacity = '1';
+            startEdgeBlinking(); // เริ่มกระพริบตาตอนเกาะขอบ
+            
+            // 5. แช่ไว้ 10 วินาทีตามโจทย์
+            peekWaitTimer = setTimeout(() => {
+                if (isPeeking && !isDragging) {
+                    stopEdgeBlinking();
+                    isPeeking = false;
+                    resetIdleTimer(); // กลับไปนับเวลา idle ใหม่
+                }
+            }, 10000); 
+        }
+      }, 1200);
+    }, 1000);
+  }
+
+  // --- ระบบ Drag & Touch (แก้ไขให้ล้างตาซ้อน) ---
+  function startDragging(clientX, clientY) {
+    if (isShocked || isFalling) return;
+    clearTimeout(idleTimer);
+    clearTimeout(peekWaitTimer);
+    stopEdgeBlinking(); // หยุดกระพริบตาร่างเกาะ
+    
+    isDragging = true;
+    hasMoved = false;
+    isPeeking = false;
+    
+    const rect = mascot.getBoundingClientRect();
+    offsetX = clientX - rect.left;
+    offsetY = clientY - rect.top;
+    
+    mascotParts.style.opacity = '0';
+    mascotDragFull.style.opacity = '1';
+    mascotFallFull.style.opacity = '0';
+    mascotEdgeFull.style.opacity = '0';
+    
+    mascot.style.transition = 'none';
+  }
+
+  function endDragging() {
+    if (isDragging) {
+      isDragging = false;
+      isFalling = true;
+      
+      mascotDragFull.style.opacity = '0';
+      mascotFallFull.style.opacity = '1';
+      
+      const groundPos = window.innerHeight - 380; 
+      mascot.style.transition = 'top 0.6s cubic-bezier(0.47, 0, 0.745, 0.715)';
+      mascot.style.top = groundPos + 'px';
+
+      setTimeout(() => {
+        if (!isDragging) { // ดักคนลากใหม่ทันที
+            mascotParts.style.opacity = '0';
+            mascotFallFull.style.opacity = '0';
+            mascotEdgeFull.style.opacity = '1';
+            startEdgeBlinking(); // เริ่มกระพริบตาตอนเกาะล่าง
+            
+            setTimeout(() => {
+                if (!isDragging) {
+                    stopEdgeBlinking();
+                    mascotEdgeFull.style.opacity = '0';
+                    mascotParts.style.opacity = '1';
+                    mascot.style.transition = 'transform 0.15s ease-out';
+                    isFalling = false;
+                    resetEyesToNormal(); // ล้างตาซ้อนตอนกลับร่างปกติ
+                    resetIdleTimer();
+                }
+            }, 1200);
+        }
+      }, 600);
+    }
+  }
+
+  // --- Event Listeners (เหมือนเดิม) ---
+  mascot.addEventListener('mousedown', (e) => startDragging(e.clientX, e.clientY));
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    hasMoved = true;
+    mascot.style.left = (e.clientX - offsetX) + 'px';
+    mascot.style.top = (e.clientY - offsetY) + 'px';
+  });
+  document.addEventListener('mouseup', endDragging);
+
+  mascot.addEventListener('touchstart', (e) => startDragging(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
+  document.addEventListener('touchmove', (e) => {
+    if (isDragging) {
+        hasMoved = true;
+        mascot.style.left = (e.touches[0].clientX - offsetX) + 'px';
+        mascot.style.top = (e.touches[0].clientY - offsetY) + 'px';
+        e.preventDefault();
+    }
+  }, {passive:false});
+  document.addEventListener('touchend', endDragging);
+
+  // --- ระบบ Shock ---
+  mascot.addEventListener('click', () => {
+    if (hasMoved || isShocked || isDragging || isFalling || isPeeking) return;
+    isShocked = true;
+    clearTimeout(idleTimer);
+
+    // หน้า Shock + แขน Shock (ล้างตาปกติ)
+    eyes.openL.style.opacity = '0'; eyes.openR.style.opacity = '0';
+    eyes.shockL.style.opacity = '1'; eyes.shockR.style.opacity = '1';
+    mouth.normal.style.opacity = '0'; mouth.shock.style.opacity = '1';
+    arms.normalL.style.opacity = '0'; arms.normalR.style.opacity = '0';
+    arms.shockL.style.opacity = '1'; arms.shockR.style.opacity = '1';
+
+    mascot.style.transform = 'scale(1.1) translateY(-15px)';
+
+    setTimeout(() => {
+      isShocked = false;
+      resetEyesToNormal(); // คืนค่าตากลับมาปกติ
+      mouth.normal.style.opacity = '1'; mouth.shock.style.opacity = '0';
+      arms.normalL.style.opacity = '1'; arms.normalR.style.opacity = '1';
+      arms.shockL.style.opacity = '0'; arms.shockR.style.opacity = '0';
+      mascot.style.transform = 'scale(1)';
+      resetIdleTimer();
+    }, 1000);
+  });
+
+  function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    if (!isDragging && !isShocked && !isFalling && !isPeeking) {
+        idleTimer = setTimeout(randomPeek, 3000); // 3 วินาที
+    }
+  }
+
+  // ระบบกระพริบตาปกติ (Idle Mode) แบบกันตาซ้อน
+  setInterval(() => {
+    // ต้องไม่อยู่ในสถานะอื่นๆ ถึงจะกระพริบตาปกติได้
+    if (!isShocked && !isDragging && !isFalling && !isPeeking) {
+      eyes.openL.style.opacity = '0'; eyes.openR.style.opacity = '0';
+      eyes.closeL.style.opacity = '1'; eyes.closeR.style.opacity = '1';
+      setTimeout(() => {
+        // เช็คอีกรอบตอนจะลืมตา เผื่อระหว่างที่หลับตาอยู่เราดันไปคลิกน้อง
+        if (!isShocked && !isDragging && !isFalling && !isPeeking) {
+          eyes.openL.style.opacity = '1'; eyes.openR.style.opacity = '1';
+          eyes.closeL.style.opacity = '0'; eyes.closeR.style.opacity = '0';
+        }
+      }, 120);
+    }
+  }, 4000);
+
+  mascot.ondragstart = () => false;
+  resetIdleTimer(); // เริ่มทำงานครั้งแรก
 </script>
 </body>
 </html>
