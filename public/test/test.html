@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Shigure Mascot - Full Fix & Toggle</title>
+<title>Shigure Mascot - Anti-Ghosting Final Version</title>
 <style>
   body { margin: 0; overflow: hidden; background: transparent; }
 
-  /* --- [1] ปุ่ม Toggle ^/v แยกอิสระจากตัวน้อง --- */
   #toggle-btn {
     position: fixed;
     bottom: 20px;
@@ -31,7 +30,6 @@
   }
   #toggle-btn:hover { background: rgba(0, 0, 0, 0.9); transform: scale(1.1); }
 
-  /* --- [2] กล่องควบคุมตัวละคร --- */
   .shigure-container {
     position: fixed;
     width: 500px;  
@@ -45,7 +43,6 @@
     transform-origin: center bottom;
     transition: top 0.6s cubic-bezier(0.23, 1, 0.32, 1);
   }
-  .shigure-container:active { cursor: grabbing; }
 
   .shigure-layer {
     position: absolute;
@@ -58,13 +55,13 @@
     transition: opacity 0.1s ease-out;
   }
 
-  /* เลเยอร์สถานะพิเศษ */
+  /* เลเยอร์พิเศษ */
   .layer-edge-full  { z-index: 160; background-image: url('shigure_edge.png'); opacity: 0; }
   .layer-edge-blink { z-index: 161; background-image: url('shigure_edge2.png'); opacity: 0; }
   .layer-fall-full  { z-index: 150; background-image: url('shigure_fall.png'); opacity: 0; }
   .layer-drag-full  { z-index: 100; background-image: url('shigure_drag.png'); opacity: 0; }
 
-  /* --- [3] อนิเมชั่น Idle ชิ้นส่วนแยก --- */
+  /* อนิเมชั่น Idle แยกชิ้น */
   .layer-hair-back    { z-index: 1;  background-image: url('hair back.png'); animation: hairBackSway 10s ease-in-out infinite; transform-origin: center top; }
   .layer-costume-back { z-index: 2;  background-image: url('costume Back.png'); }
   .layer-main-body    { z-index: 3;  background-image: url('main body.png'); }
@@ -163,6 +160,15 @@
     eyes.openR.style.opacity = '1';
   }
 
+  // --- ล้างสถานะภาพ Full ทั้งหมด ---
+  function resetAllFullLayers() {
+    mascotDragFull.style.opacity = '0';
+    mascotFallFull.style.opacity = '0';
+    mascotEdgeFull.style.opacity = '0';
+    mascotEdgeBlink.style.opacity = '0';
+    stopEdgeBlinking();
+  }
+
   // --- Toggle Hide/Show ---
   toggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -184,18 +190,19 @@
     if (isFalling || isHidden) return;
     clearTimeout(idleTimer);
     clearTimeout(peekWaitTimer);
-    stopEdgeBlinking();
+    resetAllFullLayers();
+    
     isDragging = true;
     hasMoved = false;
     isPeeking = false;
     isShocked = false;
+    
     const rect = mascot.getBoundingClientRect();
     offsetX = clientX - rect.left;
     offsetY = clientY - rect.top;
+    
     mascotParts.style.opacity = '0';
     mascotDragFull.style.opacity = '1';
-    mascotFallFull.style.opacity = '0';
-    mascotEdgeFull.style.opacity = '0';
     mascot.style.transition = 'none';
   }
 
@@ -210,19 +217,21 @@
     if (!isDragging) return;
     isDragging = false;
     isFalling = true;
-    mascotDragFull.style.opacity = '0';
+    
+    resetAllFullLayers();
     mascotFallFull.style.opacity = '1';
+    
     mascot.style.transition = 'top 0.6s cubic-bezier(0.47, 0, 0.745, 0.715)';
     mascot.style.top = (window.innerHeight - 380) + 'px';
+    
     setTimeout(() => {
       if (!isDragging) {
-        mascotFallFull.style.opacity = '0';
+        resetAllFullLayers();
         mascotEdgeFull.style.opacity = '1';
         startEdgeBlinking();
         setTimeout(() => {
-          if (!isDragging) {
-            stopEdgeBlinking();
-            mascotEdgeFull.style.opacity = '0';
+          if (!isDragging && !isPeeking) {
+            resetAllFullLayers();
             mascotParts.style.opacity = '1';
             isFalling = false;
             resetEyesToNormal();
@@ -233,34 +242,37 @@
     }, 600);
   }
 
-  mascot.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
-  document.addEventListener('mousemove', (e) => moveMascot(e.clientX, e.clientY));
-  document.addEventListener('mouseup', endDrag);
-  mascot.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
-  document.addEventListener('touchmove', (e) => { if(isDragging){ moveMascot(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, {passive:false});
-  document.addEventListener('touchend', endDrag);
-
-  // --- Peek & Random ---
+  // --- Peek & Random (แก้ไขการสลับเลเยอร์) ---
   function randomPeek() {
     if (isDragging || isShocked || isFalling || isPeeking || isHidden) return;
     isPeeking = true;
+    
     mascot.style.transition = 'top 0.8s ease-in';
     mascot.style.top = window.innerHeight + 'px';
+    
     setTimeout(() => {
-      if (isHidden) return;
+      if (isHidden || isDragging) { isPeeking = false; return; }
+      
       mascot.style.left = Math.random() * (window.innerWidth - 500) + 'px';
-      mascotParts.style.opacity = '1';
+      resetAllFullLayers(); // ล้างชิ้นเต็มก่อน
+      mascotParts.style.opacity = '1'; // โชว์ร่างแยกเพื่อเด้ง
       resetEyesToNormal();
+      
       mascot.style.transition = 'top 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
       mascot.style.top = (window.innerHeight - 380) + 'px';
+      
       setTimeout(() => {
         if (isPeeking && !isDragging && !isHidden) {
+          // สลับจากร่างแยกเป็นร่างเกาะ (Edge)
           mascotParts.style.opacity = '0';
+          resetAllFullLayers(); // ล้างเผื่อ
           mascotEdgeFull.style.opacity = '1';
           startEdgeBlinking();
+          
           peekWaitTimer = setTimeout(() => {
             if (isPeeking && !isDragging) {
-              stopEdgeBlinking();
+              resetAllFullLayers();
+              mascotParts.style.opacity = '1';
               isPeeking = false;
               resetIdleTimer();
             }
@@ -269,6 +281,14 @@
       }, 1200);
     }, 1000);
   }
+
+  // --- Event Listeners ---
+  mascot.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+  document.addEventListener('mousemove', (e) => moveMascot(e.clientX, e.clientY));
+  document.addEventListener('mouseup', endDrag);
+  mascot.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
+  document.addEventListener('touchmove', (e) => { if(isDragging){ moveMascot(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, {passive:false});
+  document.addEventListener('touchend', endDrag);
 
   function resetIdleTimer() {
     clearTimeout(idleTimer);
