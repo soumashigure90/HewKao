@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Shigure Mascot - Final Fix Z-Index & Drag State</title>
+<title>Shigure Mascot - Layer Sorted Edition</title>
 <style>
   body { margin: 0; overflow: hidden; background: transparent; }
 
@@ -49,31 +49,40 @@
     transition: opacity 0.1s ease-out;
   }
 
-  /* Z-INDEX FIX: ดันส่วนใบหน้าให้สูงกว่า Head เสมอ */
+  /* --- Z-INDEX DEFINITION (เรียงลำดับความสูง) --- */
   .layer-edge-full  { z-index: 500; background-image: url('shigure_edge.png'); opacity: 0; }
   .layer-edge-blink { z-index: 510; background-image: url('shigure_edge2.png'); opacity: 0; }
   .layer-fall-full  { z-index: 400; background-image: url('shigure_fall.png'); opacity: 0; }
   .layer-drag-full  { z-index: 410; background-image: url('shigure_drag.png'); opacity: 0; }
   .layer-drag-alt   { z-index: 420; background-image: url('shigure_drag2.png'); opacity: 0; }
 
+  /* ชั้นร่างกาย (10-90) */
   .layer-hair-back    { z-index: 10; animation: hairBackSway 10s ease-in-out infinite; transform-origin: center top; }
+  .layer-costume-back { z-index: 20; }
   .layer-main-body    { z-index: 30; }
   .layer-arm-l, .layer-arm-r { z-index: 40; }
   .layer-arm-shock-l, .layer-arm-shock-r { z-index: 45; opacity: 0; }
-  .layer-head         { z-index: 100; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-neck         { z-index: 50; }
+  .layer-costume-front{ z-index: 90; } /* ชุดด้านหน้าทับตัวและคอ */
   
-  /* ส่วนใบหน้า Z-index 200+ */
+  /* ชั้นหัวและใบหน้า (100-150) */
+  .layer-head         { z-index: 100; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
   .layer-eyes-l, .layer-eyes-r, .layer-eye-blink-l, .layer-eye-blink-r, 
   .layer-eye-shock-l, .layer-eye-shock-r, .layer-mouth, .layer-mouth-shock {
-    z-index: 250; 
+    z-index: 150; 
     animation: headNaturalMove 15s ease-in-out infinite;
     transform-origin: 50% 35%;
   }
 
-  .layer-hair-front   { z-index: 300; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  /* ชั้นผมด้านหน้า (200+) - ทับทุกอย่าง */
+  .layer-hair-front   { z-index: 200; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-hair-l       { z-index: 210; animation: hairSideSwayL 9s ease-in-out infinite; transform-origin: 85% 10%; }
+  .layer-hair-r       { z-index: 220; animation: hairSideSwayR 9s ease-in-out infinite; transform-origin: 15% 10%; }
 
   @keyframes headNaturalMove { 0%, 25%, 100% { transform: rotate(0deg) translateY(0); } 35%, 50% { transform: rotate(-1.5deg) translateY(1px); } 60%, 75% { transform: rotate(1.5deg) translateY(-1px); } 85%, 95% { transform: rotate(0deg) translateY(4px); } }
   @keyframes hairBackSway { 0%, 100% { transform: skewX(-0.5deg); } 50% { transform: skewX(0.5deg); } }
+  @keyframes hairSideSwayL { 0%, 100% { transform: rotate(-1deg) skewY(0.5deg); } 50% { transform: rotate(1.2deg) skewY(-0.5deg); } }
+  @keyframes hairSideSwayR { 0%, 100% { transform: rotate(1deg) skewY(-0.5deg); } 50% { transform: rotate(-1.2deg) skewY(0.5deg); } }
 </style>
 </head>
 <body>
@@ -89,11 +98,14 @@
 
   <div id="mascot-parts">
     <div class="shigure-layer layer-hair-back" style="background-image: url('hair back.png');"></div>
+    <div class="shigure-layer layer-costume-back" style="background-image: url('costume Back.png');"></div>
     <div class="shigure-layer layer-main-body" style="background-image: url('main body.png');"></div>
     <div class="shigure-layer layer-arm-l" id="arm-normal-l" style="background-image: url('arm L.png');"></div>
     <div class="shigure-layer layer-arm-r" id="arm-normal-r" style="background-image: url('arm R.png');"></div>
     <div class="shigure-layer layer-arm-shock-l" id="arm-shock-l" style="background-image: url('arm shock L.png');"></div>
     <div class="shigure-layer layer-arm-shock-r" id="arm-shock-r" style="background-image: url('arm shock R.png');"></div>
+    <div class="shigure-layer layer-neck" style="background-image: url('neck.png');"></div>
+    <div class="shigure-layer layer-costume-front" style="background-image: url('costume Front.png');"></div>
     <div class="shigure-layer layer-head" style="background-image: url('Head.png');"></div>
     
     <div class="shigure-layer layer-eyes-l" id="eye-open-l" style="background-image: url('eye L.png'); opacity: 1;"></div>
@@ -106,6 +118,8 @@
     <div class="shigure-layer layer-mouth-shock" id="mouth-shock" style="background-image: url('mouth shock.png'); opacity: 0;"></div>
     
     <div class="shigure-layer layer-hair-front" style="background-image: url('hair front.png');"></div>
+    <div class="shigure-layer layer-hair-l" style="background-image: url('hair L.png');"></div>
+    <div class="shigure-layer layer-hair-r" style="background-image: url('hair R.png');"></div>
   </div>
 </div>
 
@@ -142,47 +156,23 @@
   toggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     clearTimeout(idleTimer); clearTimeout(peekWaitTimer); clearTimeout(randomPeekGlobalTimer);
-    isHidden = !isHidden; 
-    
-    // [FIX] Reset Falling state ทันทีที่กดปุ่ม
-    isPeeking = false; isFalling = false; isShocked = false; isDragging = false; 
-    
+    isHidden = !isHidden; isPeeking = false; isFalling = false; isShocked = false; isDragging = false; 
     resetAllLayers();
-    if (isHidden) { 
-      mascot.style.top = window.innerHeight + 'px'; 
-      toggleBtn.innerText = '^'; 
-    } else { 
-      mascot.style.top = (window.innerHeight - 380) + 'px'; 
-      toggleBtn.innerText = 'v'; 
-      resetIdleTimer(); 
-    }
+    if (isHidden) { mascot.style.top = window.innerHeight + 'px'; toggleBtn.innerText = '^'; }
+    else { mascot.style.top = (window.innerHeight - 380) + 'px'; toggleBtn.innerText = 'v'; resetIdleTimer(); }
   });
 
   function startDrag(clientX, clientY) {
     if (isHidden) return;
-    
-    // บั๊ก drag2 เกิดจากตัวแปร isFalling ค้าง
-    const wasFalling = isFalling; 
-
+    const wasFalling = isFalling;
     clearTimeout(idleTimer); clearTimeout(peekWaitTimer); clearTimeout(randomPeekGlobalTimer);
     stopEdgeBlinking();
-    
-    isDragging = true; hasMoved = false; isPeeking = false; isShocked = false;
-    isFalling = false; // หยุด Falling ทันทีที่จับ
-
+    isDragging = true; hasMoved = false; isPeeking = false; isShocked = false; isFalling = false;
     const rect = mascot.getBoundingClientRect();
     offsetX = clientX - rect.left; offsetY = clientY - rect.top;
-    
     mascotParts.style.opacity = '0'; mascotFallFull.style.opacity = '0'; mascotEdgeFull.style.opacity = '0';
-    
-    // เช็คว่าถ้าจับได้ตอนกำลังร่วงจริงจัง ถึงจะโชว์ drag2
-    if (wasFalling) {
-      mascotDragFull.style.opacity = '0';
-      mascotDragAlt.style.opacity = '1';
-    } else {
-      mascotDragFull.style.opacity = '1';
-      mascotDragAlt.style.opacity = '0';
-    }
+    if (wasFalling) { mascotDragFull.style.opacity = '0'; mascotDragAlt.style.opacity = '1'; }
+    else { mascotDragFull.style.opacity = '1'; mascotDragAlt.style.opacity = '0'; }
     mascot.style.transition = 'none';
   }
 
