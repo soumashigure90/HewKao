@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Shigure Mascot - Perfect State Fix</title>
+<title>Shigure Mascot - Drag Fix After Show</title>
 <style>
   body { margin: 0; overflow: hidden; background: transparent; }
 
@@ -151,7 +151,7 @@
   let offsetX = 0, offsetY = 0;
   let idleTimer, peekWaitTimer, edgeBlinkInterval, randomPeekGlobalTimer;
 
-  // --- ฟังก์ชันล้างเลเยอร์ทั้งหมด ---
+  // --- ล้างเลเยอร์ทั้งหมด ---
   function resetAllLayers() {
     mascotDragFull.style.opacity = '0';
     mascotFallFull.style.opacity = '0';
@@ -172,36 +172,41 @@
     eyes.openR.style.opacity = '1';
   }
 
-  // --- Toggle Logic (แบบล้างค้างคา) ---
+  // --- Toggle Logic (FIXED: Reset All Status) ---
   toggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     
-    // 1. ล้างคิวการทำงานเดิมทั้งหมดก่อน
+    // ล้าง Timer ทุกตัวที่มีในโลก
     clearTimeout(idleTimer);
     clearTimeout(peekWaitTimer);
     clearTimeout(randomPeekGlobalTimer);
-    resetAllLayers();
     
     isHidden = !isHidden;
     
+    // [สำคัญมาก] ล้างสถานะกิจกรรมทั้งหมดทันทีที่กดปุ่ม
+    isPeeking = false;
+    isFalling = false;
+    isShocked = false;
+    isDragging = false; 
+    
+    resetAllLayers(); // คืนร่างปกติ
+    
     if (isHidden) {
-      // มุดซ่อน
       mascot.style.top = window.innerHeight + 'px';
       toggleBtn.innerText = '^';
-      isPeeking = false; // ปลดล็อกสถานะ Peek ทันที
     } else {
-      // แสดงตัว
       mascot.style.top = (window.innerHeight - 380) + 'px';
       toggleBtn.innerText = 'v';
-      isPeeking = false;
-      resetIdleTimer(); // เริ่มนับ 1 ใหม่
+      resetIdleTimer(); // เริ่มนับ Idle ใหม่
     }
   });
 
-  // --- Drag & Touch Logic ---
+  // --- Drag Logic ---
   function startDrag(clientX, clientY) {
-    if (isFalling || isHidden) return;
-    clearTimeout(idleTimer);
+    // ถ้าน้องซ่อนอยู่ หรือ กำลังร่วง (Falling) ห้ามลาก
+    if (isHidden || isFalling) return;
+
+    // ถ้ากำลัง Peek อยู่ ให้หยุด Peek แล้วยอมให้ลาก
     clearTimeout(peekWaitTimer);
     clearTimeout(randomPeekGlobalTimer);
     stopEdgeBlinking();
@@ -251,7 +256,7 @@
     }, 600);
   }
 
-  // --- Random Peek (ปรับปรุงให้ไม่ซ้อน) ---
+  // --- Random Peek ---
   function randomPeek() {
     if (isDragging || isShocked || isFalling || isPeeking || isHidden) return;
     isPeeking = true;
@@ -260,12 +265,10 @@
     mascot.style.top = window.innerHeight + 'px';
 
     randomPeekGlobalTimer = setTimeout(() => {
-      // เช็คอีกครั้งเผื่อโดนกดซ่อนหรือลากไปแล้ว
       if (isHidden || isDragging) { isPeeking = false; return; }
 
       mascot.style.left = Math.random() * (window.innerWidth - 500) + 'px';
       
-      // ล้างสถานะภาพก่อนโชว์
       mascotParts.style.opacity = '1';
       mascotEdgeFull.style.opacity = '0';
       resetEyesToNormal();
@@ -316,7 +319,7 @@
     mascotEdgeBlink.style.opacity = '0';
   }
 
-  // --- Listeners ---
+  // --- Event Listeners ---
   mascot.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
   document.addEventListener('mousemove', (e) => {
     if (isDragging) {
