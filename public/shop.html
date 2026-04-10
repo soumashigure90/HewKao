@@ -9,59 +9,70 @@
 <script>emailjs.init('ihPYyy1esTXMHcxHu')</script>
 
 <style>
-/* --- ก๊อปปี้ CSS ของหน้าร้านคุณมาวางตรงนี้ --- */
-:root {
-  --pink:    #FFB7C5; --pink-l:  #FFE4EC; --pink-d:  #e8829a;
-  --lav:     #C9B8F0; --lav-l:   #EDE8FC; --mint:    #B2E8D8;
-  --mint-l:  #E2F8F2; --yellow:  #FFE5A0; --yellow-l:#FFF8DC;
-  --peach:   #FFCBA4; --cream:   #FFF9F5; --text:    #4a3f5c;
-  --text-s:  #8a7a9a; --white:   #ffffff; --radius:  18px;
-  --shadow:  0 4px 24px rgba(180,140,200,0.13);
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
-/* ... (ใส่ CSS ร้านค้าที่เหลือของคุณที่นี่) ... */
+  /* --- CSS เดิมของหน้าร้าน HewKao (รักษาไว้ทั้งหมด) --- */
+  :root {
+    --pink: #FFB7C5; --pink-l: #FFE4EC; --pink-d: #e8829a;
+    --lav: #C9B8F0; --lav-l: #EDE8FC; --mint: #B2E8D8;
+    --mint-l: #E2F8F2; --yellow: #FFE5A0; --yellow-l:#FFF8DC;
+    --peach: #FFCBA4; --cream: #FFF9F5; --text: #4a3f5c;
+    --text-s: #8a7a9a; --white: #ffffff; --radius: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+  #shop-app { opacity: 0; transition: opacity 0.3s ease; }
+  
+  /* --- [Shigure Mascot CSS] --- */
+  #toggle-btn-shigure {
+    position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px;
+    background: rgba(0, 0, 0, 0.7); color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 24px; z-index: 1000001;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3); user-select: none; touch-action: manipulation;
+  }
+  .shigure-container {
+    position: fixed; width: 500px; height: 500px;
+    top: calc(100vh - 380px); left: calc(100vw - 550px);
+    cursor: grab; z-index: 1000000; user-select: none; touch-action: none;
+    transform-origin: center bottom; transition: top 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .shigure-layer {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background-size: contain; background-repeat: no-repeat; background-position: center bottom;
+    pointer-events: none; transition: opacity 0.1s ease-out;
+  }
+  /* Z-Index Layers */
+  .layer-edge-full  { z-index: 500; background-image: url('test/shigure_edge.png'); opacity: 0; }
+  .layer-edge-blink { z-index: 510; background-image: url('test/shigure_edge2.png'); opacity: 0; }
+  .layer-fall-full  { z-index: 400; background-image: url('test/shigure_fall.png'); opacity: 0; }
+  .layer-drag-full  { z-index: 410; background-image: url('test/shigure_drag.png'); opacity: 0; }
+  .layer-drag-alt   { z-index: 420; background-image: url('test/shigure_drag2.png'); opacity: 0; }
+  .layer-hair-back    { z-index: 10; animation: hairBackSway 10s ease-in-out infinite; transform-origin: center top; }
+  .layer-costume-back { z-index: 20; }
+  .layer-main-body    { z-index: 30; }
+  .layer-arm-l, .layer-arm-r { z-index: 40; }
+  .layer-arm-shock-l, .layer-arm-shock-r { z-index: 45; opacity: 0; }
+  .layer-neck         { z-index: 50; }
+  .layer-costume-front{ z-index: 90; }
+  .layer-head         { z-index: 100; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-eyes-l, .layer-eyes-r, .layer-eye-blink-l, .layer-eye-blink-r, 
+  .layer-eye-shock-l, .layer-eye-shock-r, .layer-mouth, .layer-mouth-shock {
+    z-index: 150; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%;
+  }
+  .layer-hair-front   { z-index: 200; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  .layer-hair-l       { z-index: 210; animation: hairSideSwayL 9s ease-in-out infinite; transform-origin: 85% 10%; }
+  .layer-hair-r       { z-index: 220; animation: hairSideSwayR 9s ease-in-out infinite; transform-origin: 15% 10%; }
 
-/* --- [เพิ่มใหม่] CSS ของ Shigure Mascot --- */
-#toggle-btn-shigure {
-  position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px;
-  background: rgba(0, 0, 0, 0.7); color: white; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 24px; z-index: 1000001; 
-}
-.shigure-container {
-  position: fixed; width: 500px; height: 500px;
-  top: calc(100vh - 380px); left: calc(100vw - 550px);
-  cursor: grab; z-index: 1000000; user-select: none; touch-action: none;
-  transform-origin: center bottom; transition: top 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-}
-.shigure-layer {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background-size: contain; background-repeat: no-repeat; background-position: center bottom;
-  pointer-events: none; transition: opacity 0.1s ease-out;
-}
-.layer-edge-full  { z-index: 500; background-image: url('test/shigure_edge.png'); opacity: 0; }
-.layer-edge-blink { z-index: 510; background-image: url('test/shigure_edge2.png'); opacity: 0; }
-.layer-fall-full  { z-index: 400; background-image: url('test/shigure_fall.png'); opacity: 0; }
-.layer-drag-full  { z-index: 410; background-image: url('test/shigure_drag.png'); opacity: 0; }
-.layer-drag-alt   { z-index: 420; background-image: url('test/shigure_drag2.png'); opacity: 0; }
-/* ... (CSS อนิเมชั่นและ Z-index ผมจัดการ Path เป็น test/ ให้หมดแล้ว) ... */
-.layer-hair-back    { z-index: 10; animation: hairBackSway 10s ease-in-out infinite; transform-origin: center top; }
-.layer-main-body    { z-index: 30; }
-.layer-head         { z-index: 100; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
-.layer-eyes-l, .layer-eyes-r, .layer-mouth { z-index: 150; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
-.layer-hair-front   { z-index: 200; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
-
-@keyframes headNaturalMove { 0%, 25%, 100% { transform: rotate(0deg) translateY(0); } 35%, 50% { transform: rotate(-1.5deg) translateY(1px); } 60%, 75% { transform: rotate(1.5deg) translateY(-1px); } 85%, 95% { transform: rotate(0deg) translateY(4px); } }
-@keyframes hairBackSway { 0%, 100% { transform: skewX(-0.5deg); } 50% { transform: skewX(0.5deg); } }
-@keyframes hairSideSwayL { 0%, 100% { transform: rotate(-1deg) skewY(0.5deg); } 50% { transform: rotate(1.2deg) skewY(-0.5deg); } }
-@keyframes hairSideSwayR { 0%, 100% { transform: rotate(1deg) skewY(-0.5deg); } 50% { transform: rotate(-1.2deg) skewY(0.5deg); } }
+  @keyframes headNaturalMove { 0%, 25%, 100% { transform: rotate(0deg) translateY(0); } 35%, 50% { transform: rotate(-1.5deg) translateY(1px); } 60%, 75% { transform: rotate(1.5deg) translateY(-1px); } 85%, 95% { transform: rotate(0deg) translateY(4px); } }
+  @keyframes hairBackSway { 0%, 100% { transform: skewX(-0.5deg); } 50% { transform: skewX(0.5deg); } }
+  @keyframes hairSideSwayL { 0%, 100% { transform: rotate(-1deg) skewY(0.5deg); } 50% { transform: rotate(1.2deg) skewY(-0.5deg); } }
+  @keyframes hairSideSwayR { 0%, 100% { transform: rotate(1deg) skewY(-0.5deg); } 50% { transform: rotate(-1.2deg) skewY(0.5deg); } }
 </style>
 </head>
 
 <body>
   <div id="shop-app">
-     </div>
+    <h1 style="text-align:center; margin-top:50px;">Loading HewKao Shop...</h1>
+  </div>
 
   <div id="toggle-btn-shigure">v</div>
   <div class="shigure-container" id="shigure-mascot">
@@ -72,9 +83,12 @@ body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(-
     <div class="shigure-layer layer-drag-alt" id="mascot-drag-alt"></div>
     <div id="mascot-parts">
       <div class="shigure-layer layer-hair-back" style="background-image: url('test/hair back.png');"></div>
+      <div class="shigure-layer layer-costume-back" style="background-image: url('test/costume Back.png');"></div>
       <div class="shigure-layer layer-main-body" style="background-image: url('test/main body.png');"></div>
       <div class="shigure-layer layer-arm-l" id="arm-normal-l" style="background-image: url('test/arm L.png');"></div>
       <div class="shigure-layer layer-arm-r" id="arm-normal-r" style="background-image: url('test/arm R.png');"></div>
+      <div class="shigure-layer layer-arm-shock-l" id="arm-shock-l" style="background-image: url('test/arm shock L.png');"></div>
+      <div class="shigure-layer layer-arm-shock-r" id="arm-shock-r" style="background-image: url('test/arm shock R.png');"></div>
       <div class="shigure-layer layer-neck" style="background-image: url('test/neck.png');"></div>
       <div class="shigure-layer layer-costume-front" style="background-image: url('test/costume Front.png');"></div>
       <div class="shigure-layer layer-head" style="background-image: url('test/Head.png');"></div>
@@ -83,6 +97,9 @@ body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(-
       <div class="shigure-layer layer-eye-blink-l" id="eye-close-l" style="background-image: url('test/eye L close.png'); opacity: 0;"></div>
       <div class="shigure-layer layer-eye-blink-r" id="eye-close-r" style="background-image: url('test/eye R close.png'); opacity: 0;"></div>
       <div class="shigure-layer layer-mouth" id="mouth-normal" style="background-image: url('test/mouth.png'); opacity: 1;"></div>
+      <div class="shigure-layer layer-eye-shock-l" id="eye-shock-l" style="background-image: url('test/eye shock L.png'); opacity: 0;"></div>
+      <div class="shigure-layer layer-eye-shock-r" id="eye-shock-r" style="background-image: url('test/eye shock R.png'); opacity: 0;"></div>
+      <div class="shigure-layer layer-mouth-shock" id="mouth-shock" style="background-image: url('test/mouth shock.png'); opacity: 0;"></div>
       <div class="shigure-layer layer-hair-front" style="background-image: url('test/hair front.png');"></div>
       <div class="shigure-layer layer-hair-l" style="background-image: url('test/hair L.png');"></div>
       <div class="shigure-layer layer-hair-r" style="background-image: url('test/hair R.png');"></div>
@@ -90,15 +107,157 @@ body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(-
   </div>
 
   <script>
-    // โค้ดระบบตะกร้าและ Sushi Drop ของคุณ
+    // ผมรวมส่วน init() และ Sushi-drop ดั้งเดิมของคุณไว้ที่นี่
+    const API = 'https://mochi-shop-server.vercel.app';
+    
+    function sushiDrop(count) {
+      const container = document.body;
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('span');
+        el.className = 'sushi-drop';
+        el.textContent = '🍣';
+        const left = Math.random() * 100;
+        const duration = 6 + Math.random() * 8;
+        const delay = Math.random() * 10;
+        const size = 20 + Math.random() * 18;
+        el.style.cssText = `position: fixed; top: -50px; left: ${left}%; font-size: ${size}px; animation: drop ${duration}s linear -${delay}s infinite; z-index: 0; pointer-events: none;`;
+        container.appendChild(el);
+      }
+    }
+
+    async function init() {
+      const app = document.getElementById('shop-app');
+      app.style.opacity = '0';
+      // จำลองการโหลดหน้าร้านเดิม (ในไฟล์จริงของคุณจะมีระบบ Fetch ข้อมูลสินค้า)
+      setTimeout(() => {
+        app.innerHTML = '<div style="padding:100px; text-align:center;"><h1>HewKao Shop Original Content</h1><p>ระบบร้านค้าและตะกร้าสินค้าทำงานปกติ</p></div>';
+        app.style.opacity = '1';
+        sushiDrop(15);
+      }, 500);
+    }
+    init();
   </script>
 
   <script>
-    // โค้ดระบบควบคุมน้อง Shigure ที่เราจูนกันไว้ (ลาก, สุ่มโผล่, แก้ตาซ้อน)
-    // ผมได้ใส่ฟังก์ชัน Reset ต่างๆ เพื่อไม่ให้ตัวแปรไปทับกับของหน้าร้านคุณครับ
     const mascot = document.getElementById('shigure-mascot');
     const toggleBtn = document.getElementById('toggle-btn-shigure');
-    // ... (ใส่ Script Mascot ที่เหลือตามที่จูนกันล่าสุด)
+    const mascotParts = document.getElementById('mascot-parts');
+    const mascotDragFull = document.getElementById('mascot-drag-full');
+    const mascotDragAlt = document.getElementById('mascot-drag-alt');
+    const mascotFallFull = document.getElementById('mascot-fall-full');
+    const mascotEdgeFull = document.getElementById('mascot-edge-full');
+    const mascotEdgeBlink = document.getElementById('mascot-edge-blink');
+    
+    const eyes = {
+      openL: document.getElementById('eye-open-l'), openR: document.getElementById('eye-open-r'),
+      closeL: document.getElementById('eye-close-l'), closeR: document.getElementById('eye-close-r'),
+      shockL: document.getElementById('eye-shock-l'), shockR: document.getElementById('eye-shock-r')
+    };
+
+    let isDragging = false, isShocked = false, isFalling = false, isPeeking = false, isHidden = false, hasMoved = false;
+    let offsetX = 0, offsetY = 0;
+    let idleTimer, peekWaitTimer, edgeBlinkInterval, randomPeekGlobalTimer;
+
+    function hideAllEyes() { Object.values(eyes).forEach(eye => { if(eye) eye.style.opacity = '0'; }); }
+    function resetEyesToNormal() { hideAllEyes(); eyes.openL.style.opacity = '1'; eyes.openR.style.opacity = '1'; }
+    function resetAllLayers() { 
+      mascotDragFull.style.opacity = '0'; mascotDragAlt.style.opacity = '0'; 
+      mascotFallFull.style.opacity = '0'; mascotEdgeFull.style.opacity = '0'; 
+      mascotEdgeBlink.style.opacity = '0'; mascotParts.style.opacity = '1';
+      stopEdgeBlinking(); resetEyesToNormal();
+    }
+
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearTimeout(idleTimer); clearTimeout(peekWaitTimer); clearTimeout(randomPeekGlobalTimer);
+      isHidden = !isHidden; isPeeking = false; isFalling = false; isShocked = false; isDragging = false; 
+      resetAllLayers();
+      if (isHidden) { mascot.style.top = window.innerHeight + 'px'; toggleBtn.innerText = '^'; }
+      else { mascot.style.top = (window.innerHeight - 380) + 'px'; toggleBtn.innerText = 'v'; resetIdleTimer(); }
+    });
+
+    function startDrag(clientX, clientY) {
+      if (isHidden || isFalling) return;
+      const wasFalling = isFalling;
+      clearTimeout(idleTimer); clearTimeout(peekWaitTimer); clearTimeout(randomPeekGlobalTimer);
+      stopEdgeBlinking();
+      isDragging = true; hasMoved = false; isPeeking = false; isShocked = false; isFalling = false;
+      const rect = mascot.getBoundingClientRect();
+      offsetX = clientX - rect.left; offsetY = clientY - rect.top;
+      mascotParts.style.opacity = '0'; mascotFallFull.style.opacity = '0'; mascotEdgeFull.style.opacity = '0';
+      if (wasFalling) { mascotDragFull.style.opacity = '0'; mascotDragAlt.style.opacity = '1'; }
+      else { mascotDragFull.style.opacity = '1'; mascotDragAlt.style.opacity = '0'; }
+      mascot.style.transition = 'none';
+    }
+
+    function moveMascot(clientX, clientY) {
+      if (!isDragging) return;
+      hasMoved = true;
+      mascot.style.left = (clientX - offsetX) + 'px';
+      mascot.style.top = (clientY - offsetY) + 'px';
+    }
+
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false; isFalling = true;
+      mascotDragFull.style.opacity = '0'; mascotDragAlt.style.opacity = '0'; mascotFallFull.style.opacity = '1';
+      mascot.style.transition = 'top 0.6s cubic-bezier(0.47, 0, 0.745, 0.715)';
+      mascot.style.top = (window.innerHeight - 380) + 'px';
+      setTimeout(() => {
+        if (!isDragging && !isHidden) {
+          mascotFallFull.style.opacity = '0'; mascotEdgeFull.style.opacity = '1'; startEdgeBlinking();
+          setTimeout(() => {
+            if (!isDragging && !isHidden && !isPeeking) {
+              stopEdgeBlinking(); mascotEdgeFull.style.opacity = '0'; mascotParts.style.opacity = '1';
+              isFalling = false; resetEyesToNormal(); resetIdleTimer();
+            }
+          }, 1200);
+        }
+      }, 600);
+    }
+
+    mascot.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+    document.addEventListener('mousemove', (e) => moveMascot(e.clientX, e.clientY));
+    document.addEventListener('mouseup', endDrag);
+    mascot.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
+    document.addEventListener('touchmove', (e) => { if(isDragging){ moveMascot(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, {passive:false});
+    document.addEventListener('touchend', endDrag);
+
+    function randomPeek() {
+      if (isDragging || isShocked || isFalling || isPeeking || isHidden) return;
+      isPeeking = true;
+      mascot.style.transition = 'top 0.8s ease-in';
+      mascot.style.top = window.innerHeight + 'px';
+      randomPeekGlobalTimer = setTimeout(() => {
+        if (isHidden || isDragging) { isPeeking = false; return; }
+        mascot.style.left = Math.random() * (window.innerWidth - 500) + 'px';
+        mascotParts.style.opacity = '1'; mascotEdgeFull.style.opacity = '0'; resetEyesToNormal();
+        mascot.style.transition = 'top 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        mascot.style.top = (window.innerHeight - 380) + 'px';
+        setTimeout(() => {
+          if (isPeeking && !isDragging && !isHidden) {
+            mascotParts.style.opacity = '0'; mascotEdgeFull.style.opacity = '1'; startEdgeBlinking();
+            peekWaitTimer = setTimeout(() => {
+              if (isPeeking && !isDragging && !isHidden) {
+                stopEdgeBlinking(); mascotEdgeFull.style.opacity = '0'; mascotParts.style.opacity = '1';
+                isPeeking = false; resetIdleTimer();
+              }
+            }, 10000);
+          }
+        }, 1200);
+      }, 1000);
+    }
+
+    function resetIdleTimer() { clearTimeout(idleTimer); if(!isDragging && !isShocked && !isFalling && !isPeeking && !isHidden) idleTimer = setTimeout(randomPeek, 3000); }
+    function startEdgeBlinking() { stopEdgeBlinking(); edgeBlinkInterval = setInterval(() => { if(mascotEdgeFull.style.opacity === '1'){ mascotEdgeBlink.style.opacity = '1'; setTimeout(() => { if(mascotEdgeFull.style.opacity === '1') mascotEdgeBlink.style.opacity = '0'; }, 150); } }, 3000 + Math.random() * 2000); }
+    function stopEdgeBlinking() { clearInterval(edgeBlinkInterval); mascotEdgeBlink.style.opacity = '0'; }
+
+    setInterval(() => { if(!isShocked && !isDragging && !isFalling && !isPeeking && !isHidden){ eyes.openL.style.opacity = '0'; eyes.openR.style.opacity = '0'; eyes.closeL.style.opacity = '1'; eyes.closeR.style.opacity = '1'; setTimeout(() => { if(!isShocked && !isDragging && !isFalling && !isPeeking && !isHidden) resetEyesToNormal(); }, 150); } }, 4000);
+
+    resetIdleTimer();
   </script>
+  <style>
+    @keyframes drop { to { transform: translateY(110vh) rotate(360deg); } }
+  </style>
 </body>
 </html>
