@@ -7,24 +7,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init('ihPYyy1esTXMHcxHu')</script>
-
 <style>
-/* --- โค้ดสไตล์ร้านค้าเดิมของคุณ (รักษาไว้ทั้งหมด) --- */
+/* --- ก๊อปปี้ CSS เดิมของหน้าร้านคุณมาไว้ตรงนี้ --- */
 :root {
   --pink:    #FFB7C5; --pink-l:  #FFE4EC; --pink-d:  #e8829a;
   --lav:     #C9B8F0; --lav-l:   #EDE8FC; --mint:    #B2E8D8;
   --mint-l:  #E2F8F2; --yellow:  #FFE5A0; --yellow-l:#FFF8DC;
   --peach:   #FFCBA4; --cream:   #FFF9F5; --text:    #4a3f5c;
   --text-s:  #8a7a9a; --white:   #ffffff; --radius:  18px;
+  --shadow:  0 4px 24px rgba(180,140,200,0.13);
 }
-/* ... (ผมขออนุญาตละส่วน CSS ร้านค้าไว้เพื่อความประหยัดพื้นที่ แต่ในไฟล์จริงที่คุณ Copy ไปมันจะรวมอยู่ใน shop.html เดิมของคุณอยู่แล้วครับ) ... */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+/* ... (ส่วน CSS อื่นๆ ของร้านค้าคุณ) ... */
 
 /* --- [เพิ่มใหม่] โค้ดสไตล์ของน้อง Shigure Mascot --- */
 #toggle-btn-shigure {
   position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px;
   background: rgba(0, 0, 0, 0.7); color: white; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 24px; z-index: 1000001; /* อยู่เหนือทุกอย่าง */
+  cursor: pointer; font-size: 24px; z-index: 1000001; 
   box-shadow: 0 2px 10px rgba(0,0,0,0.3); user-select: none; touch-action: manipulation;
 }
 .shigure-container {
@@ -103,7 +105,7 @@
   </div>
 
   <script>
-    // ... (โค้ด JavaScript ร้านค้า/ตะกร้าสินค้า/Sushi Drop เดิมของคุณ) ...
+    // ... (ส่วนโค้ดร้านค้าของคุณ) ...
   </script>
 
   <script>
