@@ -3839,33 +3839,68 @@ footer strong { color: var(--pink-d); }
 
   init()
 </script>
-  <style>
+<style>
+  /* ปุ่ม Toggle ^/v */
   #toggle-btn-shigure {
     position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px;
     background: rgba(0, 0, 0, 0.7); color: white; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 24px; z-index: 2147483647; /* ลอยอยู่บนสุดของเว็บแน่นอน */
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3); user-select: none; touch-action: manipulation;
+    cursor: pointer; font-size: 24px; z-index: 2147483647;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3); user-select: none;
   }
+
+  /* 1. คืนขนาดกรอบให้เป็น 500x500 เพื่อให้ภาพประกอบร่างกันสมบูรณ์ */
   .shigure-container {
-    position: fixed; width: 500px; height: 500px;
-    top: calc(100vh - 380px); left: calc(100vw - 550px);
-    cursor: grab; z-index: 2147483646; user-select: none; touch-action: none;
-    transform-origin: center bottom; transition: top 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    position: fixed; 
+    width: 500px;  
+    height: 500px; 
+    top: calc(100vh - 380px); 
+    left: calc(100vw - 550px);
+    z-index: 2147483646; 
+    user-select: none; 
+    touch-action: none;
+    transform-origin: center bottom; 
+    transition: top 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    
+    /* สั่งให้กล่อง 500x500 ไม่รับการคลิกเลย ลูกค้าจะได้คลิกทะลุไปหน้าร้านได้ */
+    pointer-events: none; 
   }
-  .shigure-container:active { cursor: grabbing; }
+
+  /* 2. สร้างกรอบล่องหน (Hitbox) เอาไว้รับการคลิกเฉพาะตัวน้อง */
+  #mascot-hitbox {
+    position: absolute;
+    width: 140px;   /* ความกว้างเฉพาะตัวน้อง */
+    height: 250px;  /* ความสูงเฉพาะตัวน้อง */
+    bottom: 0px;    /* ยึดติดฐาน */
+    left: 50%;      /* ให้อยู่กึ่งกลาง */
+    transform: translateX(-50%);
+    z-index: 9999;  /* ให้อยู่หน้าสุดของตัวน้อง */
+    
+    /* สั่งให้พื้นที่ตรงนี้รับการคลิกและการลากได้ */
+    pointer-events: auto; 
+    cursor: grab;
+    
+    /* (ถ้าอยากเห็นกรอบ Hitbox ว่ากว้างแค่ไหน ให้ลบเครื่องหมายคอมเมนต์บรรทัดล่างออกครับ) */
+    /* border: 2px solid red; */
+  }
+  #mascot-hitbox:active {
+    cursor: grabbing;
+  }
+
+  /* 3. คืนค่าการจัดเรียง Layer ให้กลับเป็นเหมือนต้นฉบับ (หัวไม่หลุด) */
   .shigure-layer {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background-size: contain; background-repeat: no-repeat; background-position: center bottom;
     pointer-events: none; transition: opacity 0.1s ease-out;
   }
-  
-  /* ลำดับชั้น Z-index ของน้อง */
+
+  /* ลำดับชั้น Z-index (ไม่มีอะไรเปลี่ยน) */
   .layer-edge-full  { z-index: 500; background-image: url('test/shigure_edge.png'); opacity: 0; }
   .layer-edge-blink { z-index: 510; background-image: url('test/shigure_edge2.png'); opacity: 0; }
   .layer-fall-full  { z-index: 400; background-image: url('test/shigure_fall.png'); opacity: 0; }
   .layer-drag-full  { z-index: 410; background-image: url('test/shigure_drag.png'); opacity: 0; }
   .layer-drag-alt   { z-index: 420; background-image: url('test/shigure_drag2.png'); opacity: 0; }
+
   .layer-hair-back    { z-index: 10; animation: hairBackSway 10s ease-in-out infinite; transform-origin: center top; }
   .layer-costume-back { z-index: 20; }
   .layer-main-body    { z-index: 30; }
@@ -3874,10 +3909,12 @@ footer strong { color: var(--pink-d); }
   .layer-neck         { z-index: 50; }
   .layer-costume-front{ z-index: 90; }
   .layer-head         { z-index: 100; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
+  
   .layer-eyes-l, .layer-eyes-r, .layer-eye-blink-l, .layer-eye-blink-r, 
   .layer-eye-shock-l, .layer-eye-shock-r, .layer-mouth, .layer-mouth-shock {
     z-index: 150; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%;
   }
+
   .layer-hair-front   { z-index: 200; animation: headNaturalMove 15s ease-in-out infinite; transform-origin: 50% 35%; }
   .layer-hair-l       { z-index: 210; animation: hairSideSwayL 9s ease-in-out infinite; transform-origin: 85% 10%; }
   .layer-hair-r       { z-index: 220; animation: hairSideSwayR 9s ease-in-out infinite; transform-origin: 15% 10%; }
@@ -3890,6 +3927,8 @@ footer strong { color: var(--pink-d); }
 
 <div id="toggle-btn-shigure">v</div>
 <div class="shigure-container" id="shigure-mascot">
+  <div id="mascot-hitbox"></div>
+
   <div class="shigure-layer layer-edge-full" id="mascot-edge-full"></div>
   <div class="shigure-layer layer-edge-blink" id="mascot-edge-blink"></div>
   <div class="shigure-layer layer-fall-full" id="mascot-fall-full"></div>
@@ -3922,6 +3961,7 @@ footer strong { color: var(--pink-d); }
 
 <script>
   const mascot = document.getElementById('shigure-mascot');
+  const hitbox = document.getElementById('mascot-hitbox'); // รับ Event จาก Hitbox แทน
   const toggleBtn = document.getElementById('toggle-btn-shigure');
   const mascotParts = document.getElementById('mascot-parts');
   const mascotDragFull = document.getElementById('mascot-drag-full');
@@ -3964,8 +4004,12 @@ footer strong { color: var(--pink-d); }
     clearTimeout(idleTimer); clearTimeout(peekWaitTimer); clearTimeout(randomPeekGlobalTimer);
     stopEdgeBlinking();
     isDragging = true; hasMoved = false; isPeeking = false; isShocked = false; isFalling = false;
+    
+    // คำนวณ offset จากกล่องใหญ่
     const rect = mascot.getBoundingClientRect();
-    offsetX = clientX - rect.left; offsetY = clientY - rect.top;
+    offsetX = clientX - rect.left; 
+    offsetY = clientY - rect.top;
+    
     mascotParts.style.opacity = '0'; mascotFallFull.style.opacity = '0'; mascotEdgeFull.style.opacity = '0';
     if (wasFalling) { mascotDragFull.style.opacity = '0'; mascotDragAlt.style.opacity = '1'; }
     else { mascotDragFull.style.opacity = '1'; mascotDragAlt.style.opacity = '0'; }
@@ -3998,10 +4042,12 @@ footer strong { color: var(--pink-d); }
     }, 600);
   }
 
-  mascot.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+  // เปลี่ยน Event Listener ไปเกาะที่ hitbox แทน
+  hitbox.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
   document.addEventListener('mousemove', (e) => moveMascot(e.clientX, e.clientY));
   document.addEventListener('mouseup', endDrag);
-  mascot.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
+  
+  hitbox.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
   document.addEventListener('touchmove', (e) => { if(isDragging){ moveMascot(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, {passive:false});
   document.addEventListener('touchend', endDrag);
 
@@ -4036,7 +4082,7 @@ footer strong { color: var(--pink-d); }
 
   setInterval(() => { if(!isShocked && !isDragging && !isFalling && !isPeeking && !isHidden){ eyes.openL.style.opacity = '0'; eyes.openR.style.opacity = '0'; eyes.closeL.style.opacity = '1'; eyes.closeR.style.opacity = '1'; setTimeout(() => { if(!isShocked && !isDragging && !isFalling && !isPeeking && !isHidden) resetEyesToNormal(); }, 150); } }, 4000);
   
-  mascot.addEventListener('click', () => { 
+  hitbox.addEventListener('click', () => { 
     if(hasMoved || isShocked || isDragging || isFalling || isPeeking || isHidden) return; 
     isShocked = true; clearTimeout(idleTimer); hideAllEyes(); 
     eyes.shockL.style.opacity = '1'; eyes.shockR.style.opacity = '1'; 
@@ -4054,6 +4100,7 @@ footer strong { color: var(--pink-d); }
   });
 
   resetIdleTimer();
+</script>
 </script>
 </body>
 </html>
