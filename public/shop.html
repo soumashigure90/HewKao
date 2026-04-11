@@ -3052,6 +3052,23 @@ footer strong { color: var(--pink-d); }
   async function submitOrder() {
     const token = localStorage.getItem('mochi_token')
     const orderItems = window._buyNowItems || cart
+
+    // ตรวจ stock ก่อน submit — กรณีสินค้าหมดระหว่างที่ค้างใน cart
+    for (const item of orderItems) {
+      if (item.stock !== null && item.stock !== undefined && item.qty > item.stock) {
+        if (item.stock <= 0) {
+          showToast(lang === 'en'
+            ? `❌ "${item.name}" is out of stock. Please remove it from cart.`
+            : `❌ "${item.name_th||item.name}" หมดแล้ว กรุณาลบออกจากตะกร้า`)
+        } else {
+          showToast(lang === 'en'
+            ? `❌ Only ${item.stock} of "${item.name}" left. Please adjust qty.`
+            : `❌ "${item.name_th||item.name}" เหลือแค่ ${item.stock} ชิ้น`)
+        }
+        hideLoading()
+        return
+      }
+    }
     const isPreorder   = orderItems.some(i => i.type === 'preorder')
     const isAllDigital = orderItems.every(i => i.type === 'digital')
     const total     = window._orderTotalTHB || orderItems.reduce((s,i) => s + i.price*i.qty, 0)
@@ -3151,7 +3168,7 @@ footer strong { color: var(--pink-d); }
           ${isPreorder?'เราได้รับ pre-order ของคุณแล้ว<br>จะยืนยันโดยเร็วที่สุดนะคะ 🌸':'รับออเดอร์เรียบร้อยแล้ว!<br>ขอบคุณที่ซื้อสินค้ากับเราค่ะ 🌸'}
         </p>
         ${freebieHtml}
-        <button onclick="document.getElementById('orderSuccessOverlay').remove()" style="background:var(--pink-d);color:#fff;border:none;padding:13px 32px;border-radius:20px;font-size:15px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;width:100%;">
+        <button onclick="document.getElementById('orderSuccessOverlay').remove();setTimeout(()=>location.reload(),100)" style="background:var(--pink-d);color:#fff;border:none;padding:13px 32px;border-radius:20px;font-size:15px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;width:100%;">
           Continue Shopping 🌸
         </button>
       </div>`
