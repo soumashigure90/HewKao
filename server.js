@@ -688,7 +688,7 @@ app.get('/api/my-orders', auth, async (req, res) => {
     const { data: orders, error } = await supabase
       .from('orders')
       .select(`id, total, total_usd, currency, status, note, created_at, tracking_number, carrier, tracking_url,
-        order_items(quantity, price, products(name, name_th, emoji, image_url, type))`)
+        order_items(quantity, price, product_id, products(name, name_th, emoji, image_url, type))`)
       .eq('member_id', req.user.id)
       .order('created_at', { ascending: false })
     if (error) throw error
