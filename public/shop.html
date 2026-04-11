@@ -1997,14 +1997,17 @@ footer strong { color: var(--pink-d); }
     try {
       const res = await fetch(`${API}/api/my-orders`, { headers: { Authorization: 'Bearer ' + token } })
       const orders = await res.json()
-      purchasedIds = new Set(
-        (orders || []).flatMap(o =>
-          (o.order_items || [])
-            .filter(i => i.products?.type === 'digital')
-            .map(i => i.product_id || i.products?.id)
-        ).filter(Boolean)
-      )
-      renderProducts(allProducts.length ? allProducts : [])
+      const ids = []
+      ;(orders || []).forEach(o => {
+        ;(o.order_items || []).forEach(i => {
+          if (i.products?.type === 'digital') {
+            if (i.product_id)    { ids.push(Number(i.product_id));  ids.push(String(i.product_id)) }
+            if (i.products?.id)  { ids.push(Number(i.products.id)); ids.push(String(i.products.id)) }
+          }
+        })
+      })
+      purchasedIds = new Set(ids)
+      if (allProducts.length) renderProducts(allProducts)
     } catch(e) { purchasedIds = new Set() }
   }
 
@@ -2383,7 +2386,7 @@ footer strong { color: var(--pink-d); }
     // digital ซื้อได้ 1 ชิ้นเท่านั้น
     if (p.type === 'digital') {
       if (cart.find(i => i.id === id)) { showToast(lang==='en'?'✅ Already in cart!':'✅ มีในตะกร้าแล้ว'); return }
-      if (purchasedIds.has(id)) { showToast(lang==='en'?'✅ Already purchased!':'✅ ซื้อแล้ว ดาวน์โหลดได้ใน Order History'); return }
+      if (purchasedIds.has(Number(id)) || purchasedIds.has(String(id))) { showToast(lang==='en'?'✅ Already purchased!':'✅ ซื้อแล้ว ดาวน์โหลดได้ใน Order History'); return }
       cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:Number(p.price), price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, stock:p.stock, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null })
       saveCart(); if (btnEl) flyToCart(btnEl); else showToast('Added to cart!'); return
     }
@@ -3950,7 +3953,7 @@ footer strong { color: var(--pink-d); }
     updateCartBadge()
     checkEditBtn()
     initSushiRain()
-    await Promise.all([ loadPageContent(), loadProducts(), loadShopSettings(), loadProfile() ])
+    await Promise.all([ loadPageContent(), loadProducts(), loadShopSettings(), loadProfile(), loadPurchasedIds() ])
     document.body.style.opacity = '1'
     pollAdminOrders()
     setInterval(pollAdminOrders, 30000)
