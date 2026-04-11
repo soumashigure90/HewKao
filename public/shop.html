@@ -1923,13 +1923,38 @@ footer strong { color: var(--pink-d); }
     document.getElementById('prodModalSub').textContent = p.type + (modalOOS
       ? (lang==='en' ? ' · Out of stock' : ' · สินค้าหมด')
       : p.stock !== null ? ` · ${p.stock} left` : ' · In stock')
-    // ปิดปุ่ม Add to Cart ใน modal ถ้า OOS
+    // ปิดปุ่ม Add to Cart / Buy Now ใน modal ถ้า OOS หรือ purchased
+    const isPurchased = p.type === 'digital' && (purchasedIds.has(Number(p.id)) || purchasedIds.has(String(p.id)))
     const modalCartBtn = document.querySelector('.btn-add-cart')
+    const modalBuyBtn  = document.querySelector('.btn-buy')
     if (modalCartBtn) {
-      modalCartBtn.disabled = modalOOS
-      modalCartBtn.style.opacity = modalOOS ? '0.4' : '1'
-      modalCartBtn.style.cursor = modalOOS ? 'not-allowed' : 'pointer'
-      if (modalOOS) modalCartBtn.textContent = lang==='en' ? 'Out of Stock' : 'สินค้าหมด'
+      const disableCart = modalOOS || isPurchased
+      modalCartBtn.disabled = disableCart
+      modalCartBtn.style.opacity = disableCart ? '0.5' : '1'
+      modalCartBtn.style.cursor  = disableCart ? 'not-allowed' : 'pointer'
+      if (isPurchased) {
+        modalCartBtn.textContent = lang==='en' ? '✅ Already Purchased' : '✅ ซื้อแล้ว'
+        modalCartBtn.style.background = 'var(--mint-d)'
+      } else if (modalOOS) {
+        modalCartBtn.textContent = lang==='en' ? 'Out of Stock' : 'สินค้าหมด'
+      } else {
+        modalCartBtn.textContent = '🛒 Add to Cart'
+      }
+    }
+    if (modalBuyBtn) {
+      const disableBuy = modalOOS || isPurchased
+      modalBuyBtn.disabled = disableBuy
+      modalBuyBtn.style.opacity = disableBuy ? '0.5' : '1'
+      modalBuyBtn.style.cursor  = disableBuy ? 'not-allowed' : 'pointer'
+      if (isPurchased) {
+        modalBuyBtn.textContent = lang==='en' ? '✅ Purchased' : '✅ ซื้อแล้ว'
+        modalBuyBtn.style.background = 'var(--mint-d)'
+      } else if (modalOOS) {
+        modalBuyBtn.style.display = 'none'
+      } else {
+        modalBuyBtn.textContent = '⚡ Buy Now'
+        modalBuyBtn.style.display = ''
+      }
     }
     document.getElementById('prodModalDesc').textContent = p.description || 'No description available.'
     document.getElementById('prodModalPrice').textContent = lang === 'en' && p.price_usd
