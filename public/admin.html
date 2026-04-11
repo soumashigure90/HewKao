@@ -181,16 +181,28 @@ textarea{resize:vertical;min-height:80px;}
   <main class="main">
     <div class="page active" id="page-dashboard">
       <div class="page-header"><h1>👋 Good day, Admin!</h1><p>Here's what's happening in your shop today.</p></div>
+
+      <!-- SUMMARY STATS -->
       <div class="stats">
-        <div class="stat pink"><div class="stat-icon">💰</div><div class="stat-val" id="stat-revenue">—</div><div class="stat-label">Revenue this month</div></div>
-        <div class="stat lav"><div class="stat-icon">🛍️</div><div class="stat-val" id="stat-orders">—</div><div class="stat-label">Total orders</div></div>
-        <div class="stat mint"><div class="stat-icon">📦</div><div class="stat-val" id="stat-products">—</div><div class="stat-label">Products listed</div></div>
+        <div class="stat pink"><div class="stat-icon">💰</div><div class="stat-val" id="stat-revenue">—</div><div class="stat-label">ยอดรวมทั้งหมด (paid)</div></div>
+        <div class="stat lav"><div class="stat-icon">🛍️</div><div class="stat-val" id="stat-orders">—</div><div class="stat-label">Orders ทั้งหมด</div></div>
+        <div class="stat mint"><div class="stat-icon">📦</div><div class="stat-val" id="stat-products">—</div><div class="stat-label">สินค้าทั้งหมด</div></div>
         <div class="stat yellow"><div class="stat-icon">👥</div><div class="stat-val" id="stat-members">—</div><div class="stat-label">Members</div></div>
       </div>
+
+      <!-- ARTIST BREAKDOWN -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title">🎨 ยอดขายแยกตามศิลปิน</div>
+        <div id="artistBreakdown" style="padding:8px 0;">
+          <div style="text-align:center;color:var(--text-s);padding:1rem;">Loading...</div>
+        </div>
+      </div>
+
+      <!-- RECENT ORDERS -->
       <div class="card">
         <div class="card-title">🕐 Recent Orders</div>
-        <div class="tbl-wrap"><table><thead><tr><th>ORDER</th><th>CUSTOMER</th><th>TOTAL</th><th>STATUS</th></tr></thead>
-        <tbody id="dash-orders"><tr class="loading-row"><td colspan="4">Loading...</td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>ORDER</th><th>CUSTOMER</th><th>ITEMS</th><th>TOTAL</th><th>STATUS</th></tr></thead>
+        <tbody id="dash-orders"><tr class="loading-row"><td colspan="5">Loading...</td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -527,18 +539,95 @@ function showPage(id, btn) {
 
 async function loadDashboard() {
   try {
-    const [pRes, mRes] = await Promise.all([
-      fetch(`${API}/api/admin/products`, {headers:authHeader()}),
-      fetch(`${API}/api/admin/members`,  {headers:authHeader()})
+    const [pRes, mRes, oRes] = await Promise.all([
+      fetch(`${API}/api/admin/products`,        {headers:authHeader()}),
+      fetch(`${API}/api/admin/members`,         {headers:authHeader()}),
+      fetch(`${API}/api/admin/orders?limit=500`,{headers:authHeader()}),
     ])
-    const products = await pRes.json()
-    const members  = await mRes.json()
+    const products      = await pRes.json()
+    const members       = await mRes.json()
+    const { orders = [] } = await oRes.json()
+
+    // ── SUMMARY ──
     document.getElementById('stat-products').textContent = Array.isArray(products) ? products.length : '—'
     document.getElementById('stat-members').textContent  = Array.isArray(members)  ? members.length  : '—'
-    document.getElementById('stat-orders').textContent   = '—'
-    document.getElementById('stat-revenue').textContent  = '—'
-    document.getElementById('dash-orders').innerHTML = '<tr><td colspan="4" style="color:#bbb;text-align:center;padding:1rem;">No orders yet</td></tr>'
-  } catch(e) { console.error(e) }
+
+    const paidOrders = orders.filter(o => ['paid','shipped'].includes(o.status))
+    const totalRev   = paidOrders.reduce((s,o) => s + Number(o.total||0), 0)
+    document.getElementById('stat-orders').textContent  = orders.length
+    document.getElementById('stat-revenue').textContent = '฿' + totalRev.toLocaleString()
+
+    // ── ARTIST BREAKDOWN ──
+    const ARTISTS = ['Shigure_S','kono82','EspadaGcon','MN762']
+    const TYPES   = ['physical','digital','preorder']
+    const TYPE_LABELS = { physical:'📮 Physical', digital:'💾 Digital', preorder:'⏳ Pre-order' }
+
+    // สร้าง map: artist → { type → { count, revenue } }
+    const artistMap = {}
+    for (const o of paidOrders) {
+      for (const item of (o.order_items||[])) {
+        const artist = item.products?.artist || 'Unknown'
+        const type   = item.products?.type   || 'other'
+        if (!artistMap[artist]) artistMap[artist] = {}
+        if (!artistMap[artist][type]) artistMap[artist][type] = { count:0, revenue:0 }
+        artistMap[artist][type].count   += item.quantity || 1
+        artistMap[artist][type].revenue += Number(item.price||0) * Number(item.quantity||1)
+      }
+    }
+
+    const artistOrder = [...new Set([...ARTISTS, ...Object.keys(artistMap)])]
+    const artistColors = { Shigure_S:'var(--pink-d)', kono82:'#2A7FAF', EspadaGcon:'#5B8FCC', MN762:'#8B5CF6', Unknown:'var(--text-s)' }
+
+    const breakdownHtml = artistOrder.map(artist => {
+      const data = artistMap[artist]
+      if (!data) return ''
+      const artistTotal = Object.values(data).reduce((s,d) => s + d.revenue, 0)
+      const artistCount = Object.values(data).reduce((s,d) => s + d.count, 0)
+      const color = artistColors[artist] || 'var(--pink-d)'
+
+      const typeRows = TYPES.map(type => {
+        const d = data[type]
+        if (!d) return ''
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 12px 5px 20px;font-size:12px;color:var(--text-s);border-bottom:1px solid var(--pink-l);">
+          <span>${TYPE_LABELS[type]||type} <span style="color:var(--text-s);font-size:11px;">(${d.count} ชิ้น)</span></span>
+          <span style="font-weight:700;color:var(--text);">฿${d.revenue.toLocaleString()}</span>
+        </div>`
+      }).join('')
+
+      return `<div style="margin-bottom:12px;border:1.5px solid var(--pink-l);border-radius:14px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:${color}18;border-bottom:1.5px solid var(--pink-l);">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+            <span style="font-size:14px;font-weight:800;color:var(--text);">${artist}</span>
+            <span style="font-size:11px;color:var(--text-s);">${artistCount} ชิ้น</span>
+          </div>
+          <span style="font-size:15px;font-weight:800;color:${color};">฿${artistTotal.toLocaleString()}</span>
+        </div>
+        ${typeRows}
+      </div>`
+    }).filter(Boolean).join('')
+
+    document.getElementById('artistBreakdown').innerHTML = breakdownHtml ||
+      '<div style="text-align:center;color:var(--text-s);padding:1rem;">ยังไม่มียอดขาย</div>'
+
+    // ── RECENT ORDERS ──
+    const recent = [...orders].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,10)
+    if (!recent.length) {
+      document.getElementById('dash-orders').innerHTML = '<tr><td colspan="5" style="color:#bbb;text-align:center;padding:1rem;">No orders yet</td></tr>'
+      return
+    }
+    const statusColors = { pending:'preorder', paid:'active', shipped:'digital', cancelled:'hidden' }
+    document.getElementById('dash-orders').innerHTML = recent.map(o => {
+      const items = (o.order_items||[]).map(i => `${i.products?.name||'?'} ×${i.quantity}`).join(', ')
+      return `<tr>
+        <td><strong>#${o.id}</strong></td>
+        <td>${o.members?.username || o.guest_email || 'Guest'}</td>
+        <td style="font-size:12px;color:var(--text-s);max-width:200px;">${items}</td>
+        <td class="price-cell">฿${Number(o.total).toLocaleString()}</td>
+        <td><span class="badge ${statusColors[o.status]||''}">${o.status}</span></td>
+      </tr>`
+    }).join('')
+  } catch(e) { console.error('Dashboard error:', e) }
 }
 
 async function loadProducts() {
