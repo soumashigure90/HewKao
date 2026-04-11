@@ -2027,14 +2027,17 @@ input,textarea,select { background:#0d1117 !important; border-color:#2A3F5F !imp
     try {
       const res = await fetch(`${API}/api/my-orders`, { headers: { Authorization: 'Bearer ' + token } })
       const orders = await res.json()
-      purchasedIds = new Set(
-        (orders || []).flatMap(o =>
-          (o.order_items || [])
-            .filter(i => i.products?.type === 'digital')
-            .map(i => i.product_id || i.products?.id)
-        ).filter(Boolean)
-      )
-      renderProducts(allProducts.length ? allProducts : [])
+      const ids = []
+      ;(orders || []).forEach(o => {
+        ;(o.order_items || []).forEach(i => {
+          if (i.products?.type === 'digital') {
+            if (i.product_id)    { ids.push(Number(i.product_id));  ids.push(String(i.product_id)) }
+            if (i.products?.id)  { ids.push(Number(i.products.id)); ids.push(String(i.products.id)) }
+          }
+        })
+      })
+      purchasedIds = new Set(ids)
+      if (allProducts.length) renderProducts(allProducts)
     } catch(e) { purchasedIds = new Set() }
   }
 
@@ -3943,7 +3946,7 @@ input,textarea,select { background:#0d1117 !important; border-color:#2A3F5F !imp
     updateCartBadge()
     checkEditBtn()
     initSushiRain()
-    await Promise.all([ loadPageContent(), loadProducts(), loadShopSettings(), loadProfile() ])
+    await Promise.all([ loadPageContent(), loadProducts(), loadShopSettings(), loadProfile(), loadPurchasedIds() ])
     document.body.style.opacity = '1'
     pollAdminOrders()
     setInterval(pollAdminOrders, 30000)
