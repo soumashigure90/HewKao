@@ -2735,14 +2735,53 @@ input,textarea,select { background:#0d1117 !important; border-color:#2A3F5F !imp
     document.body.style.overflow = ''
   }
 
-  function goToPayment() {
-    const total = window._orderTotalTHB || 0
+  async function goToPayment() {
+    const orderItems = window._buyNowItems || cart
     const co = document.getElementById('checkoutOverlay')
+
+    // ── เช็ค stock จาก server ก่อนเปิดหน้าจ่ายเงิน ──
+    showLoading('กำลังตรวจสอบสินค้า...\nChecking availability...')
+    try {
+      const ids = [...new Set(orderItems.map(i => i.id))]
+      const res = await fetch(`${API}/api/products/stock-check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+      })
+      const stockData = await res.json()
+      const outOfStock = []
+      for (const item of orderItems) {
+        const currentStock = stockData[item.id]
+        if (currentStock !== null && currentStock !== undefined && item.qty > currentStock) {
+          outOfStock.push({ name: item.name_th || item.name, stock: currentStock, qty: item.qty })
+          item.stock = currentStock
+        }
+      }
+      saveCart()
+      hideLoading()
+      if (outOfStock.length > 0) {
+        const msgs = outOfStock.map(i =>
+          i.stock <= 0
+            ? `❌ "${i.name}" หมดแล้ว`
+            : `❌ "${i.name}" เหลือแค่ ${i.stock} ชิ้น (คุณมี ${i.qty} ชิ้นในตะกร้า)`
+        ).join('\n')
+        alert(msgs + '\n\nกรุณาแก้ไขตะกร้าก่อนชำระเงิน')
+        co.style.display = ''
+        co.classList.add('open')
+        renderCart()
+        return
+      }
+    } catch(e) {
+      hideLoading()
+      console.warn('Stock check failed:', e.message)
+    }
+
+    const total = window._orderTotalTHB || 0
     co.classList.remove('open','closing')
     co.style.display = 'none'
 
-    // ถ้า total = 0 (คูปอง 100%) → ข้ามหน้า payment ไป submit เลย
     if (total === 0) {
+      showLoading('กำลังบันทึกคำสั่งซื้อ... 🛒\nPlacing your order...')
       setTimeout(() => {
         co.style.display = ''
         submitOrder()
