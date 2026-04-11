@@ -2071,7 +2071,7 @@ footer strong { color: var(--pink-d); }
           <button class="qty-btn" onclick="changeQty(${idx},-1)">−</button>
           <span class="qty-num">${item.qty}</span>
           <button class="qty-btn" onclick="changeQty(${idx},1)" ${item.stock !== null && item.qty >= item.stock ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>+</button>
-          ${item.stock !== null ? `<span style="font-size:10px;color:var(--text-s);">(${item.stock} left)</span>` : ''}
+          ${(item.stock !== null && item.stock !== undefined) ? `<span style="font-size:10px;color:var(--text-s);">(${item.stock} left)</span>` : ''}
         </div>
         ${priceHtml}
         <button class="cart-remove" onclick="removeFromCart(${idx})">✕</button>
@@ -2090,7 +2090,8 @@ footer strong { color: var(--pink-d); }
   function changeQty(idx, delta) {
     const item = cart[idx]
     const newQty = item.qty + delta
-    if (delta > 0 && item.stock !== null && newQty > item.stock) {
+    const hasStock = item.stock !== null && item.stock !== undefined
+    if (delta > 0 && hasStock && newQty > item.stock) {
       showToast(lang === 'en' ? `Only ${item.stock} left in stock!` : `เหลือแค่ ${item.stock} ชิ้นนะคะ`)
       return
     }
