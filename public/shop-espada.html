@@ -2014,10 +2014,11 @@ input,textarea,select { background:#0d1117 !important; border-color:#2A3F5F !imp
   }
 
   // ── CART ──
-  let cart = JSON.parse(localStorage.getItem('espada_cart')||'[]')
+  const SHARED_CART_KEY = 'hewkao_shared_cart'
+  let cart = JSON.parse(localStorage.getItem(SHARED_CART_KEY)||'[]')
 
   function saveCart() {
-    localStorage.setItem('espada_cart', JSON.stringify(cart))
+    localStorage.setItem(SHARED_CART_KEY, JSON.stringify(cart))
     updateCartBadge()
   }
 
@@ -2099,7 +2100,8 @@ input,textarea,select { background:#0d1117 !important; border-color:#2A3F5F !imp
         <div class="cart-qty">
           <button class="qty-btn" onclick="changeQty(${idx},-1)">−</button>
           <span class="qty-num">${item.qty}</span>
-          <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
+          <button class="qty-btn" onclick="changeQty(${idx},1)" ${item.stock !== null && item.qty >= item.stock ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>+</button>
+          ${item.stock !== null ? `<span style="font-size:10px;color:var(--text-s);">(${item.stock} left)</span>` : ''}
         </div>
         ${priceHtml}
         <button class="cart-remove" onclick="removeFromCart(${idx})">✕</button>
@@ -2116,7 +2118,13 @@ input,textarea,select { background:#0d1117 !important; border-color:#2A3F5F !imp
   }
 
   function changeQty(idx, delta) {
-    cart[idx].qty = Math.max(1, cart[idx].qty + delta)
+    const item = cart[idx]
+    const newQty = item.qty + delta
+    if (delta > 0 && item.stock !== null && newQty > item.stock) {
+      showToast(lang === 'en' ? `Only ${item.stock} left in stock!` : `เหลือแค่ ${item.stock} ชิ้นนะคะ`)
+      return
+    }
+    item.qty = Math.max(1, newQty)
     saveCart(); renderCart()
   }
 
@@ -2369,6 +2377,15 @@ input,textarea,select { background:#0d1117 !important; border-color:#2A3F5F !imp
     // เช็ค stock
     if (p.stock !== null && p.stock <= 0) {
       showToast(lang === 'en' ? '❌ Out of stock' : '❌ สินค้าหมดแล้ว')
+      return
+    }
+    // block preorder mix
+    if (p.type === 'preorder' && cart.some(i => i.type !== 'preorder')) {
+      showToast(lang === 'en' ? '❌ Cannot mix Pre-order with other items' : '❌ ไม่สามารถสั่ง Pre-order พร้อมสินค้าอื่นได้')
+      return
+    }
+    if (p.type !== 'preorder' && cart.some(i => i.type === 'preorder')) {
+      showToast(lang === 'en' ? '❌ Please checkout Pre-order items first' : '❌ กรุณาสั่ง Pre-order แยกออกมาก่อนนะคะ')
       return
     }
     const existing = cart.find(i => i.id === id)
