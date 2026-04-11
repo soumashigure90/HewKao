@@ -1531,9 +1531,12 @@ footer strong { color: var(--pink-d); }
         : p.stock !== null
           ? (lang === 'en' ? `Limited · ${p.stock} left` : `จำกัด · เหลือ ${p.stock} ชิ้น`)
           : (lang === 'en' ? 'In stock' : 'มีสินค้า')
-      const cartLabel = p.type === 'preorder'
-        ? (lang === 'en' ? '+ Pre-order' : '+ พรีออเดอร์')
-        : (lang === 'en' ? '+ Cart' : '+ ตะกร้า')
+      const alreadyBought = p.type === 'digital' && purchasedIds.has(p.id)
+      const cartLabel = alreadyBought
+        ? (lang === 'en' ? '✅ Purchased' : '✅ ซื้อแล้ว')
+        : p.type === 'preorder'
+          ? (lang === 'en' ? '+ Pre-order' : '+ พรีออเดอร์')
+          : (lang === 'en' ? '+ Cart' : '+ ตะกร้า')
 
       // รูปภาพ หรือ emoji fallback
       const imgContent = p.image_url
@@ -1560,7 +1563,7 @@ footer strong { color: var(--pink-d); }
           <p class="card-sub" style="${isOOS?'color:var(--pink-d);font-weight:700;':''}">${isOOS ? stockText : (p.description || stockText)}</p>
           <div class="card-footer">
             <div class="price" style="${isOOS?'color:var(--text-s);text-decoration:line-through;':''}">${lang === 'en' && p.price_usd ? '$' + Number(p.price_usd).toFixed(2) : '฿' + Number(p.price).toLocaleString()}</div>
-            <button class="btn-cart" onclick="event.stopPropagation();${isOOS?'':('addToCart('+p.id+',this)')}" ${isOOS?'disabled style="opacity:0.4;cursor:not-allowed;"':''}>${isOOS?(lang==='en'?'Sold Out':'หมดแล้ว'):cartLabel}</button>
+            <button class="btn-cart" onclick="event.stopPropagation();${(isOOS||alreadyBought)?'':('addToCart('+p.id+',this)')}" ${(isOOS||alreadyBought)?'disabled style="opacity:0.75;cursor:default;'+(alreadyBought?'background:var(--mint-d)!important;':'')+'"':''}>${isOOS?(lang==='en'?'Sold Out':'หมดแล้ว'):cartLabel}</button>
           </div>
         </div>
       </div>`
@@ -1986,6 +1989,24 @@ footer strong { color: var(--pink-d); }
   // ── CART ──
   const SHARED_CART_KEY = 'hewkao_shared_cart'
   let cart = JSON.parse(localStorage.getItem(SHARED_CART_KEY)||'[]')
+  let purchasedIds = new Set()
+
+  async function loadPurchasedIds() {
+    const token = localStorage.getItem('mochi_token')
+    if (!token) { purchasedIds = new Set(); return }
+    try {
+      const res = await fetch(`${API}/api/my-orders`, { headers: { Authorization: 'Bearer ' + token } })
+      const orders = await res.json()
+      purchasedIds = new Set(
+        (orders || []).flatMap(o =>
+          (o.order_items || [])
+            .filter(i => i.products?.type === 'digital')
+            .map(i => i.product_id || i.products?.id)
+        ).filter(Boolean)
+      )
+      renderProducts(allProducts.length ? allProducts : [])
+    } catch(e) { purchasedIds = new Set() }
+  }
 
   function saveCart() {
     localStorage.setItem(SHARED_CART_KEY, JSON.stringify(cart))
@@ -2068,10 +2089,10 @@ footer strong { color: var(--pink-d); }
           <div class="cart-item-type">${item.type}</div>
         </div>
         <div class="cart-qty">
-          <button class="qty-btn" onclick="changeQty(${idx},-1)">−</button>
+          <button class="qty-btn" onclick="changeQty(${idx},-1)" ${item.type==='digital'?'disabled style="opacity:.4;cursor:not-allowed;"':''}>−</button>
           <span class="qty-num">${item.qty}</span>
-          <button class="qty-btn" onclick="changeQty(${idx},1)" ${item.stock !== null && item.qty >= item.stock ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>+</button>
-          ${(item.stock !== null && item.stock !== undefined) ? `<span style="font-size:10px;color:var(--text-s);">(${item.stock} left)</span>` : ''}
+          <button class="qty-btn" onclick="changeQty(${idx},1)" ${item.type==='digital'||( item.stock !== null && item.qty >= item.stock) ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>+</button>
+          ${item.type==='digital' ? `<span style="font-size:10px;color:var(--mint-d);">💾 ×1</span>` : (item.stock !== null && item.stock !== undefined) ? `<span style="font-size:10px;color:var(--text-s);">(${item.stock} left)</span>` : ''}
         </div>
         ${priceHtml}
         <button class="cart-remove" onclick="removeFromCart(${idx})">✕</button>
@@ -2358,6 +2379,13 @@ footer strong { color: var(--pink-d); }
     if (p.type !== 'preorder' && cart.some(i => i.type === 'preorder')) {
       showToast(lang === 'en' ? '❌ Please checkout Pre-order items first' : '❌ กรุณาสั่ง Pre-order แยกออกมาก่อนนะคะ')
       return
+    }
+    // digital ซื้อได้ 1 ชิ้นเท่านั้น
+    if (p.type === 'digital') {
+      if (cart.find(i => i.id === id)) { showToast(lang==='en'?'✅ Already in cart!':'✅ มีในตะกร้าแล้ว'); return }
+      if (purchasedIds.has(id)) { showToast(lang==='en'?'✅ Already purchased!':'✅ ซื้อแล้ว ดาวน์โหลดได้ใน Order History'); return }
+      cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:Number(p.price), price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, stock:p.stock, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null })
+      saveCart(); if (btnEl) flyToCart(btnEl); else showToast('Added to cart!'); return
     }
     const existing = cart.find(i => i.id === id)
     if (existing) {
