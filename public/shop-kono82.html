@@ -2391,7 +2391,7 @@ nav { background:rgba(255,255,255,0.92) !important; border-bottom:2px solid #A8D
       }
       existing.qty++
     }
-    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:Number(p.price), price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null })
+    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:Number(p.price), price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, stock:p.stock??null, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null })
     saveCart()
     if (btnEl) flyToCart(btnEl)
     else showToast('Added to cart!')
@@ -2418,7 +2418,7 @@ nav { background:rgba(255,255,255,0.92) !important; border-bottom:2px solid #A8D
       }
       existing.qty++
     }
-    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved, price_usd:finalPriceUSD, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null })
+    else cart.push({ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved, price_usd:finalPriceUSD, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, stock:p.stock??null, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null })
     saveCart()
     const btn = document.querySelector('.btn-add-cart')
     if (btn) flyToCart(btn)
@@ -2643,7 +2643,7 @@ nav { background:rgba(255,255,255,0.92) !important; border-bottom:2px solid #A8D
     const p = currentProduct
     const origPrice  = Number(p.price)
     const finalPrice = discountedPrice !== null ? discountedPrice : origPrice
-    const buyItem = [{ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved:origPrice-finalPrice, price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null }]
+    const buyItem = [{ id:p.id, name:p.name, name_th:p.name_th, price:finalPrice, origPrice, saved:origPrice-finalPrice, price_usd:p.price_usd?Number(p.price_usd):null, emoji:p.emoji||'📦', image_url:p.image_url, type:p.type, qty:1, stock:p.stock??null, shipping_dom_thb:p.shipping_dom_thb??null, shipping_intl_thb:p.shipping_intl_thb??null, shipping_intl_usd:p.shipping_intl_usd??null }]
     window._buyNowItems = buyItem
 
     const needAddr = p.type === 'physical' || p.type === 'preorder'
