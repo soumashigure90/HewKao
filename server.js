@@ -307,6 +307,24 @@ app.post('/api/register', async (req, res) => {
 // PRODUCTS ROUTES
 // ═══════════════════════════════════════
 
+// POST /api/products/stock-check — เช็ค stock ก่อนจ่ายเงิน
+app.post('/api/products/stock-check', async (req, res) => {
+  const { ids } = req.body
+  if (!ids || !ids.length) return res.json({})
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, stock')
+      .in('id', ids)
+    if (error) throw error
+    const result = {}
+    data.forEach(p => { result[p.id] = p.stock })
+    res.json(result)
+  } catch(e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
 // GET /api/products — public (active only), รองรับ ?artist=xxx
 app.get('/api/products', async (req, res) => {
   let query = supabase
