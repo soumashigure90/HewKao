@@ -566,6 +566,12 @@ async function loadDashboard() {
     document.getElementById('stat-orders').textContent  = orders.length
     document.getElementById('stat-revenue').textContent = '฿' + totalRev.toLocaleString()
 
+    // ── SHARED CONSTANTS ──
+    const ARTISTS     = ['Shigure_S','kono82','EspadaGcon','MN762']
+    const TYPES       = ['physical','digital','preorder']
+    const TYPE_LABELS = { physical:'📮 Physical', digital:'💾 Digital', preorder:'⏳ Pre-order' }
+    const artistColors = { Shigure_S:'var(--pink-d)', kono82:'#2A7FAF', EspadaGcon:'#5B8FCC', MN762:'#8B5CF6', Unknown:'var(--text-s)' }
+
     // ── WEEKLY STATS ──
     const now       = new Date()
     const weekStart = new Date(now)
@@ -623,10 +629,6 @@ async function loadDashboard() {
       '<div style="text-align:center;color:var(--text-s);padding:1rem;">ยังไม่มียอดสัปดาห์นี้</div>'
 
     // ── ARTIST BREAKDOWN ──
-    const ARTISTS = ['Shigure_S','kono82','EspadaGcon','MN762']
-    const TYPES   = ['physical','digital','preorder']
-    const TYPE_LABELS = { physical:'📮 Physical', digital:'💾 Digital', preorder:'⏳ Pre-order' }
-
     // สร้าง map: artist → { type → { count, revenue } }
     const artistMap = {}
     for (const o of paidOrders) {
@@ -641,7 +643,6 @@ async function loadDashboard() {
     }
 
     const artistOrder = [...new Set([...ARTISTS, ...Object.keys(artistMap)])]
-    const artistColors = { Shigure_S:'var(--pink-d)', kono82:'#2A7FAF', EspadaGcon:'#5B8FCC', MN762:'#8B5CF6', Unknown:'var(--text-s)' }
 
     const breakdownHtml = artistOrder.map(artist => {
       const data = artistMap[artist]
